@@ -1,80 +1,63 @@
 # local-chess-review
 
-Web app **locale** per la revisione di partite di scacchi: scarica le tue
-partite tramite l'API pubblica della piattaforma su cui giochi, le analizza
-con [Stockfish](https://stockfishchess.org/) in locale e mostra una scacchiera
-interattiva con etichette per mossa (Migliore, Imprecisione, Errore, Grave
-errore, Brillante, …) e una eval bar.
+A **local** web app for chess game review: it downloads your games via the
+public API of the chess platform you play on, analyzes them locally with
+[Stockfish](https://stockfishchess.org/), and shows an interactive board with
+per-move tags (Best, Inaccuracy, Mistake, Blunder, Brilliant, …) and an eval
+bar.
 
-Pensata per girare sul PC e per essere usata anche dal telefono sulla stessa
-rete Wi-Fi (LAN).
+Designed to run on your PC.
 
-UI bilingue (Italiano default, Inglese opzionale) selezionabile dalla
+Bilingual UI (Italian default, English optional), selectable from the
 dashboard.
 
 > [!IMPORTANT]
 > ## Disclaimer
 >
-> - Questo è un **progetto personale, non commerciale, a scopo
->   educativo / di studio**.
-> - **Non** è affiliato, sponsorizzato o approvato da alcun fornitore di
->   servizi scacchistici.
-> - I dati delle partite vengono recuperati esclusivamente tramite l'**API
->   HTTP pubblica** documentata della piattaforma di scacchi scelta. Non
->   vengono usate scraping techniques, credenziali, sessioni private né
->   API non documentate.
-> - Tutta l'**analisi avviene in locale** sulla macchina dell'utente: non
->   c'è nessun server proprio che riceve, memorizza o ridistribuisce le
->   partite.
-> - Lo stile grafico è generico (Bootstrap 5 + chessboard.js) e non riproduce
->   marchi, loghi o asset di alcun fornitore terzo.
-> - L'utente è responsabile di rispettare i Termini di Servizio della
->   piattaforma da cui scarica le proprie partite, in particolare i limiti
->   di rate dell'API pubblica.
-> - **Stockfish** è un motore scacchistico open source distribuito sotto
->   licenza GPLv3: scaricarlo e usarlo è gratis ma l'eseguibile **non è
->   incluso** in questa repo (vedi sezione *Setup*).
-> - I puzzle (opzionali, mostrati durante il caricamento) provengono dal
->   [Lichess Puzzle Database](https://database.lichess.org/), distribuito
->   sotto licenza CC0.
+> - This is a **personal, non-commercial project for educational / study
+>   purposes**.
+> - It is **not** affiliated with, sponsored by, or endorsed by any chess
+>   service provider.
+> - Game data is fetched **only through the documented public HTTP API** of
+>   the chosen chess platform. No scraping, no credentials, no private
+>   sessions, no undocumented APIs.
+> - **All analysis runs locally** on the user's machine: there is no own
+>   server that receives, stores, or redistributes any game.
+> - The visual style is generic (Bootstrap 5 + chessboard.js) and does not
+>   reproduce trademarks, logos, or assets of any third party provider.
+> - The user is responsible for complying with the Terms of Service of the
+>   platform they download their games from, in particular the rate limits
+>   of the public API.
+> - **Stockfish** is a free open-source chess engine distributed under the
+>   GPLv3 license: it is free to download and use, but the executable is
+>   **not included** in this repository (see *Setup*).
+> - The puzzles (optional, shown during loading) come from the
+>   [Lichess Puzzle Database](https://database.lichess.org/), released
+>   under the CC0 license.
 
 ---
 
-## Funzionalità principali
+## Main features
 
-- 📥 Download partite del **mese corrente** dell'utente specificato
-  (con bandiera del paese e Elo di entrambi i giocatori).
-- 🐟 Analisi con **Stockfish locale** (depth configurabile, default 15).
-- 🏷️ Tag per ogni mossa: *Brillante, Grande mossa, Migliore, Eccellente,
-  Buona, Teoria, Imprecisione, Errore, Occasione persa, Grave errore*
-  (modello *Expected Points* basato su Win Probability).
-- 📊 Schermata di **riepilogo**: precisione %, *Performance Elo* per
-  giocatore, grafico WP, fasi di partita (Apertura / Mediogioco / Finale).
-- ▶️ **Revisione interattiva** mossa per mossa con commento tattico,
-  freccia sulla mossa migliore, "linea di punizione" e *variation explorer*
-  (puoi giocare mosse alternative trascinando i pezzi).
-- 🧩 **Mini-puzzle** Lichess durante l'attesa dell'analisi.
-- 🌍 UI bilingue **IT / EN**.
-- 📱 Accessibile dal telefono sulla stessa rete Wi-Fi.
+- 📥 Download of the **current month's games** for the specified user.
+- 🐟 Analysis with **local Stockfish** (configurable depth, default 15).
+- 🏷️ Per-move tags: *Brilliant, Great move, Best, Excellent, Good, Book,
+  Inaccuracy, Mistake, Missed opportunity, Blunder* (Win-Probability based
+  *Expected Points* model).
+- 📊 **Summary screen**: accuracy %, *Performance Elo* per player, WP
+  chart, game phases (Opening / Middlegame / Endgame).
+- ▶️ **Interactive review** move by move with tactical commentary, arrow
+  pointing at the best move, and *variation explorer*.
+- 🧩 **Mini Lichess puzzle** while you wait for the analysis.
+- 🌍 Bilingual UI **IT / EN**.
+- 📱 Reachable from your phone on the same Wi-Fi network.
 
 ---
 
-## Screenshot
-
-> Aggiungi qui i tuoi screenshot e referenziali con percorsi tipo
-> `docs/screenshots/dashboard.png`. Esempio:
-
-```markdown
-![Dashboard](docs/screenshots/dashboard.png)
-![Riepilogo partita](docs/screenshots/summary.png)
-![Revisione mossa per mossa](docs/screenshots/review.png)
-```
-
----
 
 ## Setup (Windows)
 
-### 1. Python e dipendenze
+### 1. Python and dependencies
 
 ```powershell
 python -m venv .venv
@@ -82,51 +65,51 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-> **PowerShell 5.1**: l'operatore `&&` non esiste. Esegui i comandi uno
-> alla volta o concatena con `;` + `if ($?)`.
+> **PowerShell 5.1**: the `&&` operator does not exist. Run the commands
+> one by one or chain them with `;` + `if ($?)`.
 >
-> Se PowerShell blocca l'attivazione del venv:
+> If PowerShell blocks venv activation:
 > `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
 
 ### 2. Stockfish
 
-1. Scarica l'ultima build da
-   <https://stockfishchess.org/download/> (Windows → variante
-   `avx2`; se la tua CPU non la supporta, `popcnt`).
-2. Estrai lo zip.
-3. Copia l'eseguibile in `engine/`, rinominandolo in **`stockfish.exe`**:
+1. Download the latest build from
+   <https://stockfishchess.org/download/> (Windows → `avx2` build; if your
+   CPU does not support it, use `popcnt`).
+2. Extract the zip.
+3. Copy the executable into `engine/`, renaming it to **`stockfish.exe`**:
 
    ```text
    engine/stockfish.exe
    ```
 
-L'app cerca l'eseguibile in `engine/stockfish.exe` (Windows) oppure
-`engine/stockfish` (Linux / macOS). Se manca, l'endpoint `/api/analyze`
-risponde con un errore esplicito.
+The app looks for the executable at `engine/stockfish.exe` (Windows) or
+`engine/stockfish` (Linux / macOS). If it is missing, the `/api/analyze`
+endpoint returns an explicit error.
 
-### 3. (Opzionale) Database puzzle Lichess
+### 3. (Optional) Lichess puzzle database
 
-La schermata di caricamento mostra un mini-puzzle Lichess mentre Stockfish
-analizza. Per attivarlo, scarica una sola volta il DB puzzle:
+The loading screen shows a Lichess mini-puzzle while Stockfish is
+analyzing. To enable it, download the puzzle DB once:
 
 ```powershell
 python download_puzzles.py
 ```
 
-Lo script scarica ~250 MB compressi da `database.lichess.org`, filtra in
-streaming e produce `engine/puzzles.db` (~20 MiB con i cap di default).
-Senza il DB il resto dell'app funziona comunque, semplicemente i mini-puzzle
-non vengono mostrati.
+The script downloads ~250 MB compressed from `database.lichess.org`,
+filters in streaming, and produces `engine/puzzles.db` (~20 MiB with the
+default caps). Without the DB the rest of the app still works — only the
+mini-puzzles are not shown.
 
-Per ridurre un DB esistente senza ri-scaricarlo:
+To shrink an existing DB without re-downloading:
 
 ```powershell
 python trim_puzzles.py --per-band 5000
 ```
 
-### 4. (Opzionale) Profondità di analisi
+### 4. (Optional) Analysis depth
 
-Default = 15 (veloce). Per maggiore precisione (più lento):
+Default = 15 (fast). For higher precision (slower):
 
 ```powershell
 $env:REVIEW_DEPTH = "18"
@@ -135,149 +118,118 @@ python app.py
 
 ---
 
-## Avvio
+## Run
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 python app.py
 ```
 
-In console verranno stampate gli URL su cui l'app è raggiungibile:
+The console prints the URLs the app is reachable on:
 
 ```text
  * Running on http://127.0.0.1:5000
  * Running on http://192.168.1.X:5000
 ```
 
-### Dal PC
+### From the PC
 
-Apri <http://127.0.0.1:5000>.
+Open <http://127.0.0.1:5000>.
 
-### Dal telefono (stessa Wi-Fi)
+### From your phone (same Wi-Fi)
 
-1. Trova l'IP del PC: in PowerShell digita `ipconfig` e cerca
-   "Indirizzo IPv4" della scheda Wi-Fi (es. `192.168.1.42`).
-2. Sul telefono apri il browser e vai su `http://192.168.1.42:5000`.
-3. **Firewall**: la prima volta Windows chiede se autorizzare Python ad
-   accettare connessioni in ingresso → seleziona "Reti private". Se l'app
-   non risponde, crea una regola in entrata su Windows Defender Firewall
-   che apra la porta TCP 5000.
-
----
-
-## Come si usa
-
-1. **Dashboard** (`/`): scegli la lingua, inserisci uno username della tua
-   piattaforma di scacchi (l'app usa l'API pubblica di lettura partite),
-   premi *Cerca*. Le partite del mese corrente compaiono ordinate dalla più
-   recente.
-2. Clicca **Analizza**: parte l'analisi con Stockfish (1-3 minuti a
-   depth 15). Durante l'attesa vedi un mini-puzzle e una progress bar.
-3. Compare la **schermata di Riepilogo**: precisione %, Performance Elo,
-   grafico Win Probability, fasi della partita.
-4. Premi **▶ Inizia revisione** per la modalità mossa per mossa:
-   - scacchiera centrata, orientata dal punto di vista del giocatore cercato;
-   - eval bar a sinistra;
-   - tag della mossa sulla casa di destinazione + freccia sulla mossa
-     migliore in caso di errore;
-   - lista delle mosse a destra;
-   - tasti `←` / `→` o pulsanti `◀ ▶ ⏮ ⏭`;
-   - **variation explorer**: trascina un pezzo per esplorare una mossa
-     alternativa, eval bar e freccia migliore si aggiornano in tempo reale.
+1. Find the PC's IP: in PowerShell run `ipconfig` and look for "IPv4
+   Address" of the Wi-Fi adapter (e.g. `192.168.1.42`).
+2. On the phone open the browser and go to `http://192.168.1.42:5000`.
+3. **Firewall**: the first time, Windows asks whether to allow Python to
+   accept incoming connections → choose "Private networks". If the app
+   does not respond, create an inbound rule in Windows Defender Firewall
+   that opens TCP port 5000.
 
 ---
 
-## Stack tecnologico
+## How to use
+
+1. **Dashboard** (`/`): pick the language, type a username from your
+   chess platform (the app uses its public read-only games API), press
+   *Search*. Games for the current month appear sorted from most recent
+   first.
+2. Click **Analyze**: Stockfish analysis starts (1–3 minutes at depth 15).
+   While you wait, a mini-puzzle and a progress bar are shown.
+3. The **Summary screen** appears: accuracy %, Performance Elo,
+   Win-Probability chart, game phases.
+4. Press **▶ Start review** to enter move-by-move mode:
+   - centered board, oriented from the searched player's POV;
+   - eval bar on the left;
+   - per-move tag overlay on the destination square + arrow on the best
+     move when you make a mistake;
+   - moves list on the right;
+   - **variation explorer**: drag a piece to play an alternative move —
+     eval bar and best-move arrow update live.
+
+---
+
+## Tech stack
 
 - **Backend**: Python 3, [Flask](https://flask.palletsprojects.com/),
   [python-chess](https://python-chess.readthedocs.io/),
-  [Stockfish](https://stockfishchess.org/) (motore esterno).
+  [Stockfish](https://stockfishchess.org/) (external engine).
 - **Frontend**: Bootstrap 5, jQuery,
   [chessboard.js](https://chessboardjs.com/),
   [chess.js](https://github.com/jhlywa/chess.js),
-  [Chart.js](https://www.chartjs.org/) — tutti tramite CDN.
-- **DB locale (opzionale)**: SQLite + dataset puzzle Lichess.
+  [Chart.js](https://www.chartjs.org/) — all loaded from CDN.
+- **Local DB (optional)**: SQLite + Lichess puzzle dataset.
 
 ---
 
-## Struttura del progetto
+## Project structure
 
 ```text
 local-chess-review/
-├── app.py                # server Flask + endpoints API
-├── chess_api.py          # wrapper API pubblica (download partite)
-├── analyzer.py           # engine + algoritmo di classificazione mosse
-├── download_puzzles.py   # script one-shot: scarica + filtra puzzle Lichess
-├── trim_puzzles.py       # script one-shot: riduce un puzzles.db esistente
+├── app.py                # Flask server + API endpoints
+├── chess_api.py          # public API wrapper (game download)
+├── analyzer.py           # engine + move classification algorithm
+├── download_puzzles.py   # one-shot script: downloads + filters Lichess puzzles
+├── trim_puzzles.py       # one-shot script: trims an existing puzzles.db
 ├── requirements.txt
 ├── engine/
-│   ├── README.txt        # istruzioni per scaricare Stockfish
-│   ├── stockfish.exe     # (DA SCARICARE MANUALMENTE)
-│   └── puzzles.db        # (CREATO DA download_puzzles.py)
+│   ├── README.txt        # how to download Stockfish
+│   ├── stockfish.exe     # (DOWNLOAD MANUALLY)
+│   └── puzzles.db        # (CREATED BY download_puzzles.py)
 ├── templates/
-│   ├── index.html        # dashboard: ricerca + lista partite
-│   └── review.html       # pagina di revisione interattiva
+│   ├── index.html        # dashboard: search + games list
+│   └── review.html       # interactive review page
 └── static/
     ├── css/style.css
     └── js/
-        ├── i18n.js       # dizionari IT/EN + helper t()
+        ├── i18n.js       # IT/EN dictionaries + t() helper
         ├── index.js
         └── review.js
 ```
 
 ---
 
-## Personalizzazioni rapide
+## Quick customizations
 
-- **Più precisione → più lento**: aumenta `REVIEW_DEPTH` (env) o `depth=`
+- **More precision → slower**: increase `REVIEW_DEPTH` (env) or `depth=`
   in `GameAnalyzer`.
-- **Soglie classificazione**: `WP_THRESHOLDS` in `analyzer.py` (in WP).
-- **Brillante più / meno restrittivo**: `BRILLIANT_SEE_MAX`,
+- **Classification thresholds**: `WP_THRESHOLDS` in `analyzer.py` (in WP).
+- **Brilliant more / less restrictive**: `BRILLIANT_SEE_MAX`,
   `BRILLIANT_WP_FLOOR`, `BRILLIANT_WP_CEILING`, `BRILLIANT_2ND_GAP`.
-- **Rilevamento teoria più lungo**: aumenta `BOOK_PLY` (default 16 plies).
-- **Aggiungere una terza lingua**: aggiungi un sotto-dizionario in
-  `static/js/i18n.js` e una `<option>` nel selettore in
-  `templates/index.html`.
+- **Longer book detection**: raise `BOOK_PLY` (default 16 plies).
+- **Add a third UI language**: add another sub-dictionary in
+  `static/js/i18n.js` and a matching `<option>` in the language selector
+  in `templates/index.html`.
 
 ---
 
-## Test rapidi senza UI
+## Troubleshooting
 
-```powershell
-# Lista partite del mese corrente per uno username
-python chess_api.py <username>
-
-# Analisi diretta di un PGN su disco
-python analyzer.py engine\stockfish.exe game.pgn
-```
-
----
-
-## Risoluzione problemi
-
-- **`Stockfish not found`** → controlla che esista `engine/stockfish.exe`.
-- **Errore 403 / rate limit dall'API** → User-Agent troppo generico oppure
-  troppe richieste. Aumenta il delay o personalizza l'header in
-  `chess_api.py`.
-- **Il telefono non vede il PC** → firewall Windows: consenti la porta
-  5000 in ingresso per le reti private; PC e telefono devono essere sulla
-  stessa Wi-Fi.
-- **Analisi troppo lenta** → riduci `REVIEW_DEPTH` (es. 12) oppure scegli
-  una partita più corta.
-- **"DB puzzle non installato"** → esegui `python download_puzzles.py`
-  una volta.
-
----
-
-## Licenza
-
-Codice sorgente: **MIT** (vedi `LICENSE` se presente, altrimenti scegline
-una in fase di pubblicazione).
-
-Componenti di terze parti — soggetti alle rispettive licenze:
-
-- **Stockfish** — GPLv3 (eseguibile non incluso, da scaricare).
-- **Lichess Puzzle Database** — CC0 (file `puzzles.db` non incluso, da
-  scaricare).
-- Tutte le librerie frontend sono caricate da CDN pubbliche e mantengono
-  le proprie licenze originali.
+- **`Stockfish not found`** → check that `engine/stockfish.exe` exists.
+- **403 / rate limit from the API** → User-Agent too generic or too many
+  requests. Increase the delay or customize the header in `chess_api.py`.
+- **Phone can't see the PC** → Windows firewall: allow inbound TCP port
+  5000 for private networks; PC and phone must be on the same Wi-Fi.
+- **Analysis too slow** → lower `REVIEW_DEPTH` (e.g. 12) or pick a
+  shorter game.
+- **"Puzzle DB not installed"** → run `python download_puzzles.py` once.
