@@ -1,0 +1,439 @@
+/* ==========================================
+   Chess Review Local - global styles
+   ========================================== */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   Dashboard (games list)
+   ============================================================ */
+.game-card {
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.game-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.result-win   { color: #28a745; font-weight: 700; }
+.result-loss  { color: #dc3545; font-weight: 700; }
+.result-draw  { color: #6c757d; font-weight: 700; }
+
+.game-players { font-size: 0.95rem; }
+.player-line { display: flex; align-items: center; gap: 6px; }
+.player-line .flag { font-size: 1.1rem; }
+.player-line .name { font-weight: 600; flex: 1; }
+.player-line .elo  { color: #6c757d; font-size: 0.85rem; }
+.vs-label {
+  text-align: center; font-size: 0.75rem; color: #999;
+  margin: 2px 0; text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* "Recent searches" chips below the dashboard search bar. */
+.recent-chip {
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  font-weight: 500;
+  user-select: none;
+  transition: background 0.12s ease;
+}
+.recent-chip:hover { background: #0a58ca !important; }
+.recent-chip-x {
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.recent-chip-x:hover { opacity: 1; }
+
+/* ============================================================
+   SUMMARY SCREEN
+   ============================================================ */
+.summary-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #262421;
+  border-radius: 12px;
+  padding: 20px 22px 26px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+}
+
+.summary-title {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #e8e6e3;
+  margin: 0 0 14px;
+}
+
+/* ----- A) Eval chart: clean, no gridlines ------------------ */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 170px;
+  background: transparent;
+  border-radius: 6px;
+  padding: 0;
+}
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+@media (max-width: 575px) {
+  .chart-container { height: 130px; }
+}
+
+/* ----- B) Avatar header with names and pawn icons ---------- */
+.players-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-top: 18px;
+  margin-bottom: 14px;
+}
+.player-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.player-block.right { justify-content: flex-end; }
+
+.player-avatar {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  background: #3d3a36 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a8a39f'><path d='M12 2a4 4 0 0 1 4 4c0 1.86-1.27 3.43-3 3.87V11h2v2h-1l1 7H9l1-7H9v-2h2V9.87C9.27 9.43 8 7.86 8 6a4 4 0 0 1 4-4z'/></svg>") center/24px no-repeat;
+  flex-shrink: 0;
+  border: 1px solid #4a4742;
+}
+
+.player-info {
+  min-width: 0;
+  line-height: 1.25;
+}
+.player-info .player-name {
+  font-weight: 700;
+  font-size: 0.96rem;
+  color: #f1efed;
+  white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.player-info .player-meta {
+  font-size: 0.78rem;
+  color: #a8a39f;
+  display: flex; align-items: center; gap: 5px;
+}
+.pawn-icon {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border-radius: 2px;
+  background-position: center; background-repeat: no-repeat; background-size: contain;
+}
+.pawn-white {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'><path d='M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47C28.06 24.84 29 23.03 29 21c0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z' fill='%23ffffff' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+.pawn-black {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 45'><path d='M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47C28.06 24.84 29 23.03 29 21c0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z' fill='%23000' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+.players-vs {
+  font-size: 0.75rem;
+  color: #8c8884;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+}
+
+/* ----- Accuracy / performance boxes ---------------------------
+   Layout: [white value] [centered label] [black value]
+*/
+.metric-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 90px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.metric-box {
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.4rem;
+  padding: 10px 0;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.metric-box.white {
+  background: #f5f3ee;
+  color: #1a1816;
+  border: 1px solid #d8d4cc;
+}
+.metric-box.black {
+  background: #2a2723;
+  color: #f1efed;
+  border: 1px solid #1a1816;
+}
+.metric-label {
+  text-align: center;
+  color: #c9c5bf;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.metric-label .small {
+  display: block;
+  color: #8c8884;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+/* ----- Game Phases section --------------------------------- */
+.phases-section { margin-top: 20px; padding-top: 14px; border-top: 1px solid #383530; }
+.phases-title {
+  font-size: 0.78rem;
+  letter-spacing: 1.4px;
+  color: #a8a39f;
+  text-transform: uppercase;
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.phase-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #2f2c28;
+}
+.phase-row:last-child { border-bottom: none; }
+.phase-name {
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #e1ddd6;
+}
+.phase-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin: 0 auto;
+}
+.phase-icon.empty {
+  background: #2f2c28;
+  color: #6e6a64;
+}
+
+/* ----- Move count table ------------------------------------ */
+.moves-stats { margin-top: 18px; padding-top: 14px; border-top: 1px solid #383530; }
+.stat-move-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 60px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #2f2c28;
+}
+.stat-move-row:last-child { border-bottom: none; }
+.stat-move-count {
+  text-align: center;
+  font-weight: 800;
+  padding: 6px 0;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.stat-move-count.white-bg { background: #f5f3ee; color: #1a1816; }
+.stat-move-count.black-bg { background: #2a2723; color: #f1efed; border: 1px solid #1a1816; }
+.stat-move-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #e1ddd6;
+}
+.badge-circle {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Puzzle card during analysis loading
+   ============================================================ */
+.puzzle-card {
+  max-width: 460px;
+  margin: 0 auto;
+  background: #262421;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+.puzzle-card h6 { color: #e8e6e3; font-weight: 600; }
+#puzzle-status { font-weight: 600; }
+.puzzle-status-ok    { color: #95c771; }
+.puzzle-status-error { color: #e58a3a; }
+.puzzle-status-info  { color: #c9c5bf; }
+
+/* ============================================================
+   Variation banner above the chessboard
+   ============================================================ */
+.variation-banner {
+  background: #1f3550;
+  border: 1px solid #3a6a99;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  color: #e6edf3;
+  font-size: 0.92rem;
+}
+.variation-banner .badge { font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   COMMENTARY box and CONTINUATION
+   ============================================================ */
+.commentary-box {
+  background: #1f2935;
+  border-left: 4px solid #1976d2;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  color: #e6edf3;
+}
+.commentary-text { font-size: 0.95rem; line-height: 1.4; }
+
+/* ============================================================
+   Player CARDS above/below the chessboard (review)
+   ============================================================ */
+.player-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px; border-radius: 8px;
+  background: #2a2a2a; border-left: 6px solid transparent;
+}
+.player-card .player-color-chip { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; border: 2px solid #888; }
+.player-card .player-info { flex: 1; line-height: 1.25; }
+.player-card .player-name { font-size: 1rem; }
+.player-card .player-name .flag { font-size: 1.15rem; margin-right: 4px; }
+.player-card .player-elo { color: #adb5bd; margin-left: 6px; font-size: 0.85rem; }
+.player-card .player-color-label { font-size: 0.7rem; letter-spacing: 1.5px; color: #adb5bd; }
+.player-card:has(.white-chip) { border-left-color: #f8f9fa; }
+.player-card:has(.black-chip) { border-left-color: #000; background: #1a1a1a; }
+.white-chip { background: #f8f9fa; }
+.black-chip { background: #1c1c1c; }
+
+/* ============================================================
+   Eval bar (vertical)
+   ============================================================ */
+.eval-bar {
+  position: relative;
+  width: 28px; height: 600px; max-height: 80vh;
+  background-color: #222;
+  border: 1px solid #555; border-radius: 4px;
+  overflow: hidden;
+}
+.eval-bar-white {
+  position: absolute; bottom: 0; left: 0;
+  width: 100%; height: 50%;
+  background-color: #f0f0f0;
+  transition: height 0.3s ease;
+}
+.eval-bar-text {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem; font-weight: 700; color: #333;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 1px 4px; border-radius: 3px;
+  pointer-events: none; white-space: nowrap;
+}
+
+/* ============================================================
+   Moves sidebar
+   ============================================================ */
+.moves-list { max-height: 70vh; overflow-y: auto; font-family: "Consolas", "Courier New", monospace; }
+.move-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+.move-row:hover { background-color: rgba(0, 0, 0, 0.08); }
+.move-row.active { background-color: #0d6efd; color: #fff; }
+.move-row.active .move-tag { color: #fff !important; }
+.move-num { color: #555; min-width: 32px; }
+.move-san { font-weight: 600; min-width: 60px; }
+.move-tag { margin-left: auto; font-size: 0.78rem; font-weight: 700; padding: 1px 6px; border-radius: 3px; }
+
+/* ============================================================
+   Move tags - color palette (aligned with DOT_COLORS in JS)
+   - Brilliant: teal
+   - Great:     vivid blue (distinct from Best which is green)
+   - Best:      green
+   ============================================================ */
+.tag-brilliant  { color: #fff; background: #1ba1a1; }
+.tag-great      { color: #fff; background: #5b9be0; }
+.tag-best       { color: #fff; background: #81b64c; }
+.tag-excellent  { color: #fff; background: #95c771; }
+.tag-good       { color: #fff; background: #a3a3a3; }
+.tag-book       { color: #fff; background: #b58863; }
+.tag-inaccuracy { color: #fff; background: #f7c12a; }
+.tag-mistake    { color: #fff; background: #e58a3a; }
+.tag-miss       { color: #fff; background: #d36e52; }
+.tag-blunder    { color: #fff; background: #ca3431; }
+
+/* "Soft" version for chips / small labels when the background must stay neutral */
+.move-tag.tag-brilliant  { color: #1ba1a1; background: #cfeeed; }
+.move-tag.tag-great      { color: #2c83d0; background: #dceaf7; }
+.move-tag.tag-best       { color: #5d8a30; background: #e6f0d6; }
+.move-tag.tag-excellent  { color: #2f7a3a; background: #e3f0d8; }
+.move-tag.tag-good       { color: #6c757d; background: #ececec; }
+.move-tag.tag-book       { color: #6f4f1d; background: #f3e6c4; }
+.move-tag.tag-inaccuracy { color: #b3850a; background: #fef0c7; }
+.move-tag.tag-mistake    { color: #a85f1a; background: #fbe1c7; }
+.move-tag.tag-miss       { color: #a04830; background: #fadcd1; }
+.move-tag.tag-blunder    { color: #962522; background: #fadcd9; }
+
+#current-move-info { min-height: 70px; font-size: 0.95rem; }
+#current-move-info .badge { font-size: 0.85rem; }
+
+/* ============================================================
+   Tag overlay on the destination square
+   ============================================================ */
+.square-tag-overlay {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* ============================================================
+   Best-move arrow
+   ============================================================ */
+.arrow-layer {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 25;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+@media (max-width: 767px) {
+  .eval-bar { height: 360px; width: 22px; }
+  .moves-list { max-height: 320px; }
+  .square-tag-overlay { width: 20px; height: 20px; font-size: 0.7rem; }
+  .metric-row { grid-template-columns: 70px 1fr 70px; }
+  .metric-box { font-size: 1.15rem; padding: 8px 0; }
+  .stat-move-row { grid-template-columns: 50px 1fr 50px; }
+}

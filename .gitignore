@@ -1,0 +1,38 @@
+# --- Local AI assistant configuration ---
+CLAUDE.md
+.claude/
+
+# --- Python virtual environment ---
+.venv/
+venv/
+env/
+
+# --- Python build / cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- IDE / editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS noise ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Engine binaries and large databases (download locally, don't ship) ---
+engine/stockfish
+engine/stockfish.exe
+engine/stockfish-*
+engine/puzzles.db
+
+# --- Local Flask / runtime artefacts ---
+instance/
+*.log
