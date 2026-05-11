@@ -23,9 +23,9 @@ const TRANSLATIONS = {
     "common.loading":            "Caricamento...",
 
     // ----- dashboard -----
-    "dashboard.brand":           "♟️ Chess Review Locale",
+    "dashboard.brand":           "♟️ Local Chess Review",
     "dashboard.title":           "Cerca giocatore",
-    "dashboard.placeholder":     "es. magnuscarlsen",
+    "dashboard.placeholder":     "es. GothamChess",
     "dashboard.intro":           "Inserisci uno username della piattaforma per scaricare le sue partite.",
     "dashboard.period_notice":   "⚠ Vengono scaricate solo le partite del mese corrente: <strong>dal 1° {month} {year}</strong> a oggi. Le partite dei mesi precedenti non sono incluse.",
     "dashboard.no_recent":       "Nessuna ricerca recente.",
@@ -159,9 +159,9 @@ const TRANSLATIONS = {
     "common.loading":            "Loading...",
 
     // ----- dashboard -----
-    "dashboard.brand":           "♟️ Chess Review Local",
+    "dashboard.brand":           "♟️ Local Chess Review",
     "dashboard.title":           "Search player",
-    "dashboard.placeholder":     "e.g. magnuscarlsen",
+    "dashboard.placeholder":     "e.g. GothamChess",
     "dashboard.intro":           "Enter the username of the chess platform to download their games.",
     "dashboard.period_notice":   "⚠ Only games from the current month are downloaded: <strong>from {month} 1, {year}</strong> until today. Games from previous months are not included.",
     "dashboard.no_recent":       "No recent searches.",

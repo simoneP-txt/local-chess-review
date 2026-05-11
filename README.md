@@ -54,6 +54,29 @@ dashboard.
 
 ---
 
+## Preview
+
+**Dashboard** — search a username, see the current month's games with
+country flag, post-game Elo and cadence:
+
+![Dashboard](docs/media/dashboard.png)
+
+**Mini-puzzle during analysis loading** — a Lichess puzzle keeps you busy
+while Stockfish chews through the game:
+
+![Mini-puzzle](docs/media/puzzle.gif)
+
+**Summary screen** — accuracy %, Performance Elo, Win-Probability chart
+and game phases:
+
+![Game summary](docs/media/summary.png)
+
+**Interactive review** — move tags, eval bar, best-move arrow,
+variation explorer (drag *or* click-to-move):
+
+![Interactive review](docs/media/review.gif)
+
+---
 
 ## Setup (Windows)
 

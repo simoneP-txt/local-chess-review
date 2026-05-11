@@ -27,6 +27,15 @@ body {
 .player-line .flag { font-size: 1.1rem; }
 .player-line .name { font-weight: 600; flex: 1; }
 .player-line .elo  { color: #6c757d; font-size: 0.85rem; }
+.player-line .card-avatar {
+  width: 24px; height: 24px; flex-shrink: 0;
+  border-radius: 50%; object-fit: cover;
+  background: #e0e0e0; display: inline-flex;
+  align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; color: #495057;
+  border: 1px solid #ced4da;
+}
+.player-line .card-avatar-fallback { text-transform: uppercase; }
 .vs-label {
   text-align: center; font-size: 0.75rem; color: #999;
   margin: 2px 0; text-transform: uppercase; letter-spacing: 1px;
@@ -282,6 +291,7 @@ body {
 }
 .puzzle-card h6 { color: #e8e6e3; font-weight: 600; }
 #puzzle-status { font-weight: 600; }
+#puzzle-meta   { color: #c9c5bf; opacity: 0.85; }
 .puzzle-status-ok    { color: #95c771; }
 .puzzle-status-error { color: #e58a3a; }
 .puzzle-status-info  { color: #c9c5bf; }
@@ -322,6 +332,20 @@ body {
   background: #2a2a2a; border-left: 6px solid transparent;
 }
 .player-card .player-color-chip { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; border: 2px solid #888; }
+.player-card .player-avatar {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 50%; overflow: hidden; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #888; background: #3a3a3a;
+}
+.player-card .player-avatar.white-chip { border-color: #f8f9fa; }
+.player-card .player-avatar.black-chip { border-color: #000; background: #222; }
+.player-card .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.player-card .player-avatar .fallback {
+  font-weight: 700; color: #e8e6e3; font-size: 1.05rem;
+  text-transform: uppercase;
+}
+.player-card .player-avatar:not(.no-image) .fallback { display: none; }
 .player-card .player-info { flex: 1; line-height: 1.25; }
 .player-card .player-name { font-size: 1rem; }
 .player-card .player-name .flag { font-size: 1.15rem; margin-right: 4px; }
@@ -331,6 +355,19 @@ body {
 .player-card:has(.black-chip) { border-left-color: #000; background: #1a1a1a; }
 .white-chip { background: #f8f9fa; }
 .black-chip { background: #1c1c1c; }
+.player-card .player-clock {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e8e6e3;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #1f1f1f;
+  min-width: 64px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.player-card .player-clock:empty { display: none; }
 
 /* ============================================================
    Eval bar (vertical)
@@ -415,6 +452,49 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   pointer-events: none;
   z-index: 30;
+}
+
+/* ============================================================
+   Last-move highlight (source + destination squares)
+   Lichess-style yellow tint via inset box-shadow so it doesn't
+   override the square colour nor cover the piece sprite on top.
+   ============================================================ */
+#board .last-move-square {
+  box-shadow: inset 0 0 0 100vmax rgba(255, 213, 0, 0.45);
+}
+
+/* ============================================================
+   Click-to-move selection + legal move markers
+   (applies to both the main board and the puzzle board)
+   ============================================================ */
+#board .selected-square,
+#puzzle-board .selected-square {
+  box-shadow: inset 0 0 0 100vmax rgba(255, 213, 0, 0.55);
+}
+
+#board [data-square].legal-target-square::after,
+#puzzle-board [data-square].legal-target-square::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 28%; height: 28%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(20, 85, 30, 0.45);
+  pointer-events: none;
+  z-index: 20;
+}
+
+#board [data-square].legal-capture-square::after,
+#puzzle-board [data-square].legal-capture-square::after {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  border: 4px solid rgba(20, 85, 30, 0.45);
+  background: transparent;
+  pointer-events: none;
+  z-index: 20;
 }
 
 /* ============================================================

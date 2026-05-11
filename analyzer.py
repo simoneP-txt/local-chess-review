@@ -131,6 +131,7 @@ class MoveAnalysis:
     comment: Optional[dict]   # structured comment {key, params} or None
     pv_uci: list              # PV from the BEFORE position: best move + responses
     pv_after_uci: list        # PV from the AFTER position: punishment/refutation line
+    clock_after: Optional[float] = None  # seconds remaining for the mover, parsed from PGN [%clk]
 
 
 # ============================================================
@@ -278,11 +279,16 @@ def static_exchange_evaluation(board: chess.Board, move: chess.Move) -> int:
 
         recap = chess.Move(atk_sq, target)
         if recap not in b.legal_moves:
+            # The smallest attacker can't legally capture (pinned, or king moving
+            # into an attacked square). Roll back the speculative gain we just
+            # appended so this would-be recapture doesn't count.
             if atk_piece.piece_type == chess.PAWN and chess.square_rank(target) in (0, 7):
                 recap = chess.Move(atk_sq, target, promotion=chess.QUEEN)
                 if recap not in b.legal_moves:
+                    gain.pop()
                     break
             else:
+                gain.pop()
                 break
         try:
             b.push(recap)
@@ -666,7 +672,13 @@ class GameAnalyzer:
             board = game.board()
             ply_index = 0
 
-            for played in game.mainline_moves():
+            # Iterate nodes (not just moves) to read the [%clk ...] PGN annotation
+            # via node.clock() — returns float seconds remaining, or None if absent.
+            for node in game.mainline():
+                played = node.move
+                if played is None:
+                    continue
+                clock_after = node.clock()
                 ply_index += 1
                 color_to_move = board.turn
                 color_str = "white" if color_to_move == chess.WHITE else "black"
@@ -778,6 +790,7 @@ class GameAnalyzer:
                     comment=comment,
                     pv_uci=pv_uci,
                     pv_after_uci=pv_after_uci,
+                    clock_after=round(clock_after, 2) if clock_after is not None else None,
                 )))
         finally:
             engine.quit()
@@ -807,6 +820,7 @@ class GameAnalyzer:
             "move_counts": move_counts,
             "phases": phases,
             "real_elo": {"white": white_elo, "black": black_elo},
+            "time_control": headers.get("TimeControl", ""),
         }
 
     @staticmethod

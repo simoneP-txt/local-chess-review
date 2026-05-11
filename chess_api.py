@@ -43,25 +43,36 @@ def get_current_month_archive_url(username: str) -> str | None:
     return None
 
 
-def get_player_country(username: str) -> str:
+def _get_player_profile(username: str) -> dict[str, str]:
     """
-    Returns the ISO-2 country code of the player (e.g. 'IT', 'US').
-    The profile payload has country as a URL: .../pub/country/IT
+    Returns a dict with 'country' (ISO-2 code) and 'avatar' (URL) for the player.
+    Both fields may be empty strings if absent. Result is cached.
     """
     if not username:
-        return ""
+        return {"country": "", "avatar": ""}
     key = username.lower()
     if key in _profile_cache:
-        return _profile_cache[key].get("country", "")
+        return _profile_cache[key]
     try:
         data = _get(f"{BASE_URL}/{key}")
         country_url = data.get("country", "")
         country_code = country_url.rsplit("/", 1)[-1].upper() if country_url else ""
-        _profile_cache[key] = {"country": country_code}
-        return country_code
+        avatar = data.get("avatar", "") or ""
+        _profile_cache[key] = {"country": country_code, "avatar": avatar}
+        return _profile_cache[key]
     except Exception:
-        _profile_cache[key] = {"country": ""}
-        return ""
+        _profile_cache[key] = {"country": "", "avatar": ""}
+        return _profile_cache[key]
+
+
+def get_player_country(username: str) -> str:
+    """ISO-2 country code of the player (e.g. 'IT', 'US')."""
+    return _get_player_profile(username).get("country", "")
+
+
+def get_player_avatar(username: str) -> str:
+    """Avatar URL of the player (empty string if absent)."""
+    return _get_player_profile(username).get("avatar", "")
 
 
 # -------- extraction helpers --------
@@ -131,6 +142,7 @@ def get_current_month_games(username: str) -> list[dict[str, Any]]:
             "opponent": black_user if user_color == "white" else white_user,
             "result": _user_result(g, username),
             "time_class": g.get("time_class", ""),
+            "time_control": g.get("time_control", ""),
             "white": white_user,
             "black": black_user,
             "user_color": user_color,
@@ -138,6 +150,8 @@ def get_current_month_games(username: str) -> list[dict[str, Any]]:
             "black_rating": black.get("rating", 0),
             "white_country": get_player_country(white_user),
             "black_country": get_player_country(black_user),
+            "white_avatar": get_player_avatar(white_user),
+            "black_avatar": get_player_avatar(black_user),
             "pgn": pgn,
         })
 

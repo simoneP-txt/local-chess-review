@@ -113,6 +113,33 @@ function resultLabel(r) {
 }
 
 /**
+ * Format chess platform time_control string into a human readable cadence.
+ *   "60"        -> "1+0"
+ *   "180+2"     -> "3+2"
+ *   "300+0"     -> "5+0"
+ *   "30"        -> "30s+0"
+ *   "1/86400"   -> "Daily 1d"
+ */
+function formatTimeControl(tc) {
+  if (!tc) return "";
+  if (tc.startsWith("1/")) {
+    const secPerMove = parseInt(tc.slice(2), 10);
+    if (!secPerMove) return "Daily";
+    const days = Math.round(secPerMove / 86400);
+    return days > 0 ? `Daily ${days}d` : "Daily";
+  }
+  const [base, inc] = tc.split("+");
+  const baseSec = parseInt(base, 10) || 0;
+  const incSec = parseInt(inc || "0", 10) || 0;
+  if (baseSec >= 60) {
+    const mins = baseSec / 60;
+    const baseDisplay = Number.isInteger(mins) ? `${mins}` : mins.toFixed(1);
+    return `${baseDisplay}+${incSec}`;
+  }
+  return `${baseSec}s+${incSec}`;
+}
+
+/**
  * Convert an ISO-2 country code (e.g. "IT") into the Unicode flag emoji.
  * Works because 🇮 = U+1F1EE and each capital letter is offset 'A' = U+1F1E6.
  */
@@ -124,12 +151,18 @@ function flagEmoji(iso2) {
   return String.fromCodePoint(...codepoints);
 }
 
-/** Render a small player block: flag + name + (Elo). */
-function playerBlock(name, country, rating) {
+/** Render a small player block: avatar + flag + name + (Elo). */
+function playerBlock(name, country, rating, avatar) {
+  const safeName = name || "?";
+  const initial = safeName.charAt(0).toUpperCase();
+  const avatarHtml = avatar
+    ? `<img class="card-avatar" src="${avatar}" alt="" onerror="this.outerHTML='<span class=\\'card-avatar card-avatar-fallback\\'>${initial}</span>'">`
+    : `<span class="card-avatar card-avatar-fallback">${initial}</span>`;
   return `
     <div class="player-line">
+      ${avatarHtml}
       <span class="flag">${flagEmoji(country)}</span>
-      <span class="name">${name || "?"}</span>
+      <span class="name">${safeName}</span>
       <span class="elo">(${rating || "—"})</span>
     </div>
   `;
@@ -150,12 +183,12 @@ function renderGames(username, games) {
       <div class="card game-card bg-light text-dark h-100" data-id="${g.id}">
         <div class="card-body">
           <div class="game-players mb-2">
-            ${playerBlock(g.white, g.white_country, g.white_rating)}
+            ${playerBlock(g.white, g.white_country, g.white_rating, g.white_avatar)}
             <div class="vs-label">vs</div>
-            ${playerBlock(g.black, g.black_country, g.black_rating)}
+            ${playerBlock(g.black, g.black_country, g.black_rating, g.black_avatar)}
           </div>
           <p class="card-text small mb-1 text-muted">
-            ${g.date || t("game.no_date")} · ${g.time_class || "?"}
+            ${g.date || t("game.no_date")} · ${formatTimeControl(g.time_control) || g.time_class || "?"}
           </p>
           <p class="card-text mb-2">${t("game.result_label")} ${resultLabel(g.result)}</p>
           <button class="btn btn-success btn-sm w-100">${t("game.analyze_btn")}</button>

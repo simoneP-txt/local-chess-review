@@ -182,8 +182,16 @@ function setupPuzzleBoard() {
     pieceTheme: "https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png",
     showNotation: true,
     draggable: true,
+    snapbackSpeed: 0,
+    onDragStart: (source, piece) => {
+      if (!puzzleData || puzzleSolved || !puzzleChess) return false;
+      if (piece[0] !== puzzleChess.turn()) return false;
+      clickSelection.puzzle = null;
+      clearClickSelection("puzzle-board");
+    },
     onDrop: handlePuzzleDrop,
   });
+  installClickToMove("puzzle", "puzzle-board", () => puzzleChess, () => puzzleBoard, handlePuzzleDrop);
 
   document.getElementById("puzzle-meta").textContent = t("puzzle.meta", {
     rating: puzzleData.rating,
@@ -511,10 +519,21 @@ function playerCardHtml(color) {
   const name = color === "white" ? meta.white : meta.black;
   const rating = color === "white" ? meta.white_rating : meta.black_rating;
   const country = color === "white" ? meta.white_country : meta.black_country;
+  const avatar = color === "white" ? meta.white_avatar : meta.black_avatar;
   const chip = color === "white" ? "white-chip" : "black-chip";
   const colorLabel = color === "white" ? t("review.color_white") : t("review.color_black");
+  const initial = (name || "?").charAt(0).toUpperCase();
+  // The avatar replaces the old empty color chip. The chip class is kept on the
+  // avatar div so the existing `:has(.white-chip|.black-chip)` selectors on the
+  // parent card keep working (border-left color + dark background for black).
+  const avatarInner = avatar
+    ? `<img src="${avatar}" alt="" onerror="this.parentElement.classList.add('no-image'); this.remove();"><span class="fallback">${initial}</span>`
+    : `<span class="fallback">${initial}</span>`;
+  const noImageClass = avatar ? "" : "no-image";
   return `
-    <div class="player-color-chip ${chip}"></div>
+    <div class="player-avatar ${chip} ${noImageClass}">
+      ${avatarInner}
+    </div>
     <div class="player-info">
       <div class="player-name">
         <span class="flag">${flagEmoji(country)}</span>
@@ -523,7 +542,56 @@ function playerCardHtml(color) {
       </div>
       <div class="player-color-label">${colorLabel}</div>
     </div>
+    <div class="player-clock" data-clock-color="${color}"></div>
   `;
+}
+
+/* Format remaining clock seconds:
+   - >= 60s : "MM:SS"
+   - <  60s : "SS.cc" (seconds + hundredths) */
+function formatClock(seconds) {
+  if (seconds === null || seconds === undefined) return "";
+  if (seconds < 0) seconds = 0;
+  if (seconds >= 60) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+  return seconds.toFixed(2);
+}
+
+/* Parse base time (seconds) from a chess platform time_control string. */
+function initialClockSeconds(tc) {
+  if (!tc) return null;
+  if (tc.startsWith("1/")) return parseInt(tc.slice(2), 10) || null;  // daily
+  const [base] = tc.split("+");
+  return parseInt(base, 10) || null;
+}
+
+/* Compute the white/black clocks at a given ply by walking the move list. */
+function clocksAtPly(ply) {
+  const tc = (analysis && analysis.time_control) || meta.time_control || "";
+  const initial = initialClockSeconds(tc);
+  let whiteClock = initial;
+  let blackClock = initial;
+  for (let i = 0; i < ply; i++) {
+    const m = analysis.moves[i];
+    if (m.clock_after !== null && m.clock_after !== undefined) {
+      if (m.color === "white") whiteClock = m.clock_after;
+      else blackClock = m.clock_after;
+    }
+  }
+  return { white: whiteClock, black: blackClock };
+}
+
+function updatePlayerClocks() {
+  if (!analysis) return;
+  const clocks = clocksAtPly(currentPly);
+  document.querySelectorAll('[data-clock-color]').forEach((el) => {
+    const c = el.getAttribute("data-clock-color");
+    const s = clocks[c];
+    el.textContent = formatClock(s);
+  });
 }
 
 function setupBoard() {
@@ -535,12 +603,115 @@ function setupBoard() {
     showNotation: true,
     // Drag-and-drop active: serves the "variation explorer" (alternative moves).
     draggable: true,
+    snapbackSpeed: 0,    // no snapback animation: avoids flicker on plain clicks
+    onDragStart: (source, piece) => {
+      // Only allow dragging pieces of the side to move. This also prevents the
+      // click-to-move flow from being broken when the user clicks an enemy piece
+      // as the capture target.
+      if (continuationActive) return false;
+      if (!chess) return false;
+      if (piece[0] !== chess.turn()) return false;
+      // Genuine drag of an own piece: drop any pending click-to-move selection.
+      clickSelection.board = null;
+      clearClickSelection("board");
+    },
     onDrop: handleBoardDrop,
     onSnapEnd: () => board.position(chess.fen(), false),
   });
+  installClickToMove("board", "board", () => chess, () => board, handleBoardDrop);
   window.addEventListener("resize", () => {
     board.resize();
     redrawArrowAndOverlay();
+  });
+}
+
+/* =============================================================
+   CLICK-TO-MOVE (alternative to drag-and-drop)
+   Works on both the main review board and the puzzle board.
+   ============================================================= */
+const clickSelection = { board: null, puzzle: null };
+
+function clearClickSelection(boardId) {
+  document.querySelectorAll(
+    `#${boardId} .selected-square,
+     #${boardId} .legal-target-square,
+     #${boardId} .legal-capture-square`
+  ).forEach((el) => {
+    el.classList.remove("selected-square", "legal-target-square", "legal-capture-square");
+  });
+}
+
+function showLegalMoves(boardId, chessRef, fromSq) {
+  const fromEl = document.querySelector(`#${boardId} [data-square="${fromSq}"]`);
+  if (fromEl) fromEl.classList.add("selected-square");
+  const moves = chessRef.moves({ square: fromSq, verbose: true });
+  for (const m of moves) {
+    const toEl = document.querySelector(`#${boardId} [data-square="${m.to}"]`);
+    if (!toEl) continue;
+    // Captures (incl. en-passant flagged with "e") get the ring style;
+    // quiet moves get the dot style.
+    if (m.captured || (m.flags && m.flags.indexOf("e") !== -1)) {
+      toEl.classList.add("legal-capture-square");
+    } else {
+      toEl.classList.add("legal-target-square");
+    }
+  }
+}
+
+function handleSquareClick(kind, boardId, chessRef, boardRef, dropHandler, square) {
+  if (!chessRef) return;
+  const piece = chessRef.get(square);
+  const currentSel = clickSelection[kind];
+
+  // No previous selection: select if the square holds a piece of the side to move.
+  if (currentSel === null) {
+    if (piece && piece.color === chessRef.turn()) {
+      clickSelection[kind] = square;
+      clearClickSelection(boardId);
+      showLegalMoves(boardId, chessRef, square);
+    }
+    return;
+  }
+
+  // Re-click on selected square -> deselect.
+  if (currentSel === square) {
+    clickSelection[kind] = null;
+    clearClickSelection(boardId);
+    return;
+  }
+
+  // Click on another own piece -> switch selection.
+  if (piece && piece.color === chessRef.turn()) {
+    clickSelection[kind] = square;
+    clearClickSelection(boardId);
+    showLegalMoves(boardId, chessRef, square);
+    return;
+  }
+
+  // Otherwise attempt to play the move via the existing drop handler.
+  const isLegal = chessRef
+    .moves({ square: currentSel, verbose: true })
+    .some((m) => m.to === square);
+  clickSelection[kind] = null;
+  clearClickSelection(boardId);
+  if (isLegal) {
+    dropHandler(currentSel, square);
+    // The drop handler updates internal state but may not sync the board
+    // (e.g. when the puzzle move is the final correct one). Force-sync.
+    const b = boardRef();
+    if (b) b.position(chessRef.fen(), false);
+  }
+}
+
+function installClickToMove(kind, boardId, chessRefFn, boardRefFn, dropHandler) {
+  // chessboard.js consumes the native `click` event during its drag lifecycle,
+  // so we hook into `mousedown` (the same trick used by the official chessboardjs
+  // click-to-move example).
+  const $b = $(`#${boardId}`);
+  $b.off("mousedown.c2m");
+  $b.on("mousedown.c2m", "[data-square]", function () {
+    const sq = this.getAttribute("data-square");
+    handleSquareClick(kind, boardId, chessRefFn(), boardRefFn, dropHandler, sq);
   });
 }
 
@@ -708,6 +879,7 @@ function goToPly(ply) {
   updateCurrentMoveInfo();
   updateCommentary();
   updateEvalBar();
+  updatePlayerClocks();
   setTimeout(redrawArrowAndOverlay, 30);
 }
 
@@ -870,6 +1042,8 @@ function updateEvalBar() {
 /* ---------- overlay tag + best-move arrow ---------- */
 function clearOverlay() {
   document.querySelectorAll(".square-tag-overlay").forEach((n) => n.remove());
+  document.querySelectorAll("#board .last-move-square").forEach((n) =>
+    n.classList.remove("last-move-square"));
   const svg = document.getElementById("arrow-layer");
   svg.querySelectorAll("line, polygon").forEach((n) => n.remove());
 }
@@ -878,9 +1052,17 @@ function redrawArrowAndOverlay() {
   clearOverlay();
   if (currentPly === 0 || continuationActive || variationActive) return;
   const m = analysis.moves[currentPly - 1];
+  highlightLastMove(m.uci.slice(0, 2), m.uci.slice(2, 4));
   drawTagOverlay(m.uci.slice(2, 4), m.classification);
   if (SHOW_ARROW_FOR.has(m.classification) && m.best_move_uci) {
     drawArrow(m.best_move_uci.slice(0, 2), m.best_move_uci.slice(2, 4));
+  }
+}
+
+function highlightLastMove(fromSq, toSq) {
+  for (const sq of [fromSq, toSq]) {
+    const sqEl = document.querySelector(`#board .square-${sq}`);
+    if (sqEl) sqEl.classList.add("last-move-square");
   }
 }
 
