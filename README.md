@@ -88,12 +88,6 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-> **PowerShell 5.1**: the `&&` operator does not exist. Run the commands
-> one by one or chain them with `;` + `if ($?)`.
->
-> If PowerShell blocks venv activation:
-> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
-
 ### 2. Stockfish
 
 1. Download the latest build from
@@ -152,7 +146,7 @@ The console prints the URLs the app is reachable on:
 
 ```text
  * Running on http://127.0.0.1:5000
- * Running on http://192.168.1.X:5000
+ * Running on http://<your-LAN-IP>:5000
 ```
 
 ### From the PC
@@ -162,8 +156,8 @@ Open <http://127.0.0.1:5000>.
 ### From your phone (same Wi-Fi)
 
 1. Find the PC's IP: in PowerShell run `ipconfig` and look for "IPv4
-   Address" of the Wi-Fi adapter (e.g. `192.168.1.42`).
-2. On the phone open the browser and go to `http://192.168.1.42:5000`.
+   Address" of the Wi-Fi adapter (format like `192.168.x.y` or `10.0.x.y`).
+2. On the phone open the browser and go to `http://<your-PC-IP>:5000`.
 3. **Firewall**: the first time, Windows asks whether to allow Python to
    accept incoming connections → choose "Private networks". If the app
    does not respond, create an inbound rule in Windows Defender Firewall
