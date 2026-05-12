@@ -19,6 +19,12 @@ datas = [
 if Path('engine/stockfish.exe').exists():
     datas.append(('engine/stockfish.exe', 'engine'))
 
+# Puzzles DB: prefer the trimmed staging copy produced by build.ps1
+# (build-staging/puzzles.db, ~40 MiB). We never bundle engine/puzzles.db
+# directly because the user's working copy may be hundreds of MiB.
+if Path('build-staging/puzzles.db').exists():
+    datas.append(('build-staging/puzzles.db', 'engine'))
+
 
 a = Analysis(
     ['app.py'],

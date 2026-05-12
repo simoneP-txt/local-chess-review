@@ -81,13 +81,14 @@ variation explorer (drag *or* click-to-move):
 ## Quick start (Windows) — no install required
 
 1. Go to the **[Releases](../../releases)** page of this repository.
-2. Download the latest `ChessReview-windows.zip` (~85 MB).
+2. Download the latest `ChessReview-windows.zip` (~100 MB).
 3. Extract the zip anywhere on your PC.
 4. Double-click **`ChessReview.exe`**.
 
 That's it. A small console window opens with the server logs, and after
 ~1 second your default browser opens automatically on
-<http://127.0.0.1:5000>. No Python install, no `pip`, no command line.
+<http://127.0.0.1:5000>. Everything is bundled — Stockfish and the Lichess
+puzzle DB included. No Python install, no `pip`, no command line.
 
 To close the app, simply close the console window.
 
@@ -111,16 +112,13 @@ while the PC does the analysis:
    create an inbound rule in Windows Defender Firewall that opens TCP
    port 5000.
 
-### Optional: enable the loading-screen puzzles
+### Want more puzzles?
 
-The mini-puzzles shown during analysis loading require a local Lichess
-puzzle DB (~20 MiB). It is not bundled in the zip to keep it small. To
-enable it, you have two options:
-
-- **Easy**: drop your own `puzzles.db` into the `engine\` folder next to
-  `ChessReview.exe`.
-- **From scratch**: see the *Development setup → Lichess puzzles* section
-  below to generate it.
+The zip ships with a curated subset (~40 MiB, ~240k positions across all
+difficulty bands) — more than enough to never see a repeat during normal
+use. If you want to refresh or replace this DB, drop your own
+`puzzles.db` into the `engine\` folder next to `ChessReview.exe`: it
+takes precedence over the bundled one.
 
 ---
 
@@ -222,11 +220,15 @@ Output:
 - `dist\ChessReview\` — the runnable folder (`ChessReview.exe` + bundled
   `_internal\`)
 - `dist\ChessReview-windows.zip` — the archive to attach to a
-  **GitHub Release** (~85 MB; GitHub Releases allow up to 2 GB per file)
+  **GitHub Release** (~100 MB; GitHub Releases allow up to 2 GB per file)
 
-If you want to ship without bundling Stockfish, simply remove
-`engine\stockfish.exe` before building: end users will then need to drop
-their own copy next to the `.exe`.
+Build inputs picked up automatically:
+
+- `engine\stockfish.exe` — bundled if present. Remove it to ship a
+  "bring-your-own-engine" zip.
+- `engine\puzzles.db` — if present, `build.ps1` makes a trimmed copy in
+  `build-staging\puzzles.db` (~40 MiB, `--per-band 10000`) and bundles
+  that. Your working copy of `engine\puzzles.db` is never modified.
 
 ---
 

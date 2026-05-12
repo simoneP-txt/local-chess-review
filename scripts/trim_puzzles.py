@@ -76,8 +76,11 @@ def main():
     parser.add_argument("--per-band", type=int, default=DEFAULT_PER_BAND,
                         help=f"Max puzzles per {BAND_SIZE}-point rating band "
                              f"(default: {DEFAULT_PER_BAND})")
+    parser.add_argument("--db", type=Path, default=DB_PATH,
+                        help=f"Path to the puzzles DB to trim "
+                             f"(default: {DB_PATH})")
     args = parser.parse_args()
-    trim(DB_PATH, args.per_band)
+    trim(args.db, args.per_band)
 
 
 if __name__ == "__main__":

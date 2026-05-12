@@ -39,6 +39,7 @@ instance/
 
 # --- PyInstaller build artefacts ---
 build/
+build-staging/
 dist/
 *.spec.bak
 
