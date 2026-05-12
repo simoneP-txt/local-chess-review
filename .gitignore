@@ -36,3 +36,16 @@ engine/puzzles.db
 # --- Local Flask / runtime artefacts ---
 instance/
 *.log
+
+# --- PyInstaller build artefacts ---
+build/
+dist/
+*.spec.bak
+
+# --- Distribution archives ---
+*.zip
+
+# --- Test / coverage artefacts (future-proof) ---
+.coverage
+htmlcov/
+.pytest_cache/

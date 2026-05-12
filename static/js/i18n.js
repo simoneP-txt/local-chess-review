@@ -65,7 +65,7 @@ const TRANSLATIONS = {
     "puzzle.continue":           "Continua: trova la mossa successiva.",
     "puzzle.solved":             "Puzzle risolto! 🎉 Premi 'Nuovo' per un altro.",
     "puzzle.hint":               "Suggerimento: muovi da {square} ...",
-    "puzzle.db_missing":         "DB puzzle non installato. Esegui: python download_puzzles.py",
+    "puzzle.db_missing":         "DB puzzle non installato. Esegui: python scripts/download_puzzles.py",
     "puzzle.error":              "Errore puzzle: {msg}",
     "puzzle.meta":               "Rating {rating} · {themes}",
 
@@ -201,7 +201,7 @@ const TRANSLATIONS = {
     "puzzle.continue":           "Continue: find the next move.",
     "puzzle.solved":             "Puzzle solved! 🎉 Press 'New' for another.",
     "puzzle.hint":               "Hint: move from {square} ...",
-    "puzzle.db_missing":         "Puzzle DB not installed. Run: python download_puzzles.py",
+    "puzzle.db_missing":         "Puzzle DB not installed. Run: python scripts/download_puzzles.py",
     "puzzle.error":              "Puzzle error: {msg}",
     "puzzle.meta":               "Rating {rating} · {themes}",
 

@@ -78,90 +78,49 @@ variation explorer (drag *or* click-to-move):
 
 ---
 
-## Setup (Windows)
+## Quick start (Windows) — no install required
 
-### 1. Python and dependencies
+1. Go to the **[Releases](../../releases)** page of this repository.
+2. Download the latest `ChessReview-windows.zip` (~85 MB).
+3. Extract the zip anywhere on your PC.
+4. Double-click **`ChessReview.exe`**.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
+That's it. A small console window opens with the server logs, and after
+~1 second your default browser opens automatically on
+<http://127.0.0.1:5000>. No Python install, no `pip`, no command line.
 
-### 2. Stockfish
+To close the app, simply close the console window.
 
-1. Download the latest build from
-   <https://stockfishchess.org/download/> (Windows → `avx2` build; if your
-   CPU does not support it, use `popcnt`).
-2. Extract the zip.
-3. Copy the executable into `engine/`, renaming it to **`stockfish.exe`**:
+> [!NOTE]
+> The first time you run it, Windows SmartScreen may show
+> *"Windows protected your PC"* because the `.exe` is not code-signed.
+> Click **More info → Run anyway**. The app is open-source and runs entirely
+> on your machine — no data leaves your PC. (A signing certificate is paid;
+> without one this warning is unavoidable.)
 
-   ```text
-   engine/stockfish.exe
-   ```
+### Use from your phone (same Wi-Fi)
 
-The app looks for the executable at `engine/stockfish.exe` (Windows) or
-`engine/stockfish` (Linux / macOS). If it is missing, the `/api/analyze`
-endpoint returns an explicit error.
+The app also listens on your LAN, so you can review games from your phone
+while the PC does the analysis:
 
-### 3. (Optional) Lichess puzzle database
+1. On the PC, open PowerShell and run `ipconfig`. Look for "IPv4 Address"
+   of the Wi-Fi adapter (e.g. `192.168.1.42`).
+2. On the phone, open the browser and go to `http://192.168.1.42:5000`.
+3. **Firewall**: the first time, Windows asks whether to allow incoming
+   connections → choose "Private networks". If the app does not respond,
+   create an inbound rule in Windows Defender Firewall that opens TCP
+   port 5000.
 
-The loading screen shows a Lichess mini-puzzle while Stockfish is
-analyzing. To enable it, download the puzzle DB once:
+### Optional: enable the loading-screen puzzles
 
-```powershell
-python download_puzzles.py
-```
+The mini-puzzles shown during analysis loading require a local Lichess
+puzzle DB (~20 MiB). It is not bundled in the zip to keep it small. To
+enable it, you have two options:
 
-The script downloads ~250 MB compressed from `database.lichess.org`,
-filters in streaming, and produces `engine/puzzles.db` (~20 MiB with the
-default caps). Without the DB the rest of the app still works — only the
-mini-puzzles are not shown.
-
-To shrink an existing DB without re-downloading:
-
-```powershell
-python trim_puzzles.py --per-band 5000
-```
-
-### 4. (Optional) Analysis depth
-
-Default = 15 (fast). For higher precision (slower):
-
-```powershell
-$env:REVIEW_DEPTH = "18"
-python app.py
-```
-
----
-
-## Run
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python app.py
-```
-
-The console prints the URLs the app is reachable on:
-
-```text
- * Running on http://127.0.0.1:5000
- * Running on http://<your-LAN-IP>:5000
-```
-
-### From the PC
-
-Open <http://127.0.0.1:5000>.
-
-### From your phone (same Wi-Fi)
-
-1. Find the PC's IP: in PowerShell run `ipconfig` and look for "IPv4
-   Address" of the Wi-Fi adapter (format like `192.168.x.y` or `10.0.x.y`).
-2. On the phone open the browser and go to `http://<your-PC-IP>:5000`.
-3. **Firewall**: the first time, Windows asks whether to allow Python to
-   accept incoming connections → choose "Private networks". If the app
-   does not respond, create an inbound rule in Windows Defender Firewall
-   that opens TCP port 5000.
+- **Easy**: drop your own `puzzles.db` into the `engine\` folder next to
+  `ChessReview.exe`.
+- **From scratch**: see the *Development setup → Lichess puzzles* section
+  below to generate it.
 
 ---
 
@@ -186,6 +145,91 @@ Open <http://127.0.0.1:5000>.
 
 ---
 
+## Development setup
+
+This section is **only** for hacking on the code. End users should follow
+the *Quick start* above.
+
+### 1. Python and dependencies
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 2. Stockfish
+
+1. Download the latest build from
+   <https://stockfishchess.org/download/> (Windows → `avx2` build; if your
+   CPU does not support it, use `popcnt`).
+2. Extract the zip.
+3. Copy the executable into `engine/`, renaming it to **`stockfish.exe`**:
+
+   ```text
+   engine/stockfish.exe
+   ```
+
+The app looks for the executable at `engine/stockfish.exe` (Windows) or
+`engine/stockfish` (Linux / macOS).
+
+### 3. (Optional) Lichess puzzle database
+
+Generates `engine/puzzles.db` (~20 MiB), used by the mini-puzzles in the
+loading screen:
+
+```powershell
+python scripts\download_puzzles.py
+```
+
+Downloads ~250 MB compressed from `database.lichess.org`, filters in
+streaming. Without the DB the rest of the app still works.
+
+To shrink an existing DB without re-downloading:
+
+```powershell
+python scripts\trim_puzzles.py --per-band 5000
+```
+
+### 4. Run the dev server
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python app.py
+```
+
+The console prints the URLs the app is reachable on. Open
+<http://127.0.0.1:5000>.
+
+For higher precision (slower):
+
+```powershell
+$env:REVIEW_DEPTH = "18"
+python app.py
+```
+
+### 5. Build the standalone `.exe`
+
+To produce the `ChessReview.exe` distributed via Releases:
+
+```powershell
+pip install -r requirements-dev.txt   # one-time: adds pyinstaller
+.\build.ps1 -Clean -Zip
+```
+
+Output:
+
+- `dist\ChessReview\` — the runnable folder (`ChessReview.exe` + bundled
+  `_internal\`)
+- `dist\ChessReview-windows.zip` — the archive to attach to a
+  **GitHub Release** (~85 MB; GitHub Releases allow up to 2 GB per file)
+
+If you want to ship without bundling Stockfish, simply remove
+`engine\stockfish.exe` before building: end users will then need to drop
+their own copy next to the `.exe`.
+
+---
+
 ## Tech stack
 
 - **Backend**: Python 3, [Flask](https://flask.palletsprojects.com/),
@@ -203,23 +247,28 @@ Open <http://127.0.0.1:5000>.
 
 ```text
 local-chess-review/
-├── app.py                # Flask server + API endpoints
-├── chess_api.py          # public API wrapper (game download)
-├── analyzer.py           # engine + move classification algorithm
-├── download_puzzles.py   # one-shot script: downloads + filters Lichess puzzles
-├── trim_puzzles.py       # one-shot script: trims an existing puzzles.db
-├── requirements.txt
+├── app.py                  # Flask server + API endpoints
+├── chess_api.py            # public API wrapper (game download)
+├── analyzer.py             # engine + move classification algorithm
+├── requirements.txt        # runtime dependencies
+├── requirements-dev.txt    # extra deps to build the standalone .exe
+├── chessreview.spec        # PyInstaller build config
+├── build.ps1               # builds dist\ChessReview\ChessReview.exe
+├── start.ps1               # quick launcher for dev mode
+├── scripts/
+│   ├── download_puzzles.py # one-shot: downloads + filters Lichess puzzles
+│   └── trim_puzzles.py     # one-shot: trims an existing puzzles.db
 ├── engine/
-│   ├── README.txt        # how to download Stockfish
-│   ├── stockfish.exe     # (DOWNLOAD MANUALLY)
-│   └── puzzles.db        # (CREATED BY download_puzzles.py)
+│   ├── README.txt          # how to download Stockfish
+│   ├── stockfish.exe       # (DOWNLOAD MANUALLY)
+│   └── puzzles.db          # (CREATED BY scripts\download_puzzles.py)
 ├── templates/
-│   ├── index.html        # dashboard: search + games list
-│   └── review.html       # interactive review page
+│   ├── index.html          # dashboard: search + games list
+│   └── review.html         # interactive review page
 └── static/
     ├── css/style.css
     └── js/
-        ├── i18n.js       # IT/EN dictionaries + t() helper
+        ├── i18n.js         # IT/EN dictionaries + t() helper
         ├── index.js
         └── review.js
 ```
@@ -249,4 +298,4 @@ local-chess-review/
   5000 for private networks; PC and phone must be on the same Wi-Fi.
 - **Analysis too slow** → lower `REVIEW_DEPTH` (e.g. 12) or pick a
   shorter game.
-- **"Puzzle DB not installed"** → run `python download_puzzles.py` once.
+- **"Puzzle DB not installed"** → run `python scripts\download_puzzles.py` once.

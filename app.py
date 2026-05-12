@@ -25,7 +25,9 @@ from __future__ import annotations
 import os
 import random
 import sqlite3
+import sys
 import threading
+import webbrowser
 from pathlib import Path
 from typing import Optional
 
@@ -36,12 +38,20 @@ from flask import Flask, jsonify, render_template, request
 from analyzer import GameAnalyzer, score_to_cp, score_to_wp
 from chess_api import get_current_month_games
 
-BASE_DIR = Path(__file__).parent
+# When packaged with PyInstaller, bundled resources live in sys._MEIPASS.
+# In dev, BASE_DIR is the source folder. USER_DATA_DIR is the folder next
+# to the .exe (or the source folder in dev), so the user can drop their own
+# engine/puzzles.db there without rebuilding the .exe.
+_FROZEN = getattr(sys, "frozen", False)
+BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).parent))
+USER_DATA_DIR = Path(sys.executable).parent if _FROZEN else Path(__file__).parent
 
-# Look for the Stockfish executable in two standard locations.
+# Look for the Stockfish executable: bundled location first, then next to the .exe.
 ENGINE_CANDIDATES = [
     BASE_DIR / "engine" / "stockfish.exe",
     BASE_DIR / "engine" / "stockfish",
+    USER_DATA_DIR / "engine" / "stockfish.exe",
+    USER_DATA_DIR / "engine" / "stockfish",
 ]
 ENGINE_PATH = next((str(p) for p in ENGINE_CANDIDATES if p.exists()), None)
 
@@ -52,9 +62,22 @@ ANALYSIS_DEPTH = int(os.environ.get("REVIEW_DEPTH", "15"))
 # latency low when the user explores alternative moves.
 EVAL_DEPTH = int(os.environ.get("EVAL_DEPTH", "12"))
 
-PUZZLE_DB_PATH = BASE_DIR / "engine" / "puzzles.db"
+# Puzzles DB: prefer the one next to the .exe (user-installable post-install)
+# over the bundled one (which normally isn't shipped due to size).
+_PUZZLE_DB_CANDIDATES = [
+    USER_DATA_DIR / "engine" / "puzzles.db",
+    BASE_DIR / "engine" / "puzzles.db",
+]
+PUZZLE_DB_PATH = next(
+    (p for p in _PUZZLE_DB_CANDIDATES if p.exists()),
+    USER_DATA_DIR / "engine" / "puzzles.db",
+)
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=str(BASE_DIR / "templates"),
+    static_folder=str(BASE_DIR / "static"),
+)
 
 # In-memory cache: { username_lower: [games...] }
 _games_cache: dict[str, list[dict]] = {}
@@ -208,7 +231,7 @@ def api_puzzle():
     """
     if not PUZZLE_DB_PATH.exists():
         return jsonify({
-            "error": "Puzzle DB not found. Run: python download_puzzles.py",
+            "error": "Puzzle DB not found. Run: python scripts/download_puzzles.py",
             "missing_db": True,
         }), 503
 
@@ -267,9 +290,19 @@ def _shutdown_engine(exception=None):
     pass
 
 
+def _open_browser_when_ready(url: str = "http://127.0.0.1:5000", delay: float = 1.2) -> None:
+    """Open the default browser after a short delay so Flask has time to bind."""
+    threading.Timer(delay, lambda: webbrowser.open(url)).start()
+
+
 if __name__ == "__main__":
     # host 0.0.0.0 -> reachable from other devices on the LAN (phone).
     # debug=False to avoid the double-process startup (incompatible with engine cache).
+    if _FROZEN:
+        # Packaged .exe: auto-open the browser so the user doesn't have to type a URL.
+        _open_browser_when_ready()
+        print("Chess Review is running. The browser will open shortly.")
+        print("LAN URL: http://<your-pc-ip>:5000  (open this on your phone)")
     try:
         app.run(host="0.0.0.0", port=5000, debug=False)
     finally:

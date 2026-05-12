@@ -8,9 +8,9 @@ existing ones. This guarantees variety across all difficulties without
 having to re-download the Lichess CSV.
 
 Usage:
-  python trim_puzzles.py                       # default: 5000 per band
-  python trim_puzzles.py --per-band 3000       # more aggressive (~14 MiB)
-  python trim_puzzles.py --per-band 10000      # richer (~40 MiB)
+  python scripts/trim_puzzles.py                       # default: 5000 per band
+  python scripts/trim_puzzles.py --per-band 3000       # more aggressive (~14 MiB)
+  python scripts/trim_puzzles.py --per-band 10000      # richer (~40 MiB)
 
 The script works "in place" on the existing DB. If you want to keep the
 original, make a copy before running.
@@ -22,8 +22,9 @@ import argparse
 import sqlite3
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent
-DB_PATH = BASE_DIR / "engine" / "puzzles.db"
+# This script lives in scripts/, so the project root is one level up.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DB_PATH = PROJECT_ROOT / "engine" / "puzzles.db"
 
 MIN_RATING_BAND = 400
 MAX_RATING_BAND = 2800
@@ -33,7 +34,7 @@ DEFAULT_PER_BAND = 5000
 
 def trim(db_path: Path, per_band: int) -> None:
     if not db_path.exists():
-        raise SystemExit(f"DB not found: {db_path}. Run download_puzzles.py first.")
+        raise SystemExit(f"DB not found: {db_path}. Run scripts/download_puzzles.py first.")
 
     size_before = db_path.stat().st_size / 2**20
     conn = sqlite3.connect(db_path)

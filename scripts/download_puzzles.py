@@ -19,9 +19,9 @@ Destination SQLite schema (engine/puzzles.db):
   )
   Secondary index on rating to allow fast SELECTs by difficulty band.
 
-Usage:
-  python download_puzzles.py            # download + filter
-  python download_puzzles.py --keep-csv # also keeps the decompressed CSV
+Usage (run from the project root):
+  python scripts/download_puzzles.py            # download + filter
+  python scripts/download_puzzles.py --keep-csv # also keeps the decompressed CSV
 
 Works from Windows PowerShell. Estimated time: 5-15 min depending on connection.
 """
@@ -41,9 +41,10 @@ import zstandard as zstd
 
 LICHESS_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
 
-BASE_DIR = Path(__file__).parent
-DB_PATH = BASE_DIR / "engine" / "puzzles.db"
-CSV_PATH = BASE_DIR / "engine" / "lichess_puzzles.csv"
+# This script lives in scripts/, so the project root is one level up.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DB_PATH = PROJECT_ROOT / "engine" / "puzzles.db"
+CSV_PATH = PROJECT_ROOT / "engine" / "lichess_puzzles.csv"
 
 # Quality filters: we want "good" puzzles (played many times and validated).
 MIN_RATING = 400
