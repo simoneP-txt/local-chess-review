@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Token</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Symbols+2&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: {{minH}}; box-sizing: border-box; padding: 64px; background: {{t.bg}}; color: {{t.text}}; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; display: flex; flex-direction: column; gap: 64px">
+
+  <header style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
+    <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Fase 1 · Token</span>
+    <h1 style="margin: 0; padding-bottom: 8px; border-bottom: 4px solid #E8A33D; font-family: 'Fraunces', Georgia, serif; font-size: 48px; font-weight: 500; line-height: 1.1; color: {{t.title}}">{{t.label}}</h1>
+    <p style="margin: 0; max-width: 880px; font-size: 18px; line-height: 1.5; color: {{t.text2}}">Valori unici per desktop e telefono: cambiano solo le misure indicate come desktop / telefono. I token corretti rispetto al brief portano la nota «Corretto».</p>
+  </header>
+
+  <section aria-label="Colori" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Colori</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px">
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="8">
+        <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 20px">
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: {{t.title}}">{{g.title}}</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px">
+            <sc-for list="{{g.items}}" as="s" hint-placeholder-count="4">
+              <div style="display: flex; align-items: flex-start; gap: 14px; min-width: 0">
+                <span aria-hidden="true" style="flex: 0 0 56px; width: 56px; height: 56px; box-sizing: border-box; border-radius: 12px; background: {{s.hex}}; border: 1.5px solid {{t.line}}"></span>
+                <div style="min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 16px; font-weight: 600; line-height: 1.3">{{s.name}}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: {{t.text2}}; overflow-wrap: anywhere">{{s.hex}}</span>
+                  <sc-if value="{{s.hasNote}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.35; color: {{t.text2}}">{{s.note}}</span></sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section aria-label="Tipografia" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Tipografia</h2>
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}">
+      <div style="display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; gap: 0 32px; align-items: end; padding-bottom: 12px; border-bottom: 1.5px solid {{t.cardBorder}}">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Ruolo</span>
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Desktop</span>
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Telefono</span>
+      </div>
+      <sc-for list="{{type}}" as="r" hint-placeholder-count="18">
+        <div style="display: grid; grid-template-columns: 300px minmax(0, 1fr) 380px; gap: 0 32px; align-items: center; padding: 12px 0; border-bottom: 1px solid {{t.hair}}">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 16px; font-weight: 600">{{r.role}}</span>
+            <span style="font-size: 14px; color: {{t.text2}}">{{r.spec}}</span>
+          </div>
+          <div style="min-width: 0; display: flex; align-items: baseline; gap: 12px">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: {{t.text2}}; flex: 0 0 40px">{{r.dLabel}}</span>
+            <span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: {{r.fam}}; font-weight: {{r.w}}; font-size: {{r.d}}; letter-spacing: {{r.ls}}; text-transform: {{r.tt}}; line-height: 1.15; color: {{r.color}}">{{r.sample}}</span>
+          </div>
+          <div style="min-width: 0; display: flex; align-items: baseline; gap: 12px">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: {{t.text2}}; flex: 0 0 40px">{{r.mLabel}}</span>
+            <span style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: {{r.fam}}; font-weight: {{r.w}}; font-size: {{r.m}}; letter-spacing: {{r.ls}}; text-transform: {{r.tt}}; line-height: 1.15; color: {{r.color}}">{{r.sample}}</span>
+          </div>
+        </div>
+      </sc-for>
+      <p style="margin: 16px 0 0; font-size: 16px; line-height: 1.5; color: {{t.text2}}">Fraunces per i titoli, Instrument Sans per il testo, IBM Plex Mono per numeri e mosse, Noto Sans Symbols 2 come riserva per le figurine (sempre seguite da U+FE0E). Nessun testo sotto i 14 px, tranne le coordinate della scacchiera.</p>
+    </div>
+  </section>
+
+  <section aria-label="Spaziature, griglia, raggi e bordi" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Spaziature, griglia, raggi e bordi</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start">
+      <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 16px">
+        <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: {{t.title}}">Spaziature</h3>
+        <p style="margin: 0; font-size: 16px; color: {{t.text2}}">Griglia da 8 px con mezzo passo da 4 px. Barre a grandezza reale.</p>
+        <sc-for list="{{spaces}}" as="sp" hint-placeholder-count="11">
+          <div style="display: flex; align-items: center; gap: 16px; height: 32px">
+            <span style="flex: 0 0 64px; font-family: 'IBM Plex Mono', monospace; font-size: 16px">{{sp.label}}</span>
+            <span aria-hidden="true" style="height: 24px; width: {{sp.w}}; border-radius: 4px; background: {{t.spaceBar}}"></span>
+          </div>
+        </sc-for>
+        <dl style="margin: 8px 0 0; padding-top: 16px; border-top: 1.5px solid {{t.cardBorder}}; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; font-size: 16px">
+          <dt>Margini pagina</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">64 / 20</dd>
+          <dt>Padding card</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">32 / 20</dd>
+          <dt>Gap tra card</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">32 / 20</dd>
+          <dt>Target interattivi · campi</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">48 · 56</dd>
+        </dl>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 32px">
+        <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 16px">
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: {{t.title}}">Griglia desktop</h3>
+          <p style="margin: 0; font-size: 16px; color: {{t.text2}}">12 colonne da 80, gap 32, larghezza 1312 (1440 meno 2 × 64). In scala.</p>
+          <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 2.439%; row-gap: 8px">
+            <sc-for list="{{cols}}" as="c" hint-placeholder-count="12"><span style="height: 32px; border-radius: 4px; background: {{t.s2}}; border: 1.5px solid {{t.ctrlBorder}}; box-sizing: border-box"></span></sc-for>
+            <span style="grid-column: span 8; height: 32px; border-radius: 4px; background: {{t.spaceBar}}"></span>
+            <span style="grid-column: span 4; height: 32px; border-radius: 4px; background: {{t.spaceBar}}"></span>
+            <span style="grid-column: span 6; height: 32px; border-radius: 4px; background: {{t.spaceBar}}"></span>
+            <span style="grid-column: span 6; height: 32px; border-radius: 4px; background: {{t.spaceBar}}"></span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 16px"><span>8/12 = <span style="font-family: 'IBM Plex Mono', monospace">864</span></span><span>4/12 = <span style="font-family: 'IBM Plex Mono', monospace">416</span></span><span>6/12 = <span style="font-family: 'IBM Plex Mono', monospace">640</span></span></div>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 16px">
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: {{t.title}}">Raggi</h3>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+            <sc-for list="{{radii}}" as="ra" hint-placeholder-count="4">
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <span aria-hidden="true" style="height: 64px; box-sizing: border-box; border-radius: {{ra.r}}; background: {{t.s2}}; border: 1.5px solid {{t.ctrlBorder}}"></span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px">{{ra.label}}</span>
+                <span style="font-size: 14px; color: {{t.text2}}">{{ra.use}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 16px">
+      <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: {{t.title}}">Bordi</h3>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 48px">
+        <sc-for list="{{borders}}" as="b" hint-placeholder-count="8">
+          <div style="display: flex; align-items: center; gap: 20px; min-height: 56px">
+            <span aria-hidden="true" style="flex: 0 0 96px; height: 48px; box-sizing: border-box; border-radius: {{b.r}}; background: {{b.bg}}; border: {{b.border}}; box-shadow: {{b.shadow}}; outline: {{b.outline}}; outline-offset: 2px"></span>
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 16px; font-weight: 600">{{b.name}}</span>
+              <span style="font-size: 16px; color: {{t.text2}}">{{b.value}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 16px; color: {{t.text2}}">{{t.shadowNote}}</p>
+    </div>
+  </section>
+
+  <section aria-label="Stati" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Stati</h2>
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: grid; grid-template-columns: 200px repeat(5, minmax(0, 1fr)); gap: 16px; align-items: center">
+        <span></span>
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Normale</span>
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Hover</span>
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Pressed</span>
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Disabilitato</span>
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Focus</span>
+      </div>
+      <sc-for list="{{states}}" as="st" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: 200px repeat(5, minmax(0, 1fr)); gap: 16px; align-items: center">
+          <span style="font-size: 16px; font-weight: 600">{{st.name}}</span>
+          <sc-for list="{{st.cells}}" as="c" hint-placeholder-count="5">
+            <button type="button" disabled="{{c.dis}}" style="height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; background: {{c.bg}}; color: {{c.fg}}; border: {{c.border}}; outline: {{c.outline}}; outline-offset: 2px; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: default">{{c.label}}</button>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div style="display: grid; grid-template-columns: 200px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr); gap: 16px; align-items: center; padding-top: 16px; border-top: 1.5px solid {{t.cardBorder}}">
+        <span style="font-size: 16px; font-weight: 600">Selezionato</span>
+        <div style="height: 48px; box-sizing: border-box; padding: 0 16px 0 20px; border-radius: 12px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; box-shadow: inset 4px 0 0 #E8A33D; display: flex; align-items: center; gap: 12px">
+          <span style="font: 500 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">16.</span>
+          <span style="font: 500 18px/1 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{qb8}}</span>
+          <span style="margin-left: auto; font-size: 16px">Riga mossa</span>
+        </div>
+        <span style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 999px; background: #E8A33D; border: {{t.amberBorder}}; color: #14262B; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600">Tutte · 6</span>
+        <span style="font-size: 16px; line-height: 1.45; color: {{t.text2}}">{{t.selNote}}</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Contrasto" style="display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Rapporti di contrasto · {{t.key}}</h2>
+      <p style="margin: 0; max-width: 960px; font-size: 16px; line-height: 1.5; color: {{t.text2}}">Calcolati con la luminanza relativa WCAG 2. Soglie: 4,5:1 per il testo, 3:1 per bordi, icone e grafici. I bordi sono misurati contro la superficie che li circonda. {{t.tableNote}}</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start">
+      <sc-for list="{{tableCols}}" as="col" hint-placeholder-count="2">
+        <div style="box-sizing: border-box; padding: 16px 24px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}">
+          <sc-for list="{{col.rows}}" as="r" hint-placeholder-count="20">
+            <div>
+              <sc-if value="{{r.isHead}}" hint-placeholder-val="{{ false }}">
+                <div style="padding: 16px 0 8px; font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">{{r.head}}</div>
+              </sc-if>
+              <sc-if value="{{r.isRow}}" hint-placeholder-val="{{ true }}">
+                <div title="{{r.hex}}" style="display: grid; grid-template-columns: 48px minmax(0, 1fr) 72px 104px; gap: 12px; align-items: center; min-height: 40px; padding: 4px 0; border-top: 1px solid {{t.hair}}">
+                  <span aria-hidden="true" style="width: 48px; height: 32px; box-sizing: border-box; border-radius: 8px; background: {{r.bg}}; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center">
+                    <sc-if value="{{r.isText}}" hint-placeholder-val="{{ true }}"><span style="font: 700 16px/1 'Instrument Sans', sans-serif; color: {{r.fg}}">Aa</span></sc-if>
+                    <sc-if value="{{r.isUi}}" hint-placeholder-val="{{ false }}"><span style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 3px solid {{r.fg}}"></span></sc-if>
+                  </span>
+                  <span style="min-width: 0; font-size: 15px; line-height: 1.3">{{r.name}}<sc-if value="{{r.hasNote}}" hint-placeholder-val="{{ false }}"><span style="display: block; font-size: 14px; color: {{t.text2}}">{{r.note}}</span></sc-if></span>
+                  <span style="font: 600 16px/1 'IBM Plex Mono', monospace; text-align: right">{{r.ratio}}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600">
+                    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="{{r.icon}}"></path></svg>{{r.status}}
+                  </span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":null,"default":"Chiaro"},"$preview":{"width":1440,"height":7200}}'>
+// Token sheet for the "carta e inchiostro" style. T2 mounts this file with theme="Scuro".
+var FE = '︎';
+var THEMES = {
+  Chiaro: {
+    key: 'tema chiaro', label: 'Token · tema chiaro', minH: '7200px',
+    bg: '#E9E1CE', card: '#FBF8F0', s2: '#F1EAD8', input: '#FFFFFF', text: '#14262B', text2: '#44585C', title: '#0F4C57',
+    petrol: '#0F4C57', petrolH: '#155C68', petrolP: '#0A3A43', onPetrol: '#FBF8F0',
+    cardBorder: '#8B7C5C', ctrlBorder: '#708183', petrolBtnBorder: '#0F4C57', petrolOutline: '#0F4C57', petrolOutlineText: '#0F4C57',
+    line: '#14262B', hair: '#E3DAC4', disFill: '#E3DAC4', disText: '#526164', disBorder: '#8B7C5C',
+    sel: '#F7DCA6', selBorder: '#14262B', amberBorder: '1.5px solid #14262B', shadow: '0 1px 0 rgba(20,38,43,.08)',
+    ghostH: '#F1EAD8', ghostP: '#E6DCC4', spaceBar: '#0F4C57',
+    shadowNote: "Ombra unica: 0 1px 0 rgba(20,38,43,.08). La separazione dallo sfondo la fanno bordi e toni.",
+    selNote: 'Selezione: fondo #F7DCA6, bordo 1,5 inchiostro, barra sinistra 4 px ambra. Ogni riempimento ambra su fondo chiaro ha bordo 1,5 inchiostro.',
+    tableNote: 'Scacchiera, eval bar e grafico usano gli stessi colori nei due temi: le loro righe stanno qui.'
+  },
+  Scuro: {
+    key: 'tema scuro', label: 'Token · tema scuro', minH: '6300px',
+    bg: '#0B1E22', card: '#143339', s2: '#1B434B', input: '#1B434B', text: '#F2EDE0', text2: '#B7C4C3', title: '#F2EDE0',
+    petrol: '#0F4C57', petrolH: '#155C68', petrolP: '#0A3A43', onPetrol: '#F2EDE0',
+    cardBorder: '#3C707B', ctrlBorder: '#5D8791', petrolBtnBorder: '#5D8791', petrolOutline: '#5D8791', petrolOutlineText: '#F2EDE0',
+    line: '#F2EDE0', hair: '#1F454D', disFill: '#143339', disText: '#8FA4A5', disBorder: '#3C707B',
+    sel: 'rgba(232,163,61,.18)', selBorder: '#E8A33D', amberBorder: '1.5px solid #E8A33D', shadow: 'none',
+    ghostH: '#1B434B', ghostP: '#24525B', spaceBar: '#5D8791',
+    shadowNote: 'Nessuna ombra. Ogni contorno inchiostro del tema chiaro diventa crema #F2EDE0.',
+    selNote: 'Selezione: ambra al 18% (#3A473A su card), bordo 1,5 ambra, barra sinistra 4 px ambra. In scuro i riempimenti ambra non hanno bordo.',
+    tableNote: 'Le righe di scacchiera, eval bar e grafico sono nel foglio del tema chiaro (T1): qui restano solo i casi che cambiano.'
+  }
+};
+
+function sw(name, hex, note) { return { name: name, hex: hex, note: note || '', hasNote: !!note }; }
+var TAGS = [
+  ['Brillante', '#26C6DA', 'glifo inchiostro'], ['Ottima', '#5B95E6', 'glifo inchiostro'],
+  ['Migliore', '#5FA83B', 'glifo inchiostro'], ['Eccellente', '#8BC56A', 'glifo inchiostro'],
+  ['Buona', '#A8B5AE', 'glifo inchiostro'], ['Teoria', '#C39A6B', 'glifo inchiostro'],
+  ['Imprecisione', '#F4D23C', 'glifo inchiostro'], ['Errore', '#E8662A', 'glifo inchiostro'],
+  ['Occasione mancata', '#D66A9A', 'glifo inchiostro'], ['Svista', '#D23B30', 'glifo bianco']
+];
+var BOARD_SW = [
+  sw('Casa chiara', '#DCE8E6'), sw('Casa scura', '#4A8590'),
+  sw('Casa di arrivo', '#E8A33D', 'opaca, uguale su case chiare e scure'), sw('Casa di partenza', '#F1C06E'),
+  sw('Pezzo bianco', '#FFFBF0'), sw('Pezzo nero', '#1B2B30'),
+  sw('Contorno pezzi', '#14262B', '2 px desktop, 1,5 px telefono'), sw('Filo interno pezzo nero', '#DCE8E6', '1 px'),
+  sw('Freccia migliore', '#5FA83B', '14 / 10 px'), sw('Alone freccia', '#FBF8F0', '2 px, poi contorno inchiostro 1,5')
+];
+
+function groups(dark) {
+  var tagNote = dark ? ', anello crema' : ', anello inchiostro';
+  var tags = TAGS.map(function (x) { return sw(x[0], x[1], x[2] + tagNote); });
+  if (!dark) {
+    return [
+      { title: 'Superfici', items: [sw('Sfondo', '#E9E1CE'), sw('Card', '#FBF8F0'), sw('Superficie-2', '#F1EAD8', 'chip e box dentro le card'), sw('Input', '#FFFFFF')] },
+      { title: 'Bordi', items: [sw('Bordo card', '#8B7C5C', 'Corretto: era #A89A7B (2,13:1 sullo sfondo)'), sw('Bordo input e pulsanti secondari', '#708183', 'Corretto: era #7A8B8D (2,73:1 sullo sfondo)'), sw('Contorno inchiostro', '#14262B', 'ambra, selezione, tracce, scacchiera, focus'), sw('Ombra', 'rgba(20,38,43,.08)', '0 1px 0, unica ombra ammessa')] },
+      { title: 'Testo', items: [sw('Inchiostro', '#14262B'), sw('Secondario', '#44585C'), sw('Titoli', '#0F4C57', 'petrolio'), sw('Testo su petrolio', '#FBF8F0'), sw('Secondario su petrolio', '#B9CFCF', 'valore già in uso nei frame')] },
+      { title: 'Petrolio e ambra', items: [sw('Petrolio', '#0F4C57', 'header, pannelli, titoli'), sw('Ambra', '#E8A33D'), sw('Petrolio hover', '#155C68', 'derivato, non nel brief'), sw('Ambra hover', '#F0B04F'), sw('Petrolio pressed', '#0A3A43', 'derivato, non nel brief'), sw('Ambra pressed', '#CF8C26')] },
+      { title: 'Stati', items: [sw('Selezione', '#F7DCA6', '+ bordo inchiostro, barra 4 px ambra'), sw('Traccia barre', '#E6DCC4', '+ bordo inchiostro 1,5'), sw('Disabilitato · fondo', '#E3DAC4'), sw('Disabilitato · testo', '#526164', 'Corretto: era #5E7073 (3,73:1)'), sw('Disabilitato · bordo', '#8B7C5C', 'Corretto: allineato al bordo card'), sw('Outline hover · pressed', '#F1EAD8', 'pressed #E6DCC4, derivati')] },
+      { title: 'Eval bar e grafico', items: [sw('Parte Bianco', '#FFFFFF', 'bordo inchiostro 2 px'), sw('Parte Nero', '#14262B'), sw('Linea 50%', '#E8A33D', 'tratteggio 3 px su contorno inchiostro 1 px')] },
+      { title: 'Scacchiera · uguale nei due temi', items: BOARD_SW },
+      { title: 'Tag mossa', items: tags }
+    ];
+  }
+  return [
+    { title: 'Superfici', items: [sw('Sfondo', '#0B1E22'), sw('Card', '#143339'), sw('Superficie-2', '#1B434B', 'chip, input e box: sempre più chiara della card'), sw('Input', '#1B434B')] },
+    { title: 'Bordi', items: [sw('Bordo card', '#3C707B', 'Corretto: era #34616B (2,51:1 sullo sfondo)'), sw('Bordo input e pulsanti secondari', '#5D8791'), sw('Bordo pannelli petrolio', '#5D8791'), sw('Contorno crema', '#F2EDE0', 'sostituisce ogni contorno inchiostro')] },
+    { title: 'Testo', items: [sw('Testo', '#F2EDE0'), sw('Secondario', '#B7C4C3'), sw('Titoli', '#F2EDE0', 'crema'), sw('Testo su petrolio', '#F2EDE0'), sw('Ambra come testo', '#E8A33D', 'ammessa solo in scuro')] },
+    { title: 'Petrolio e ambra', items: [sw('Petrolio', '#0F4C57', 'con bordo #5D8791 sui pannelli'), sw('Ambra', '#E8A33D'), sw('Petrolio hover', '#155C68', 'derivato, non nel brief'), sw('Ambra hover', '#F0B04F'), sw('Petrolio pressed', '#0A3A43', 'derivato, non nel brief'), sw('Ambra pressed', '#CF8C26')] },
+    { title: 'Stati', items: [sw('Selezione', 'rgba(232,163,61,.18)', '= #3A473A su card, + bordo ambra'), sw('Traccia barre', '#1B434B', 'non definita nel brief: superficie-2, senza bordo'), sw('Disabilitato · fondo', '#143339'), sw('Disabilitato · testo', '#8FA4A5'), sw('Disabilitato · bordo', '#3C707B', 'Corretto: allineato al bordo card'), sw('Outline hover · pressed', '#1B434B', 'pressed #24525B, derivati')] },
+    { title: 'Eval bar e grafico', items: [sw('Parte Bianco', '#FFFFFF'), sw('Parte Nero', '#0B1E22', 'bordo crema 2 px'), sw('Linea 50%', '#E8A33D', 'contorno inchiostro sull’area Bianco')] },
+    { title: 'Scacchiera · uguale nei due temi', items: BOARD_SW.concat([]) },
+    { title: 'Tag mossa', items: tags }
+  ];
+}
+
+var SERIF = "'Fraunces', 'Noto Sans Symbols 2', Georgia, serif";
+var SANS = "'Instrument Sans', 'Noto Sans Symbols 2', sans-serif";
+var MONO = "'IBM Plex Mono', 'Noto Sans Symbols 2', monospace";
+function ty(role, spec, fam, w, d, m, sample, opts) {
+  opts = opts || {};
+  return { role: role, spec: spec, fam: fam, w: String(w), d: d + 'px', m: m + 'px', dLabel: String(d), mLabel: String(m),
+           sample: sample, ls: opts.ls || 'normal', tt: opts.tt || 'none', title: !!opts.title };
+}
+var TYPE = [
+  ty('Titolo pagina', 'Fraunces 500', SERIF, 500, 48, 32, "Partita dell'Opera", { title: true }),
+  ty('Titolo card', 'Fraunces 600', SERIF, 600, 28, 24, 'Mosse per categoria', { title: true }),
+  ty('Titolo feedback', 'Fraunces 500', SERIF, 500, 28, 22, '16. ♛' + FE + 'b8+ è brillante', { title: true }),
+  ty('Titolo puzzle', 'Fraunces 500', SERIF, 500, 32, 24, 'Il Bianco dà matto in 2', { title: true }),
+  ty('Numeri grandi', 'IBM Plex Mono 600', MONO, 600, 72, 48, '98,4'),
+  ty('Numeri hero', 'IBM Plex Mono 600', MONO, 600, 56, 40, '83,8'),
+  ty('Percentuale Caricamento', 'IBM Plex Mono 600', MONO, 600, 96, 72, '64%'),
+  ty('Elo performance', 'IBM Plex Mono 600', MONO, 600, 32, 16, '2804'),
+  ty('Corpo', 'Instrument Sans 400', SANS, 400, 18, 17, 'Sacrificio di donna, poi matto in d8.'),
+  ty('Secondari', 'Instrument Sans 400', SANS, 400, 16, 16, 'Parigi, 1858 · Difesa Philidor'),
+  ty('Etichette maiuscole', 'Instrument Sans 600 · 0,08em', SANS, 600, 14, 14, 'Momenti chiave', { ls: '0.08em', tt: 'uppercase' }),
+  ty('Nome giocatore', 'Instrument Sans 600', SANS, 600, 20, 18, 'Paul Morphy'),
+  ty('Precisione barra giocatore', 'IBM Plex Mono 600', MONO, 600, 28, 22, '98,4'),
+  ty('Mossa in lista e momenti', 'IBM Plex Mono 500', MONO, 500, 20, 18, '16. ♛' + FE + 'b8+'),
+  ty('Titolo riga partita', 'Fraunces 600', SERIF, 600, 20, 20, 'Partita Immortale', { title: true }),
+  ty('Valore eval', 'IBM Plex Mono 600', MONO, 600, 16, 14, '+6,2'),
+  ty('Meta, assi, didascalie', 'Instrument Sans 400', SANS, 400, 14, 14, 'C41 Difesa Philidor · 17 mosse'),
+  ty('Coordinate scacchiera', 'IBM Plex Mono 600 · eccezione', MONO, 600, 12, 12, 'a b c d e f g h')
+];
+
+var CONTRAST = [[0,0,"Inchiostro su sfondo","#14262B","#E9E1CE",4.5,"","ok"],[0,0,"Inchiostro su card","#14262B","#FBF8F0",4.5,"","ok"],[0,0,"Inchiostro su superficie-2","#14262B","#F1EAD8",4.5,"","ok"],[0,0,"Inchiostro su input","#14262B","#FFFFFF",4.5,"","ok"],[0,0,"Secondario su sfondo","#44585C","#E9E1CE",4.5,"","ok"],[0,0,"Secondario su card","#44585C","#FBF8F0",4.5,"","ok"],[0,0,"Secondario su superficie-2","#44585C","#F1EAD8",4.5,"","ok"],[0,0,"Secondario su input (placeholder)","#44585C","#FFFFFF",4.5,"","ok"],[0,0,"Titoli petrolio su sfondo","#0F4C57","#E9E1CE",4.5,"","ok"],[0,0,"Titoli petrolio su card","#0F4C57","#FBF8F0",4.5,"","ok"],[0,0,"Testo su petrolio","#FBF8F0","#0F4C57",4.5,"","ok"],[0,0,"Secondario su petrolio","#B9CFCF","#0F4C57",4.5,"","ok"],[0,0,"Testo su petrolio hover","#FBF8F0","#155C68",4.5,"stato derivato","ok"],[0,0,"Testo su petrolio pressed","#FBF8F0","#0A3A43",4.5,"stato derivato","ok"],[0,0,"Inchiostro su ambra","#14262B","#E8A33D",4.5,"","ok"],[0,0,"Inchiostro su ambra hover","#14262B","#F0B04F",4.5,"","ok"],[0,0,"Inchiostro su ambra pressed","#14262B","#CF8C26",4.5,"","ok"],[0,0,"Secondario su ambra","#44585C","#E8A33D",4.5,"vietato: su ambra solo inchiostro","nu"],[0,0,"Inchiostro su selezione","#14262B","#F7DCA6",4.5,"","ok"],[0,0,"Inchiostro su outline pressed","#14262B","#E6DCC4",4.5,"stato derivato","ok"],[0,0,"Testo disabilitato","#526164","#E3DAC4",4.5,"corretto da #5E7073 (3,73)","ok"],[0,0,"Valore eval su parte Bianco","#14262B","#FFFFFF",4.5,"","ok"],[0,0,"Valore eval su parte Nero","#FFFFFF","#14262B",4.5,"","ok"],[0,0,"Coordinate su casa chiara (12px)","#14262B","#DCE8E6",4.5,"","ok"],[0,0,"Coordinate su casa scura (12px)","#FFFFFF","#4A8590",4.5,"eccezione del brief: massimo ottenibile","exc"],[0,0,"Coordinate su casa evidenziata","#14262B","#E8A33D",4.5,"","ok"],[0,1,"Bordo card su sfondo","#8B7C5C","#E9E1CE",3,"corretto da #A89A7B (2,13)","ok"],[0,1,"Bordo card su card (lato interno)","#8B7C5C","#FBF8F0",3,"","ok"],[0,1,"Bordo input e secondari su sfondo","#708183","#E9E1CE",3,"corretto da #7A8B8D (2,73)","ok"],[0,1,"Bordo input e secondari su card","#708183","#FBF8F0",3,"","ok"],[0,1,"Bordo chip su card","#708183","#FBF8F0",3,"","ok"],[0,1,"Bordo disabilitato su sfondo","#8B7C5C","#E9E1CE",3,"allineato al bordo card","ok"],[0,1,"Contorno inchiostro (ambra, selezione, tracce) su sfondo","#14262B","#E9E1CE",3,"","ok"],[0,1,"Contorno inchiostro su card","#14262B","#FBF8F0",3,"","ok"],[0,1,"Focus ring inchiostro su sfondo","#14262B","#E9E1CE",3,"","ok"],[0,1,"Focus ring crema su petrolio","#FBF8F0","#0F4C57",3,"inchiostro su petrolio = 1,63","ok"],[0,1,"Pulsante petrolio su card","#0F4C57","#FBF8F0",3,"","ok"],[0,1,"Ambra (pillola nav, logo) su petrolio","#E8A33D","#0F4C57",3,"","ok"],[0,1,"Fill ambra su traccia (con divisore inchiostro)","#14262B","#E6DCC4",3,"ambra/traccia = 1,46","ok"],[0,1,"Anello tag inchiostro su card","#14262B","#FBF8F0",3,"","ok"],[0,1,"Anello tag crema su petrolio","#FBF8F0","#0F4C57",3,"inchiostro su petrolio = 1,63","ok"],[0,1,"Pallino Nero su card","#14262B","#FBF8F0",3,"","ok"],[0,1,"Bordo pallino Bianco su card","#14262B","#FBF8F0",3,"","ok"],[0,1,"Contorno pezzo su casa chiara","#14262B","#DCE8E6",3,"","ok"],[0,1,"Contorno pezzo su casa scura","#14262B","#4A8590",3,"","ok"],[0,1,"Contorno pezzo su casa di arrivo","#14262B","#E8A33D",3,"","ok"],[0,1,"Contorno pezzo su casa di partenza","#14262B","#F1C06E",3,"","ok"],[0,1,"Pezzo nero su casa scura","#1B2B30","#4A8590",3,"","ok"],[0,1,"Pezzo nero su casa di arrivo","#1B2B30","#E8A33D",3,"","ok"],[0,1,"Filo interno chiaro su pezzo nero","#DCE8E6","#1B2B30",3,"","ok"],[0,1,"Contorno freccia su casa scura","#14262B","#4A8590",3,"","ok"],[0,1,"Contorno freccia su casa di arrivo","#14262B","#E8A33D",3,"","ok"],[0,1,"Anello badge su casa di arrivo","#14262B","#E8A33D",3,"","ok"],[0,1,"Bordo scacchiera su card","#14262B","#FBF8F0",3,"","ok"],[0,1,"Eval bar: Bianco contro Nero","#FFFFFF","#14262B",3,"","ok"],[0,1,"Bordo eval bar e plot su card","#14262B","#FBF8F0",3,"","ok"],[0,1,"Grafico: area Bianco contro area Nero","#FFFFFF","#14262B",3,"","ok"],[0,1,"Linea 50%: ambra su area Nero","#E8A33D","#14262B",3,"","ok"],[0,1,"Linea 50%: contorno inchiostro su area Bianco","#14262B","#FFFFFF",3,"","ok"],[0,1,"Anello marker su area Bianco","#14262B","#FFFFFF",3,"","ok"],[0,1,"Glifo tag Brillante","#14262B","#26C6DA",3,"inchiostro","ok"],[0,1,"Glifo tag Ottima","#14262B","#5B95E6",3,"inchiostro","ok"],[0,1,"Glifo tag Migliore","#14262B","#5FA83B",3,"inchiostro","ok"],[0,1,"Glifo tag Eccellente","#14262B","#8BC56A",3,"inchiostro","ok"],[0,1,"Glifo tag Buona","#14262B","#A8B5AE",3,"inchiostro","ok"],[0,1,"Glifo tag Teoria","#14262B","#C39A6B",3,"inchiostro","ok"],[0,1,"Glifo tag Imprecisione","#14262B","#F4D23C",3,"inchiostro","ok"],[0,1,"Glifo tag Errore","#14262B","#E8662A",3,"inchiostro","ok"],[0,1,"Glifo tag Occasione mancata","#14262B","#D66A9A",3,"inchiostro","ok"],[0,1,"Glifo tag Svista","#FFFFFF","#D23B30",3,"bianco","ok"],[1,0,"Testo su sfondo","#F2EDE0","#0B1E22",4.5,"","ok"],[1,0,"Testo su card","#F2EDE0","#143339",4.5,"","ok"],[1,0,"Testo su superficie-2","#F2EDE0","#1B434B",4.5,"","ok"],[1,0,"Testo su petrolio","#F2EDE0","#0F4C57",4.5,"","ok"],[1,0,"Secondario su sfondo","#B7C4C3","#0B1E22",4.5,"","ok"],[1,0,"Secondario su card","#B7C4C3","#143339",4.5,"","ok"],[1,0,"Secondario su superficie-2","#B7C4C3","#1B434B",4.5,"","ok"],[1,0,"Secondario su petrolio","#B7C4C3","#0F4C57",4.5,"","ok"],[1,0,"Ambra come testo su sfondo","#E8A33D","#0B1E22",4.5,"","ok"],[1,0,"Ambra come testo su card","#E8A33D","#143339",4.5,"","ok"],[1,0,"Inchiostro su ambra","#14262B","#E8A33D",4.5,"","ok"],[1,0,"Testo su selezione","#F2EDE0","#3A473A",4.5,"ambra 18% su card = #3A473A","ok"],[1,0,"Testo su outline pressed","#F2EDE0","#24525B",4.5,"stato derivato","ok"],[1,0,"Testo disabilitato","#8FA4A5","#143339",4.5,"","ok"],[1,0,"Valore eval su parte Nero","#F2EDE0","#0B1E22",4.5,"","ok"],[1,0,"Valore eval su parte Bianco","#14262B","#FFFFFF",4.5,"","ok"],[1,1,"Bordo card su sfondo","#3C707B","#0B1E22",3,"corretto da #34616B (2,51)","ok"],[1,1,"Bordo input e secondari su card","#5D8791","#143339",3,"","ok"],[1,1,"Bordo input e secondari su sfondo","#5D8791","#0B1E22",3,"","ok"],[1,1,"Bordo pannelli petrolio su sfondo","#5D8791","#0B1E22",3,"","ok"],[1,1,"Bordo pulsante petrolio su card","#5D8791","#143339",3,"","ok"],[1,1,"Bordo disabilitato su sfondo","#3C707B","#0B1E22",3,"allineato al bordo card","ok"],[1,1,"Contorni crema (scacchiera, eval, plot) su card","#F2EDE0","#143339",3,"","ok"],[1,1,"Focus ring crema su sfondo","#F2EDE0","#0B1E22",3,"","ok"],[1,1,"Focus ring crema su petrolio","#F2EDE0","#0F4C57",3,"","ok"],[1,1,"Bordo selezione ambra su card","#E8A33D","#143339",3,"","ok"],[1,1,"Ambra pieno su sfondo","#E8A33D","#0B1E22",3,"","ok"],[1,1,"Ambra pieno su card","#E8A33D","#143339",3,"","ok"],[1,1,"Fill ambra su traccia superficie-2","#E8A33D","#1B434B",3,"","ok"],[1,1,"Anello tag crema su card","#F2EDE0","#143339",3,"","ok"],[1,1,"Anello pallino Nero crema su card","#F2EDE0","#143339",3,"","ok"],[1,1,"Area Nero #0B1E22: bordo crema","#F2EDE0","#0B1E22",3,"","ok"],[1,1,"Anello marker su area Bianco","#14262B","#FFFFFF",3,"superficie fissa: resta inchiostro","ok"],[1,1,"Anello badge su casa di arrivo","#14262B","#E8A33D",3,"superficie fissa: resta inchiostro","ok"],[1,1,"Anello tag crema su casa di arrivo","#F2EDE0","#E8A33D",3,"fallirebbe: per questo resta inchiostro","nu"]];
+
+var ICON_OK = 'M3.5 8.4l3 3 6-6.8';
+var ICON_EXC = 'M8 3v6M8 12.5v.5';
+var ICON_NU = 'M4.5 4.5l7 7M11.5 4.5l-7 7';
+
+// WCAG 2 relative luminance and contrast ratio.
+function lum(hex) {
+  var c = [1, 3, 5].map(function (i) { return parseInt(hex.slice(i, i + 2), 16) / 255; });
+  c = c.map(function (x) { return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function ratio(a, b) {
+  var x = lum(a), y = lum(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+
+function contrastCols(themeIdx) {
+  var list = [];
+  var lastKind = -1;
+  CONTRAST.forEach(function (r) {
+    if (r[0] !== themeIdx) return;
+    if (r[1] !== lastKind) {
+      lastKind = r[1];
+      list.push({ isHead: true, isRow: false, head: r[1] === 0 ? 'Testo · soglia 4,5:1' : 'Bordi UI, icone e grafici · soglia 3:1' });
+    }
+    var v = ratio(r[3], r[4]);
+    var st = r[7];
+    list.push({
+      isHead: false, isRow: true, head: '', name: r[2], note: r[6], hasNote: !!r[6],
+      fg: r[3], bg: r[4], hex: r[3] + ' su ' + r[4], isText: r[1] === 0, isUi: r[1] === 1,
+      ratio: v.toFixed(2).replace('.', ',') + ':1',
+      status: st === 'ok' ? 'Passa' : (st === 'exc' ? 'Eccezione' : 'Non usato'),
+      icon: st === 'ok' ? ICON_OK : (st === 'exc' ? ICON_EXC : ICON_NU)
+    });
+  });
+  var half = Math.ceil(list.length / 2);
+  // Never start the right column with a lone header.
+  if (list[half - 1] && list[half - 1].isHead) half -= 1;
+  return [{ rows: list.slice(0, half) }, { rows: list.slice(half) }];
+}
+
+function stateRows(t) {
+  var dis = { bg: t.disFill, fg: t.disText, border: '1.5px solid ' + t.disBorder, outline: 'none', dis: true, label: 'Azione' };
+  function row(name, base, hover, pressed) {
+    function cell(over) {
+      var c = { bg: base.bg, fg: base.fg, border: base.border, outline: 'none', dis: false, label: 'Azione' };
+      for (var k in over) c[k] = over[k];
+      return c;
+    }
+    return { name: name, cells: [cell({}), cell({ bg: hover }), cell({ bg: pressed }), dis, cell({ outline: '3px solid ' + t.line })] };
+  }
+  return [
+    row('Ambra pieno', { bg: '#E8A33D', fg: '#14262B', border: t.amberBorder }, '#F0B04F', '#CF8C26'),
+    row('Petrolio pieno', { bg: t.petrol, fg: t.onPetrol, border: '1.5px solid ' + t.petrolBtnBorder }, t.petrolH, t.petrolP),
+    row('Outline', { bg: 'transparent', fg: t.text, border: '1.5px solid ' + t.ctrlBorder }, t.ghostH, t.ghostP),
+    row('Outline petrolio', { bg: 'transparent', fg: t.petrolOutlineText, border: '1.5px solid ' + t.petrolOutline }, t.ghostH, t.ghostP)
+  ];
+}
+
+function borderRows(t) {
+  return [
+    { name: 'Card', value: '1,5 px · ' + t.cardBorder + ' · raggio 16', r: '16px', bg: t.card, border: '1.5px solid ' + t.cardBorder, shadow: 'none', outline: 'none' },
+    { name: 'Input e pulsanti secondari', value: '1,5 px · ' + t.ctrlBorder + ' · raggio 12', r: '12px', bg: t.input, border: '1.5px solid ' + t.ctrlBorder, shadow: 'none', outline: 'none' },
+    { name: 'Scacchiera', value: '2 px · ' + t.line, r: '0px', bg: '#DCE8E6', border: '2px solid ' + t.line, shadow: 'none', outline: 'none' },
+    { name: 'Eval bar e plot del grafico', value: '2 px · ' + t.line + ' · raggio 8', r: '8px', bg: '#FFFFFF', border: '2px solid ' + t.line, shadow: 'none', outline: 'none' },
+    { name: 'Selezione', value: '1,5 px ' + t.selBorder + ' + barra 4 px ambra', r: '12px', bg: t.sel, border: '1.5px solid ' + t.selBorder, shadow: 'inset 4px 0 0 #E8A33D', outline: 'none' },
+    { name: 'Riempimenti ambra', value: t.key === 'tema chiaro' ? '1,5 px inchiostro su fondo chiaro' : 'nessun bordo in scuro', r: '12px', bg: '#E8A33D', border: t.amberBorder, shadow: 'none', outline: 'none' },
+    { name: 'Focus ring', value: '3 px ' + t.line + ', stacco 2 px, mai ambra', r: '12px', bg: t.card, border: '1.5px solid ' + t.ctrlBorder, shadow: 'none', outline: '3px solid ' + t.line },
+    { name: 'Anello tag e pezzi', value: 'tag 1,5 px · pezzi 2 / 1,5 px inchiostro', r: '999px', bg: '#26C6DA', border: '1.5px solid ' + t.line, shadow: 'none', outline: 'none' }
+  ];
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    var dark = this.props.theme === 'Scuro';
+    var t = dark ? THEMES.Scuro : THEMES.Chiaro;
+    var type = TYPE.map(function (r) {
+      var o = {};
+      for (var k in r) o[k] = r[k];
+      o.color = r.title ? t.title : t.text;
+      return o;
+    });
+    return {
+      t: t, minH: t.minH, groups: groups(dark), type: type,
+      spaces: [4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64].map(function (v) { return { label: v + ' px', w: v + 'px' }; }),
+      cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(function (i) { return { i: i }; }),
+      radii: [
+        { r: '16px', label: '16', use: 'card' },
+        { r: '12px', label: '12', use: 'pulsanti, input, righe' },
+        { r: '8px', label: '8', use: 'plot, eval bar' },
+        { r: '999px', label: 'pill', use: 'chip pieni' }
+      ],
+      borders: borderRows(t), states: stateRows(t),
+      qb8: '♛' + FE + 'b8+',
+      tableCols: contrastCols(dark ? 1 : 0)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -211,7 +211,7 @@ python app.py
 To produce the `ChessReview.exe` distributed via Releases:
 
 ```powershell
-pip install -r requirements-dev.txt   # one-time: adds pyinstaller
+pip install -r requirements-dev.txt   # one-time: adds pyinstaller and pytest
 .\build.ps1 -Clean -Zip
 ```
 
@@ -229,6 +229,61 @@ Build inputs picked up automatically:
 - `engine\puzzles.db` — if present, `build.ps1` makes a trimmed copy in
   `build-staging\puzzles.db` (~40 MiB, `--per-band 10000`) and bundles
   that. Your working copy of `engine\puzzles.db` is never modified.
+
+---
+
+## Tests and baseline
+
+Install the dev dependencies once, then run the tests from the project root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest
+```
+
+`scripts/baseline.py` measures the analyzer before any change to it. Run it
+from the project root with `.\.venv\Scripts\python.exe scripts\baseline.py <command>`:
+
+- `fetch <username> <id>...` — downloads the PGNs of the given games from the
+  public API into `tests/fixtures/`. Use it to add games.
+- `fixtures [id...]` — runs Stockfish on the fixture games (depth 15, one
+  thread), records every engine answer to `<id>.engine.json` and writes the
+  analyzer output to `<id>.analysis.json`. Use it to build or refresh fixtures.
+  Slow: it needs the real engine.
+- `replay [id...]` — reruns the analyzer on the recorded engine answers (no
+  Stockfish needed), prints every move whose class changed and every game
+  whose accuracy changed, and overwrites `<id>.analysis.json`. Use it after
+  editing `analyzer.py`.
+- `timing --power rete|batteria --label <label>` — analyzes all fixtures twice
+  with the real engine (2 threads) and writes seconds per ply, engine share and
+  run-to-run noise to `docs/measurements/<date>-tempi-<label>.md`. Run it only
+  with the PC idle and on AC power; it takes about an hour.
+
+`timing` never overwrites a measurement: if the file exists it stops and asks
+for another label (e.g. `fase1`). The report goes to `docs/measurements/`,
+which is not tracked.
+
+### Layout of `tests/`
+
+- `engine_replay.py` — records Stockfish answers and replays them in place of
+  the engine, so tests need no `stockfish.exe`.
+- `test_analyzer.py`, `test_engine_replay.py`, `test_baseline.py` — unit tests,
+  always run.
+- `test_fixtures.py` — checks the stored fixtures; skipped when `tests/fixtures/`
+  is missing.
+- `fixtures/` — local only (git-ignored). Per game: `<id>.pgn` (public API),
+  `<id>.engine.json` (every recorded Stockfish answer), `<id>.analysis.json`
+  (analyzer output).
+
+On a fresh clone the folder is missing, so the test above is skipped.
+You can rebuild the fixtures with `fetch` and `fixtures`, but they match the
+stored baseline only with the `analyzer.py` it was recorded with.
+
+### `docs/measurements/`
+
+One Markdown file per measurement, named `<date>-<topic>-<label>.md`. The
+header lists the date, the hardware and the Stockfish version it was taken
+with.
 
 ---
 
@@ -253,13 +308,21 @@ local-chess-review/
 ├── chess_api.py            # public API wrapper (game download)
 ├── analyzer.py             # engine + move classification algorithm
 ├── requirements.txt        # runtime dependencies
-├── requirements-dev.txt    # extra deps to build the standalone .exe
+├── requirements-dev.txt    # extra deps: pyinstaller (build the .exe) and pytest
 ├── chessreview.spec        # PyInstaller build config
 ├── build.ps1               # builds dist\ChessReview\ChessReview.exe
 ├── start.ps1               # quick launcher for dev mode
 ├── scripts/
 │   ├── download_puzzles.py # one-shot: downloads + filters Lichess puzzles
-│   └── trim_puzzles.py     # one-shot: trims an existing puzzles.db
+│   ├── trim_puzzles.py     # one-shot: trims an existing puzzles.db
+│   └── baseline.py         # baseline: fetch, fixtures, replay, timing
+├── tests/
+│   ├── engine_replay.py    # record/replay layer for Stockfish answers
+│   ├── test_analyzer.py
+│   ├── test_engine_replay.py
+│   ├── test_baseline.py
+│   ├── test_fixtures.py    # skipped without fixtures/
+│   └── fixtures/           # LOCAL ONLY: PGNs, recorded engine answers, analyses
 ├── engine/
 │   ├── README.txt          # how to download Stockfish
 │   ├── stockfish.exe       # (DOWNLOAD MANUALLY)

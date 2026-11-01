@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Riepilogo su telefono, menu aperto</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Symbols+2&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; min-height: 1460px; background: #E9E1CE; color: #14262B; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif">
+
+  <header style="position: sticky; top: 0; z-index: 10; height: 56px; box-sizing: border-box; padding: 0 4px; display: flex; align-items: center; gap: 4px; background: #0F4C57; color: #FBF8F0">
+    <a href="PhoneDashboard.dc.html" aria-label="Torna alle partite" style="flex: 0 0 48px; width: 48px; height: 48px; border-radius: 12px; color: #FBF8F0; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <span style="flex: 1 1 auto; font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600">Riepilogo</span>
+    <div style="position: relative; flex: 0 0 48px">
+      <button type="button" onClick="{{toggleMenu}}" aria-label="Altre azioni" aria-haspopup="menu" aria-expanded="{{menuExpanded}}" aria-controls="m3-menu" style="width: 48px; height: 48px; border-radius: 12px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></button>
+      <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+        <div id="m3-menu" role="menu" aria-label="Altre azioni" style="position: absolute; top: 52px; right: 0; z-index: 20; width: 220px; box-sizing: border-box; padding: 4px; border-radius: 12px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08)">
+          <button type="button" role="menuitem" onClick="{{toggleMenu}}" style="width: 100%; height: 48px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 0; background: transparent; color: #14262B; display: flex; align-items: center; gap: 12px; font: 600 16px/1 'Instrument Sans', sans-serif; text-align: left; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M12 4v11M7 10l5 5 5-5M5 19h14"></path></svg>Esporta PGN</button>
+        </div>
+      </sc-if>
+    </div>
+  </header>
+
+  <main style="box-sizing: border-box; padding: 20px 20px 104px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px">
+      <h1 style="margin: 0; padding-bottom: 8px; border-bottom: 4px solid #E8A33D; font-family: 'Fraunces', Georgia, serif; font-size: 32px; font-weight: 500; line-height: 1.15; color: #0F4C57">Partita dell'Opera</h1>
+      <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #44585C">Parigi 1858 · Difesa Philidor · <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: #14262B">1-0</span></p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+      <sc-for list="{{players}}" as="p" hint-placeholder-count="2">
+        <section aria-label="{{p.full}}" style="min-width: 0; box-sizing: border-box; padding: 20px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08); display: flex; flex-direction: column">
+          <div style="display: flex; align-items: center; gap: 8px; min-width: 0">
+            <span aria-hidden="true" style="flex: 0 0 14px; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: {{p.dot}}; border: 1.5px solid #14262B"></span>
+            <h2 title="{{p.full}}" style="margin: 0; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 16px; font-weight: 600; line-height: 1.35">{{p.name}}</h2>
+          </div>
+          <span style="margin-top: 12px; font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #44585C">Precisione</span>
+          <span style="margin-top: 4px; font: 600 48px/1 'IBM Plex Mono', monospace; letter-spacing: -0.03em">{{p.acc}}</span>
+          <div aria-hidden="true" style="margin-top: 12px; height: 8px; box-sizing: border-box; border-radius: 999px; background: #E6DCC4; border: 1.5px solid #14262B; overflow: hidden; display: flex">
+            <span style="flex: {{p.v}} 1 0px; background: #E8A33D; border-right: 1.5px solid #14262B"></span>
+            <span style="flex: {{p.rest}} 1 0px"></span>
+          </div>
+          <span style="margin-top: 12px; font-size: 16px; line-height: 1.35; white-space: nowrap">Elo perf. <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">{{p.elo}}</span></span>
+        </section>
+      </sc-for>
+    </div>
+
+    <section aria-label="Probabilità di vittoria" style="box-sizing: border-box; padding: 20px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08); display: flex; flex-direction: column">
+      <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; line-height: 1.2; color: #0F4C57">Probabilità di vittoria</h2>
+      <span style="margin-top: 4px; font-size: 14px; line-height: 1.4; color: #44585C">Chiaro = Bianco · scuro = Nero</span>
+      <div style="position: relative; margin-top: 12px; width: 307px; height: 200px; box-sizing: border-box; border: 2px solid #14262B; border-radius: 8px; overflow: hidden">
+        <svg viewBox="0 0 330 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"><rect x="0" y="0" width="330" height="100" style="fill: #14262B"></rect><path d="{{graph.area}}" style="fill: #FFFFFF"></path></svg>
+        <svg viewBox="0 0 303 196" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%">
+          <line x1="0" y1="98" x2="303" y2="98" style="stroke: #14262B; stroke-width: 5; stroke-dasharray: 10 7"></line>
+          <line x1="0" y1="98" x2="303" y2="98" style="stroke: #E8A33D; stroke-width: 3; stroke-dasharray: 10 7"></line>
+          <sc-for list="{{graph.marks}}" as="m" hint-placeholder-count="4">
+            <line x1="{{m.x1}}" y1="{{m.y1}}" x2="{{m.x2}}" y2="{{m.y2}}" style="stroke: #14262B; stroke-width: 2"></line>
+          </sc-for>
+        </svg>
+        <sc-for list="{{graph.marks}}" as="m" hint-placeholder-count="4">
+          <a href="PhoneReview.dc.html" aria-label="{{m.aria}}" style="position: absolute; left: {{m.hx}}; top: {{m.hy}}; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; text-decoration: none">
+            <span aria-hidden="true" style="width: 32px; height: 32px; box-sizing: border-box; border-radius: 50%; background: {{m.tag.c}}; color: {{m.tag.fg}}; border: 1.5px solid #14262B; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">{{m.tag.txt}}</span>
+          </a>
+        </sc-for>
+      </div>
+      <div style="position: relative; margin-top: 8px; width: 307px; height: 18px; font: 500 14px/18px 'IBM Plex Mono', monospace; color: #44585C">
+        <sc-for list="{{graph.ticks}}" as="k" hint-placeholder-count="5"><span style="position: absolute; left: {{k.left}}; transform: {{k.tf}}">{{k.label}}</span></sc-for>
+      </div>
+      <dl style="margin: 12px 0 0; border-radius: 8px; border: 1.5px solid #708183; background: #F1EAD8; overflow: hidden">
+        <sc-for list="{{bands}}" as="b" hint-placeholder-count="2">
+          <div style="box-sizing: border-box; padding: 8px 12px; border-top: {{b.bt}}; display: flex; flex-direction: column; gap: 4px">
+            <dt style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #44585C">{{b.name}}</span><span style="font-size: 14px; color: #44585C">{{b.range}}</span></dt>
+            <dd style="margin: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 16px; line-height: 1.35">
+              <span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid #14262B"></span><span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Morphy: </span>{{b.white}}</span></span>
+              <span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #14262B; border: 1.5px solid #14262B"></span><span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Duca e Conte: </span>{{b.black}}</span></span>
+            </dd>
+          </div>
+        </sc-for>
+      </dl>
+    </section>
+
+    <section aria-label="Momenti chiave" style="box-sizing: border-box; padding: 20px; border-radius: 16px; background: #0F4C57; border: 1.5px solid #0F4C57; color: #FBF8F0; display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 500; line-height: 1.2">Momenti chiave</h2>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px">
+        <sc-for list="{{moments}}" as="k" hint-placeholder-count="3">
+          <li>
+            <a href="PhoneReview.dc.html" style="min-height: 48px; box-sizing: border-box; padding: 12px; margin: 0 -12px; border-radius: 12px; color: #FBF8F0; text-decoration: none; display: flex; align-items: flex-start; gap: 12px">
+              <span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{k.tag.c}}; color: {{k.tag.fg}}; border: 1.5px solid #FBF8F0; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">{{k.tag.txt}}</span>
+              <span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+                <span style="display: flex; align-items: baseline; gap: 10px"><span style="font: 600 18px/1.2 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{k.move}}</span><span style="font-size: 14px; color: #B9CFCF">{{k.tag.label}}</span></span>
+                <span style="font-size: 17px; line-height: 1.45">{{k.text}}</span>
+              </span>
+            </a>
+          </li>
+        </sc-for>
+      </ul>
+    </section>
+
+    <details style="box-sizing: border-box; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08)">
+      <summary style="list-style: none; height: 56px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: #0F4C57">Mosse per categoria<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="flex: 0 0 20px; fill: none; stroke: #14262B; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg></summary>
+      <table style="width: 100%; box-sizing: border-box; border-collapse: collapse; margin: 0 0 12px">
+        <thead>
+          <tr style="height: 48px">
+            <th scope="col" style="padding-left: 20px; text-align: left; font-size: 14px; font-weight: 600; color: #44585C">Categoria</th>
+            <th scope="col" style="width: 72px; text-align: right; font-size: 14px; font-weight: 600"><span style="display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid #14262B"></span>Morphy</span></th>
+            <th scope="col" style="width: 112px; padding-right: 20px; text-align: right; font-size: 14px; font-weight: 600"><span style="display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #14262B; border: 1.5px solid #14262B"></span>Duca e Conte</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{cats}}" as="c" hint-placeholder-count="8">
+            <tr style="height: 48px; border-top: 1px solid #E3DAC4">
+              <th scope="row" style="padding-left: 20px; text-align: left; font-size: 16px; font-weight: 500">
+                <span style="display: inline-flex; align-items: center; gap: 10px">
+                  <span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{c.tag.c}}; color: {{c.tag.fg}}; border: 1.5px solid #14262B; display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
+                    <sc-if value="{{c.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{c.tag.txt}}</span></sc-if>
+                    <sc-if value="{{c.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 15px; height: 15px; fill: {{c.tag.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{c.tag.path}}"></path></svg></sc-if>
+                  </span>{{c.tag.label}}
+                </span>
+              </th>
+              <td style="text-align: right; font: 600 18px/1 'IBM Plex Mono', monospace; color: {{c.wColor}}">{{c.w}}</td>
+              <td style="padding-right: 20px; text-align: right; font: 600 18px/1 'IBM Plex Mono', monospace; color: {{c.bColor}}">{{c.b}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </details>
+  </main>
+
+  <div style="position: fixed; left: 0; bottom: 0; z-index: 10; width: 390px; height: 88px; box-sizing: border-box; padding: 16px 20px; background: #FBF8F0; border-top: 1.5px solid #8B7C5C">
+    <a href="PhoneReview.dc.html" style="height: 56px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid #14262B; background: #E8A33D; color: #14262B; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font: 700 17px/1 'Instrument Sans', sans-serif">Inizia revisione<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg></a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1460}}'>
+// M3 · Riepilogo su telefono. Same data as D3; at most four markers on the graph.
+var FE = '︎';
+var ICON = {
+  star: 'M8 1.8l1.9 3.9 4.2.6-3.05 3 .72 4.2L8 11.5l-3.77 2 .72-4.2-3.05-3 4.2-.6z',
+  check: 'M3.5 8.4l3 3 6-6.8',
+  ring: 'M8 4.2a3.8 3.8 0 1 1 0 7.6a3.8 3.8 0 1 1 0-7.6z',
+  book: 'M8 4.6C6.4 3.5 4.4 3.3 2.4 3.9v8.3c2-.6 4-.4 5.6.7 1.6-1.1 3.6-1.3 5.6-.7V3.9c-2-.6-4-.4-5.6.7zM8 4.6v8.3',
+  cross: 'M4.6 4.6l6.8 6.8M11.4 4.6l-6.8 6.8'
+};
+var TAG = {
+  brillante:    { label: 'Brillante', c: '#26C6DA', txt: '!!' },
+  ottima:       { label: 'Ottima', c: '#5B95E6', txt: '!' },
+  migliore:     { label: 'Migliore', c: '#5FA83B', icon: 'star', fill: true },
+  eccellente:   { label: 'Eccellente', c: '#8BC56A', icon: 'check' },
+  buona:        { label: 'Buona', c: '#A8B5AE', icon: 'ring' },
+  teoria:       { label: 'Teoria', c: '#C39A6B', icon: 'book' },
+  imprecisione: { label: 'Imprecisione', c: '#F4D23C', txt: '?!' },
+  errore:       { label: 'Errore', c: '#E8662A', txt: '?' },
+  occasione:    { label: 'Occasione mancata', c: '#D66A9A', icon: 'cross' },
+  svista:       { label: 'Svista', c: '#D23B30', txt: '??', fg: '#FFFFFF' }
+};
+function tag(key) {
+  var d = TAG[key];
+  return { label: d.label, c: d.c, fg: d.fg || '#14262B', isTxt: !!d.txt, txt: d.txt || '', isIcon: !!d.icon,
+           path: d.icon ? ICON[d.icon] : '', fill: d.fill ? 'currentColor' : 'none' };
+}
+// Move counts per category: [Morphy, Duke and Count]. Only categories that occur are listed.
+var COUNTS = [['brillante', 1, 0], ['ottima', 2, 0], ['migliore', 7, 3], ['eccellente', 1, 3], ['buona', 1, 1],
+              ['teoria', 5, 5], ['imprecisione', 0, 3], ['svista', 0, 1]];
+
+var Y = [46.1, 46.7, 46.6, 46.5, 45.6, 44.7, 41.9, 41.9, 37.6, 37.0, 37.1, 40.4, 32.1, 31.0, 29.5, 32.3, 33.1, 32.9, 24.8, 24.8,
+         14.2, 13.2, 12.7, 12.4, 12.6, 10.7, 9.3, 9.8, 4.7, 3.8, 0.4, 0.4, 0.4, 0.0];
+var AREA = 'M0,100 L' + Y.map(function (y, i) { return (i * 10) + ',' + y; }).join(' L') + ' L330,100 Z';
+// Plot interior is 303 x 196. Markers sit in the white area; plies 27, 30 and 31 are 37 px apart,
+// so their centres are set by hand (48 px hit areas never overlap) and joined to the curve by a leader.
+var W = 303, H = 196, R = 16;
+var MARKS = [
+  { k: 31, tag: 'brillante', x: 279, y: 40, aria: '16. Qb8+, brillante' },
+  { k: 30, tag: 'svista', x: 231, y: 40, aria: '15… Nxd7, svista' },
+  { k: 27, tag: 'ottima', x: 255, y: 96, aria: '14. Rd1, ottima' },
+  { k: 19, tag: 'ottima', x: 174.5, y: 76, aria: '10. Nxb5, ottima' }
+];
+function buildGraph() {
+  return {
+    area: AREA,
+    marks: MARKS.map(function (m) {
+      var cx = m.k / 33 * W, cy = Y[m.k] / 100 * H;
+      var dx = m.x - cx, dy = m.y - cy, len = Math.sqrt(dx * dx + dy * dy);
+      return { x1: cx.toFixed(1), y1: cy.toFixed(1), x2: (m.x - dx / len * R).toFixed(1), y2: (m.y - dy / len * R).toFixed(1),
+               hx: (m.x - 24).toFixed(1) + 'px', hy: (m.y - 24).toFixed(1) + 'px', tag: tag(m.tag), aria: m.aria };
+    }),
+    ticks: [[1, '1'], [9, '5'], [19, '10'], [29, '15'], [33, '17']].map(function (t, i, arr) {
+      return { left: (t[0] / 33 * 100).toFixed(2) + '%', label: t[1], tf: i === arr.length - 1 ? 'translateX(-100%)' : (i === 0 ? 'translateX(-30%)' : 'translateX(-50%)') };
+    })
+  };
+}
+
+class Component extends DCLogic {
+  constructor() {
+    super(...arguments);
+    this.state = { menu: true };
+  }
+
+  renderVals() {
+    var self = this;
+    var players = [
+      { name: 'Morphy', full: 'Paul Morphy', dot: '#FFFFFF', acc: '98,4', v: 98.4, rest: 1.6, elo: '2804' },
+      { name: 'Duca e Conte', full: 'Duca di Brunswick e Conte Isouard', dot: '#14262B', acc: '83,8', v: 83.8, rest: 16.2, elo: '1928' }
+    ];
+    var cats = COUNTS.map(function (c) {
+      return { tag: tag(c[0]), w: String(c[1]), b: String(c[2]), wColor: c[1] ? '#14262B' : '#44585C', bColor: c[2] ? '#14262B' : '#44585C' };
+    });
+    var moments = [
+      { tag: tag('ottima'), move: '10. ♞' + FE + 'xb5', text: 'Cavallo per due pedoni e linee aperte.' },
+      { tag: tag('svista'), move: '15… ♞' + FE + 'xd7', text: 'Libera la diagonale g5-e7: matto in 2.' },
+      { tag: tag('brillante'), move: '16. ♛' + FE + 'b8+', text: 'Sacrificio di donna, poi ♜' + FE + 'd8 matto.' }
+    ];
+    var bands = [
+      { name: 'Apertura', range: 'mosse 1–10', white: 'Eccellente', black: 'Buona', bt: '0' },
+      { name: 'Mediogioco', range: 'mosse 11–17', white: 'Eccellente', black: 'Eccellente', bt: '1.5px solid #708183' }
+    ];
+    return {
+      players: players, cats: cats, moments: moments, bands: bands, graph: buildGraph(),
+      menuOpen: this.state.menu, menuExpanded: this.state.menu ? 'true' : 'false',
+      toggleMenu: function () { self.setState({ menu: !self.state.menu }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

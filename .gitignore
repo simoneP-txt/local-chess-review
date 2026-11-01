@@ -50,3 +50,6 @@ dist/
 .coverage
 htmlcov/
 .pytest_cache/
+
+# --- Recorded test fixtures: local only ---
+tests/fixtures/

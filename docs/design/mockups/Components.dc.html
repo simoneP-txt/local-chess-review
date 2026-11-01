@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Componenti</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Symbols+2&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; min-height: {{t.minH}}; box-sizing: border-box; padding: 64px; background: {{t.bg}}; color: {{t.text}}; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; display: flex; flex-direction: column; gap: 64px">
+
+  <header style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
+    <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Fase 1 · Componenti</span>
+    <h1 style="margin: 0; padding-bottom: 8px; border-bottom: 4px solid #E8A33D; font-family: 'Fraunces', Georgia, serif; font-size: 48px; font-weight: 500; line-height: 1.1; color: {{t.title}}">{{t.label}}</h1>
+    <p style="margin: 0; max-width: 900px; font-size: 18px; line-height: 1.5; color: {{t.text2}}">Dove desktop e telefono differiscono, le due versioni stanno affiancate. Dati della Partita dell'Opera, Parigi 1858.</p>
+  </header>
+
+  <section aria-label="Tag mossa" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Tag mossa</h2>
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px 24px">
+        <sc-for list="{{tags}}" as="x" hint-placeholder-count="10">
+          <div style="display: flex; align-items: center; gap: 12px; min-height: 56px">
+            <span aria-hidden="true" style="flex: 0 0 {{x.size}}; width: {{x.size}}; height: {{x.size}}; box-sizing: border-box; border-radius: 50%; background: {{x.c}}; color: {{x.fg}}; border: 1.5px solid {{x.ring}}; display: inline-flex; align-items: center; justify-content: center; font: 700 {{x.font}}/1 'Instrument Sans', sans-serif">
+              <sc-if value="{{x.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{x.txt}}</span></sc-if>
+              <sc-if value="{{x.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: {{x.svg}}; height: {{x.svg}}; fill: {{x.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{x.path}}"></path></svg></sc-if>
+            </span>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <span style="font-size: 18px; font-weight: 600">{{x.label}}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: {{t.text2}}">{{x.c}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; padding-top: 20px; border-top: 1.5px solid {{t.cardBorder}}">
+        <span style="font-size: 16px; font-weight: 600">Misure</span>
+        <sc-for list="{{tagSizes}}" as="x" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span aria-hidden="true" style="flex: 0 0 {{x.size}}; width: {{x.size}}; height: {{x.size}}; box-sizing: border-box; border-radius: 50%; background: {{x.c}}; color: {{x.fg}}; border: 1.5px solid {{x.ring}}; display: inline-flex; align-items: center; justify-content: center; font: 700 {{x.font}}/1 'Instrument Sans', sans-serif"><span>{{x.txt}}</span></span>
+            <span style="font-size: 16px; color: {{t.text2}}">{{x.caption}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 16px; line-height: 1.5; color: {{t.text2}}">Sempre icona distinta più etichetta. Anello 1,5 px: {{t.ringNote}} Su scacchiera e grafico l'anello resta inchiostro in entrambi i temi.</p>
+    </div>
+  </section>
+
+  <section aria-label="Pulsanti" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Pulsanti</h2>
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px 32px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button type="button" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: {{t.amberBorder}}; background: #E8A33D; color: #14262B; display: inline-flex; align-items: center; gap: 8px; font: 700 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Inizia revisione<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg></button>
+        <span style="font-size: 14px; color: {{t.text2}}">Ambra pieno · uno per schermata</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button type="button" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid {{t.petrolBtnBorder}}; background: #0F4C57; color: {{t.onPetrol}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Apri</button>
+        <span style="font-size: 14px; color: {{t.text2}}">Petrolio pieno</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button type="button" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Esporta PGN</button>
+        <span style="font-size: 14px; color: {{t.text2}}">Outline</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button type="button" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid {{t.petrolOutline}}; background: transparent; color: {{t.petrolOutlineText}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Analizza</button>
+        <span style="font-size: 14px; color: {{t.text2}}">Outline petrolio</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button type="button" disabled="" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid {{t.disBorder}}; background: {{t.disFill}}; color: {{t.disText}}; font: 600 16px/1 'Instrument Sans', sans-serif">Apri il riepilogo</button>
+        <span style="font-size: 14px; color: {{t.text2}}">Disabilitato · mai ambra</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button type="button" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: {{t.amberBorder}}; background: #E8A33D; color: #14262B; outline: 3px solid {{t.line}}; outline-offset: 2px; font: 700 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Inizia revisione</button>
+        <span style="font-size: 14px; color: {{t.text2}}">Con focus · 3 px, stacco 2</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Controlli" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Segmented, filtri, navigazione, campo</h2>
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 16px; font-weight: 600">Piattaforma</span>
+        <div role="group" aria-label="Piattaforma" style="align-self: flex-start; display: flex; gap: 4px; padding: 4px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: {{t.input}}">
+          <button type="button" aria-pressed="true" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 8px; border: {{t.amberBorder}}; background: #E8A33D; color: #14262B; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Chess.com</button>
+          <button type="button" aria-pressed="false" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 8px; border: 1.5px solid transparent; background: transparent; color: {{t.text}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Lichess</button>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 16px; font-weight: 600">Filtri</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <button type="button" aria-pressed="true" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 999px; border: {{t.amberBorder}}; background: #E8A33D; color: #14262B; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Tutte · 6</button>
+          <button type="button" aria-pressed="false" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 999px; border: 1.5px solid {{t.ctrlBorder}}; background: {{t.s2}}; color: {{t.text}}; font: 500 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Analizzate · 1</button>
+          <button type="button" aria-pressed="false" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 999px; border: 1.5px solid {{t.ctrlBorder}}; background: {{t.s2}}; color: {{t.text}}; font: 500 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Da analizzare · 5</button>
+        </div>
+      </div>
+      <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 16px; font-weight: 600">Header con pillola nav e tassello logo</span>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; min-height: 64px; box-sizing: border-box; padding: 8px 20px; border-radius: 16px; background: #0F4C57; border: {{t.panelBorder}}; color: {{t.onPetrol}}">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="12" height="12" rx="2.5" style="fill: #FBF8F0"></rect><rect x="15" y="1" width="12" height="12" rx="2.5" style="fill: #4A8590"></rect><rect x="1" y="15" width="12" height="12" rx="2.5" style="fill: #4A8590"></rect><rect x="15.75" y="15.75" width="10.5" height="10.5" rx="2" style="fill: #E8A33D; stroke: {{t.logoStroke}}; stroke-width: 1.5"></rect></svg>
+            <span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600">Local Chess Review</span>
+          </div>
+          <nav aria-label="Sezioni" style="display: flex; flex-wrap: wrap; gap: 4px">
+            <a href="#nav" aria-current="page" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; border: {{t.amberBorder}}; background: #E8A33D; color: #14262B; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 600">Partite</a>
+            <a href="#nav" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; color: {{t.onPetrol}}; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 500">Riepilogo</a>
+            <a href="#nav" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; color: {{t.onPetrol}}; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 500">Revisione</a>
+          </nav>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="cmp-user" style="font-size: 16px; font-weight: 600">Nome utente</label>
+        <input id="cmp-user" type="text" value="{{userValue}}" onChange="{{noop}}" style="height: 56px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: {{t.input}}; color: {{t.text}}; font: 400 18px/1 'Instrument Sans', sans-serif">
+        <span style="font-size: 14px; color: {{t.text2}}">Campo 56 px, testo 18. Segnaposto in colore secondario.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="cmp-user-focus" style="font-size: 16px; font-weight: 600">Nome utente · con focus</label>
+        <input id="cmp-user-focus" type="text" value="{{placeholderValue}}" onChange="{{noop}}" style="height: 56px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: {{t.input}}; color: {{t.text2}}; outline: 3px solid {{t.line}}; outline-offset: 2px; font: 400 18px/1 'Instrument Sans', sans-serif">
+        <span style="font-size: 14px; color: {{t.text2}}">Focus ring 3 px {{t.lineName}}, mai ambra.</span>
+      </div>
+    </div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start">
+    <section aria-label="Barre" style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Barre</h2>
+      <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+            <span style="font-size: 16px">Progresso · semimossa 21 di 33</span>
+            <span style="font: 600 20px/1 'IBM Plex Mono', monospace">64%</span>
+          </div>
+          <div role="progressbar" aria-label="Avanzamento analisi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="64" style="height: 16px; box-sizing: border-box; border-radius: 999px; background: {{t.track}}; border: {{t.trackBorder}}; overflow: hidden; display: flex">
+            <span style="flex: 64 1 0px; background: #E8A33D; border-right: {{t.fillDivider}}"></span>
+            <span style="flex: 36 1 0px"></span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; padding-top: 20px; border-top: 1.5px solid {{t.cardBorder}}">
+          <span style="font-size: 16px">Precisione</span>
+          <sc-for list="{{accBars}}" as="a" hint-placeholder-count="2">
+            <div style="display: grid; grid-template-columns: 16px 140px minmax(0, 1fr) 64px; align-items: center; gap: 12px">
+              <span aria-hidden="true" style="width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: {{a.dot}}; border: 1.5px solid {{a.ring}}"></span>
+              <span style="font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.name}}</span>
+              <div aria-hidden="true" style="height: 16px; box-sizing: border-box; border-radius: 999px; background: {{t.track}}; border: {{t.trackBorder}}; overflow: hidden; display: flex">
+                <span style="flex: {{a.v}} 1 0px; background: #E8A33D; border-right: {{t.fillDivider}}"></span>
+                <span style="flex: {{a.rest}} 1 0px"></span>
+              </div>
+              <span style="font: 600 20px/1 'IBM Plex Mono', monospace; text-align: right">{{a.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.45; color: {{t.text2}}">{{t.barNote}}</p>
+      </div>
+    </section>
+
+    <section aria-label="Barra giocatore" style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Barra giocatore</h2>
+      <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 16px">
+        <sc-for list="{{playerBars}}" as="p" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">{{p.caption}}</span>
+            <div style="width: {{p.w}}; max-width: 100%; height: 48px; display: flex; align-items: center; gap: 12px">
+              <span aria-hidden="true" style="flex: 0 0 16px; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: {{p.dot}}; border: 1.5px solid {{p.ring}}"></span>
+              <span style="flex: 0 1 auto; min-width: 0; font-size: {{p.nameSize}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.name}}</span>
+              <span style="flex: 0 0 auto; font: 500 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">{{p.adv}}</span>
+              <span style="flex: 1 1 auto"></span>
+              <span style="flex: 0 0 auto; font: 600 {{p.accSize}}/1 'IBM Plex Mono', monospace">{{p.acc}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <section aria-label="Scacchiera" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Scacchiera e pezzi</h2>
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 32px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px">
+        <sc-for list="{{boards}}" as="bd" hint-placeholder-count="2">
+          <figure style="margin: 0; display: flex; flex-direction: column; gap: 12px">
+            <div style="position: relative; width: {{bd.size}}; height: {{bd.size}}; border: 2px solid {{t.line}}">
+              <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); width: 100%; height: 100%">
+                <sc-for list="{{bd.squares}}" as="sq" hint-placeholder-count="64">
+                  <div style="position: relative; display: flex; align-items: center; justify-content: center; background: {{sq.bg}}">
+                    <sc-if value="{{sq.showRank}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; top: 3px; left: 4px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.rank}}</span></sc-if>
+                    <sc-if value="{{sq.showFile}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; bottom: 3px; right: 4px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.file}}</span></sc-if>
+                    <sc-if value="{{sq.hasPiece}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 45 45" aria-hidden="true" style="width: 90%; height: 90%; overflow: visible"><path d="{{sq.body}}" style="fill: {{sq.fill}}; stroke: #14262B; stroke-width: {{bd.sw}}; stroke-linejoin: round; vector-effect: non-scaling-stroke"></path><path d="{{sq.detail}}" style="fill: none; stroke: {{sq.dc}}; stroke-width: 1px; stroke-linecap: round; vector-effect: non-scaling-stroke"></path></svg></sc-if>
+                    <sc-if value="{{sq.hasBadge}}" hint-placeholder-val="{{ false }}">
+                      <span aria-hidden="true" style="position: absolute; top: 2px; right: 2px; z-index: 3; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{sq.tag.c}}; color: {{sq.tag.fg}}; border: 1.5px solid #14262B; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif"><span>{{sq.tag.txt}}</span></span>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+              <svg viewBox="{{bd.vb}}" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none"><polygon points="{{bd.arrow}}" style="fill: #14262B; stroke: #14262B; stroke-width: 7; stroke-linejoin: round"></polygon><polygon points="{{bd.arrow}}" style="fill: #FBF8F0; stroke: #FBF8F0; stroke-width: 4; stroke-linejoin: round"></polygon><polygon points="{{bd.arrow}}" style="fill: #5FA83B"></polygon></svg>
+            </div>
+            <figcaption style="max-width: {{bd.size}}; font-size: 14px; line-height: 1.45; color: {{t.text2}}">{{bd.caption}}</figcaption>
+          </figure>
+        </sc-for>
+        <ul style="flex: 1 1 240px; min-width: 0; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.45">
+          <li>Posizione dopo 9… b5: tutti i 12 pezzi in gioco.</li>
+          <li>Arrivo ambra opaca #E8A33D, partenza #F1C06E, uguali su case chiare e scure.</li>
+          <li>Freccia della migliore (♞︎a6) verde, alone chiaro 2 px e contorno inchiostro 1,5 px.</li>
+          <li>Badge 28 px sulla casa di arrivo, anello inchiostro anche in tema scuro.</li>
+          <li>Coordinate 12 px: inchiostro sulle case chiare ed evidenziate, bianco sulle scure (4,16:1, eccezione del brief).</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 24px; border-top: 1.5px solid {{t.cardBorder}}">
+        <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: {{t.title}}">Pezzi su ogni tipo di casa</h3>
+        <div style="display: grid; grid-template-columns: 160px repeat(12, 56px); gap: 0; align-items: center">
+          <span></span>
+          <sc-for list="{{pieceHead}}" as="h" hint-placeholder-count="12"><span style="text-align: center; font-size: 14px; color: {{t.text2}}; padding-bottom: 6px">{{h.label}}</span></sc-for>
+          <sc-for list="{{specimen}}" as="row" hint-placeholder-count="4">
+            <span style="font-size: 16px; padding-right: 12px">{{row.label}}</span>
+            <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="12">
+              <span style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: {{c.bg}}"><svg viewBox="0 0 45 45" aria-hidden="true" style="width: 50px; height: 50px; overflow: visible"><path d="{{c.body}}" style="fill: {{c.fill}}; stroke: #14262B; stroke-width: 2px; stroke-linejoin: round; vector-effect: non-scaling-stroke"></path><path d="{{c.detail}}" style="fill: none; stroke: {{c.dc}}; stroke-width: 1px; stroke-linecap: round; vector-effect: non-scaling-stroke"></path></svg></span>
+            </sc-for>
+          </sc-for>
+        </div>
+        <p style="margin: 0; font-size: 14px; line-height: 1.45; color: {{t.text2}}">Pezzi SVG originali. Bianchi #FFFBF0, neri #1B2B30 con filo interno chiaro 1 px, contorno #14262B da 2 px su desktop e 1,5 px su telefono. Scacchiera e pezzi non cambiano col tema.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Eval bar" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Eval bar</h2>
+    <div style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-wrap: wrap; gap: 48px">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Desktop · verticale 56 px</span>
+        <div style="display: flex; gap: 40px">
+          <sc-for list="{{evalV}}" as="e" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+              <div style="width: 56px; height: 400px; box-sizing: border-box; border: 2px solid {{t.line}}; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column">
+                <div style="flex: {{e.bFlex}} 1 0px; box-sizing: border-box; padding: {{e.bPad}}; background: {{t.evB}}; display: flex; justify-content: center; align-items: flex-start">
+                  <sc-if value="{{e.onBlack}}" hint-placeholder-val="{{ false }}"><span style="font: 600 16px/1.15 'IBM Plex Mono', monospace; color: {{t.evBText}}; text-align: center; white-space: pre-line">{{e.val}}</span></sc-if>
+                </div>
+                <div style="flex: {{e.wFlex}} 1 0px; box-sizing: border-box; padding: {{e.wPad}}; background: #FFFFFF; display: flex; justify-content: center; align-items: flex-end">
+                  <sc-if value="{{e.onWhite}}" hint-placeholder-val="{{ true }}"><span style="font: 600 16px/1.15 'IBM Plex Mono', monospace; color: #14262B; text-align: center; white-space: pre-line">{{e.val}}</span></sc-if>
+                </div>
+              </div>
+              <span style="font-size: 14px; color: {{t.text2}}">{{e.caption}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 12px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Telefono · orizzontale 20 px</span>
+        <sc-for list="{{evalH}}" as="e" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px">
+            <div style="width: 350px; height: 20px; box-sizing: border-box; border: 2px solid {{t.line}}; border-radius: 8px; overflow: hidden; display: flex">
+              <div style="flex: {{e.wFlex}} 1 0px; box-sizing: border-box; padding: {{e.wPad}}; background: #FFFFFF; display: flex; align-items: center; justify-content: flex-start">
+                <sc-if value="{{e.onWhite}}" hint-placeholder-val="{{ true }}"><span style="font: 600 14px/16px 'IBM Plex Mono', monospace; color: #14262B; white-space: nowrap">{{e.val}}</span></sc-if>
+              </div>
+              <div style="flex: {{e.bFlex}} 1 0px; box-sizing: border-box; padding: {{e.bPad}}; background: {{t.evB}}; display: flex; align-items: center; justify-content: flex-end">
+                <sc-if value="{{e.onBlack}}" hint-placeholder-val="{{ false }}"><span style="font: 600 14px/16px 'IBM Plex Mono', monospace; color: {{t.evBText}}; white-space: nowrap">{{e.val}}</span></sc-if>
+              </div>
+            </div>
+            <span style="font-size: 14px; color: {{t.text2}}">{{e.caption}}</span>
+          </div>
+        </sc-for>
+        <p style="margin: 0; max-width: 520px; font-size: 14px; line-height: 1.45; color: {{t.text2}}">Il valore sta dentro la barra, al bordo del lato in vantaggio, in inchiostro sul Bianco e in {{t.evBTextName}} sul Nero. Mai «M1»: sempre «Matto in 1».</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Grafico" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Grafico Probabilità di vittoria</h2>
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px">
+      <sc-for list="{{graphs}}" as="g" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">{{g.caption}}</span>
+          <div style="width: {{g.cardW}}; box-sizing: border-box; padding: {{g.pad}}; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px">
+              <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{g.titleSize}}; font-weight: 600; line-height: 1.2; color: {{t.title}}">Probabilità di vittoria</h3>
+              <span style="font-size: 14px; color: {{t.text2}}">Chiaro = Bianco · scuro = Nero</span>
+            </div>
+            <div style="position: relative; width: {{g.plotW}}; height: {{g.plotH}}; box-sizing: border-box; border: 2px solid {{t.line}}; border-radius: 8px; overflow: hidden">
+              <svg viewBox="0 0 330 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"><rect x="0" y="0" width="330" height="100" style="fill: {{t.evB}}"></rect><path d="{{area}}" style="fill: #FFFFFF"></path></svg>
+              <svg viewBox="{{g.vb}}" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"><line x1="0" y1="{{g.mid}}" x2="{{g.w}}" y2="{{g.mid}}" style="stroke: #14262B; stroke-width: 5; stroke-dasharray: 12 8"></line><line x1="0" y1="{{g.mid}}" x2="{{g.w}}" y2="{{g.mid}}" style="stroke: #E8A33D; stroke-width: 3; stroke-dasharray: 12 8"></line></svg>
+              <sc-for list="{{g.marks}}" as="m" hint-placeholder-count="5">
+                <span aria-hidden="true" style="position: absolute; left: {{m.lx}}; top: {{m.ly}}; width: 2px; height: {{m.lh}}; background: {{m.ring}}"></span>
+                <span title="{{m.aria}}" style="position: absolute; left: {{m.x}}; top: {{m.y}}; width: {{m.size}}; height: {{m.size}}; box-sizing: border-box; border-radius: 50%; background: {{m.tag.c}}; color: {{m.tag.fg}}; border: 1.5px solid {{m.ring}}; display: flex; align-items: center; justify-content: center; font: 700 {{m.tag.font}}/1 'Instrument Sans', sans-serif"><span>{{m.tag.txt}}</span></span>
+              </sc-for>
+            </div>
+            <div style="position: relative; width: {{g.plotW}}; height: 18px; font: 500 14px/18px 'IBM Plex Mono', monospace; color: {{t.text2}}">
+              <sc-for list="{{g.ticks}}" as="k" hint-placeholder-count="5"><span style="position: absolute; left: {{k.left}}; transform: {{k.tf}}">{{k.label}}</span></sc-for>
+            </div>
+            <div style="width: {{g.plotW}}; display: flex">
+              <sc-for list="{{g.bands}}" as="b" hint-placeholder-count="2">
+                <div style="flex: {{b.grow}} 1 0px; min-width: 0; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid {{t.ctrlBorder}}; border-left-width: {{b.bl}}; border-radius: {{b.r}}; background: {{t.s2}}; display: flex; flex-direction: column; gap: 4px">
+                  <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">{{b.name}}</span>
+                  <span style="font-size: 14px; color: {{t.text2}}">{{b.range}}</span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: {{g.bandFont}}">
+                    <span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid {{t.line}}"></span>{{b.white}}</span>
+                    <span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: {{t.blackDot}}; border: 1.5px solid {{t.blackRing}}"></span>{{b.black}}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{g.showFinale}}" hint-placeholder-val="{{ true }}">
+              <div style="width: {{g.plotW}}; box-sizing: border-box; padding: 12px 14px; border-radius: 8px; background: {{t.disFill}}; border: 1.5px dashed {{t.disBorder}}; color: {{t.disText}}; font-size: 16px">Finale · non raggiunto</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <p style="margin: 0; max-width: 1000px; font-size: 16px; line-height: 1.5; color: {{t.text2}}">Marker 28 / 32 px, al massimo 5 / 4, per priorità: brillante, svista, ottima, imprecisione. Stanno dentro l'area bianca sotto la curva, collegati da un filo; se due si toccano, il secondo scende di un passo. Nell'app hanno un'area cliccabile di 48 px.</p>
+  </section>
+
+  <section aria-label="Card feedback" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Card feedback</h2>
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px">
+      <sc-for list="{{feedback}}" as="fc" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">{{fc.caption}}</span>
+          <section style="width: {{fc.w}}; box-sizing: border-box; padding: {{fc.pad}}; border-radius: 16px; background: #0F4C57; border: {{t.panelBorder}}; color: {{t.onPetrol}}; display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span aria-hidden="true" style="flex: 0 0 40px; width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; background: {{fc.tag.c}}; color: {{fc.tag.fg}}; border: 1.5px solid {{t.onPetrol}}; display: flex; align-items: center; justify-content: center; font: 700 18px/1 'Instrument Sans', sans-serif"><span>{{fc.tag.txt}}</span></span>
+              <span style="flex: 1 1 auto; font-size: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.onPetrol}}">{{fc.cat}}</span>
+              <span style="padding: 8px 10px; border-radius: 8px; background: #FFFFFF; color: #14262B; font: 600 {{fc.evSize}}/1 'IBM Plex Mono', monospace; white-space: nowrap">{{fc.ev}}</span>
+            </div>
+            <h3 style="margin: 0; font-family: 'Fraunces', 'Noto Sans Symbols 2', Georgia, serif; font-size: {{fc.titleSize}}; font-weight: 500; line-height: 1.2">{{fc.title}}</h3>
+            <p style="margin: 0; font-size: {{fc.textSize}}; line-height: 1.5">{{fc.text}}</p>
+            <sc-if value="{{fc.showActions}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <button type="button" style="height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.onPetrol}}; background: transparent; color: {{t.onPetrol}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Riprova da qui</button>
+                <button type="button" aria-pressed="true" style="height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.onPetrol}}; background: transparent; color: {{t.onPetrol}}; display: inline-flex; align-items: center; gap: 8px; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M5 19L19 5"></path><path d="M10 5h9v9"></path></svg>Freccia migliore</button>
+              </div>
+            </sc-if>
+            <details style="border-top: 1.5px solid {{t.petrolSep}}">
+              <summary style="list-style: none; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-size: 16px; font-weight: 600">Linea del motore<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg></summary>
+              <dl style="margin: 0 0 4px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: 16px">
+                <dt style="color: {{t.onPetrol2}}">Migliore</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{fc.best}}</dd>
+                <dt style="color: {{t.onPetrol2}}">Linea</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{fc.line}}</dd>
+              </dl>
+            </details>
+          </section>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start">
+    <section aria-label="Riga mossa" style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Riga mossa</h2>
+      <div style="box-sizing: border-box; padding: 24px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}">
+        <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+          <sc-for list="{{moveRows}}" as="mr" hint-placeholder-count="4">
+            <li>
+              <button type="button" aria-current="{{mr.current}}" style="width: 100%; height: 48px; box-sizing: border-box; padding: 0 12px 0 16px; border-radius: 12px; border: 1.5px solid {{mr.border}}; background: {{mr.bg}}; box-shadow: {{mr.bar}}; color: {{t.text}}; display: flex; align-items: center; gap: 12px; cursor: pointer; text-align: left">
+                <span style="flex: 0 0 44px; font: 500 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">{{mr.num}}</span>
+                <span style="flex: 1 1 auto; font: 500 18px/1 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{mr.san}}</span>
+                <span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{mr.tag.c}}; color: {{mr.tag.fg}}; border: 1.5px solid {{mr.tag.ring}}; display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
+                  <sc-if value="{{mr.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{mr.tag.txt}}</span></sc-if>
+                  <sc-if value="{{mr.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 15px; height: 15px; fill: {{mr.tag.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{mr.tag.path}}"></path></svg></sc-if>
+                </span>
+                <span style="flex: 0 0 104px; font: 500 16px/1 'Instrument Sans', sans-serif">{{mr.tag.label}}</span>
+              </button>
+            </li>
+          </sc-for>
+        </ol>
+        <p style="margin: 16px 0 0; font-size: 14px; line-height: 1.45; color: {{t.text2}}">Una semimossa per riga, 48 px. Uguale su telefono (testo 17 nello sheet).</p>
+      </div>
+    </section>
+
+    <section aria-label="Striscia mobile" style="display: flex; flex-direction: column; gap: 24px">
+      <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Striscia mobile</h2>
+      <div style="box-sizing: border-box; padding: 24px; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: flex; flex-direction: column; gap: 16px">
+        <nav aria-label="Mosse vicine" style="width: 350px; max-width: 100%; display: flex; gap: 8px">
+          <sc-for list="{{strip}}" as="c" hint-placeholder-count="3">
+            <button type="button" aria-current="{{c.current}}" aria-label="{{c.aria}}" style="flex: 1 1 0px; min-width: 0; height: 56px; box-sizing: border-box; padding: 0 8px; border-radius: 999px; border: {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer">
+              <span style="font: 600 16px/1.15 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace; white-space: nowrap">{{c.san}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 4px; font: 500 14px/1 'Instrument Sans', sans-serif; white-space: nowrap">
+                <span aria-hidden="true" style="flex: 0 0 24px; width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; background: {{c.tag.c}}; color: {{c.tag.fg}}; border: 1.5px solid {{c.tag.ring}}; display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
+                  <sc-if value="{{c.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{c.tag.txt}}</span></sc-if>
+                  <sc-if value="{{c.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 13px; height: 13px; fill: {{c.tag.fill}}; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="{{c.tag.path}}"></path></svg></sc-if>
+                </span>{{c.tag.label}}
+              </span>
+            </button>
+          </sc-for>
+        </nav>
+        <p style="margin: 0; font-size: 14px; line-height: 1.45; color: {{t.text2}}">Chip da 56 px su due righe, così il tag mostra icona ed etichetta. Selezionato: ambra pieno con testo inchiostro.</p>
+      </div>
+    </section>
+  </div>
+
+  <section aria-label="Riga partita" style="display: flex; flex-direction: column; gap: 24px">
+    <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: {{t.title}}">Riga partita</h2>
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Desktop · 8/12</span>
+        <ul style="width: 864px; margin: 0; padding: 0; list-style: none; box-sizing: border-box; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; overflow: hidden">
+          <sc-for list="{{games}}" as="gm" hint-placeholder-count="2">
+            <li style="display: flex; align-items: center; gap: 20px; padding: 20px 24px; border-bottom: 1px solid {{t.hair}}">
+              <span style="flex: 0 0 56px; height: 40px; box-sizing: border-box; border-radius: 8px; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 16px/1 'IBM Plex Mono', monospace">{{gm.result}}</span>
+              <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px"><span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: {{t.title}}">{{gm.title}}</span><span style="font-size: 16px; color: {{t.text2}}">{{gm.place}}</span></div>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 16px">
+                  <span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid {{t.line}}"></span>{{gm.white}}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: {{t.blackDot}}; border: 1.5px solid {{t.blackRing}}"></span>{{gm.black}}</span>
+                </div>
+                <span style="font-size: 14px; color: {{t.text2}}">{{gm.meta}}</span>
+              </div>
+              <sc-if value="{{gm.analyzed}}" hint-placeholder-val="{{ false }}"><span style="flex: 0 0 auto; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: {{t.s2}}; border: 1.5px solid {{t.ctrlBorder}}; display: inline-flex; align-items: center; gap: 6px; font-size: 16px">Precisione <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">{{gm.acc}}</span></span></sc-if>
+              <button type="button" style="flex: 0 0 auto; height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid {{gm.btnBorder}}; background: {{gm.btnBg}}; color: {{gm.btnFg}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">{{gm.action}}</button>
+            </li>
+          </sc-for>
+        </ul>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Telefono · 350 px</span>
+        <ul style="width: 350px; margin: 0; padding: 0; list-style: none; box-sizing: border-box; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; overflow: hidden">
+          <sc-for list="{{games}}" as="gm" hint-placeholder-count="2">
+            <li style="display: flex; flex-direction: column; gap: 8px; padding: 20px; border-bottom: 1px solid {{t.hair}}">
+              <div style="display: flex; align-items: center; gap: 12px">
+                <span style="flex: 0 0 48px; height: 36px; box-sizing: border-box; border-radius: 8px; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 16px/1 'IBM Plex Mono', monospace">{{gm.result}}</span>
+                <div style="min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; line-height: 1.2; color: {{t.title}}">{{gm.title}}</span><span style="font-size: 16px; color: {{t.text2}}">{{gm.place}}</span></div>
+              </div>
+              <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 16px"><span aria-hidden="true" style="flex: 0 0 16px; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid {{t.line}}"></span>{{gm.white}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 16px"><span aria-hidden="true" style="flex: 0 0 16px; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: {{t.blackDot}}; border: 1.5px solid {{t.blackRing}}"></span>{{gm.black}}</span>
+              <span style="font-size: 14px; color: {{t.text2}}">{{gm.meta}}</span>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px">
+                <sc-if value="{{gm.analyzed}}" hint-placeholder-val="{{ false }}"><span style="height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: {{t.s2}}; border: 1.5px solid {{t.ctrlBorder}}; display: inline-flex; align-items: center; gap: 6px; font-size: 16px">Precisione <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">{{gm.acc}}</span></span></sc-if>
+                <button type="button" style="margin-left: auto; height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid {{gm.btnBorder}}; background: {{gm.btnBg}}; color: {{gm.btnFg}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">{{gm.action}}</button>
+              </div>
+            </li>
+          </sc-for>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":null,"default":"Chiaro"},"$preview":{"width":1440,"height":7000}}'>
+// Component sheet for the "carta e inchiostro" style. T4 mounts this file with theme="Scuro".
+var FE = '︎';
+var THEMES = {
+  Chiaro: {
+    label: 'Componenti · tema chiaro', minH: '7000px',
+    bg: '#E9E1CE', card: '#FBF8F0', s2: '#F1EAD8', input: '#FFFFFF', text: '#14262B', text2: '#44585C', title: '#0F4C57',
+    onPetrol: '#FBF8F0', onPetrol2: '#B9CFCF', petrolSep: 'rgba(251,248,240,.35)', panelBorder: '1.5px solid #0F4C57',
+    cardBorder: '#8B7C5C', ctrlBorder: '#708183', petrolBtnBorder: '#0F4C57', petrolOutline: '#0F4C57', petrolOutlineText: '#0F4C57',
+    line: '#14262B', lineName: 'inchiostro', hair: '#E3DAC4', disFill: '#E3DAC4', disText: '#526164', disBorder: '#8B7C5C',
+    sel: '#F7DCA6', selBorder: '#14262B', amberBorder: '1.5px solid #14262B', logoStroke: '#14262B', shadow: '0 1px 0 rgba(20,38,43,.08)',
+    track: '#E6DCC4', trackBorder: '1.5px solid #14262B', fillDivider: '1.5px solid #14262B',
+    evB: '#14262B', evBText: '#FFFFFF', evBTextName: 'bianco', ring: '#14262B', blackDot: '#14262B', blackRing: '#14262B',
+    ringNote: 'inchiostro sulle card, crema sui pannelli petrolio.',
+    barNote: 'Traccia #E6DCC4 con bordo inchiostro 1,5 px. Il riempimento ambra chiude con un divisore inchiostro, perché ambra e traccia stanno a 1,46:1.'
+  },
+  Scuro: {
+    label: 'Componenti · tema scuro', minH: '7000px',
+    bg: '#0B1E22', card: '#143339', s2: '#1B434B', input: '#1B434B', text: '#F2EDE0', text2: '#B7C4C3', title: '#F2EDE0',
+    onPetrol: '#F2EDE0', onPetrol2: '#B7C4C3', petrolSep: 'rgba(242,237,224,.35)', panelBorder: '1.5px solid #5D8791',
+    cardBorder: '#3C707B', ctrlBorder: '#5D8791', petrolBtnBorder: '#5D8791', petrolOutline: '#5D8791', petrolOutlineText: '#F2EDE0',
+    line: '#F2EDE0', lineName: 'crema', hair: '#1F454D', disFill: '#143339', disText: '#8FA4A5', disBorder: '#3C707B',
+    sel: 'rgba(232,163,61,.18)', selBorder: '#E8A33D', amberBorder: '1.5px solid #E8A33D', logoStroke: '#E8A33D', shadow: 'none',
+    track: '#1B434B', trackBorder: '1.5px solid #1B434B', fillDivider: '0px solid transparent',
+    evB: '#0B1E22', evBText: '#F2EDE0', evBTextName: 'crema', ring: '#F2EDE0', blackDot: '#14262B', blackRing: '#F2EDE0',
+    ringNote: 'crema su card e pannelli petrolio.',
+    barNote: 'Traccia superficie-2 #1B434B senza bordo: l\'ambra ci sta a 4,99:1.'
+  }
+};
+
+var ICON = {
+  star: 'M8 1.8l1.9 3.9 4.2.6-3.05 3 .72 4.2L8 11.5l-3.77 2 .72-4.2-3.05-3 4.2-.6z',
+  check: 'M3.5 8.4l3 3 6-6.8',
+  ring: 'M8 4.2a3.8 3.8 0 1 1 0 7.6a3.8 3.8 0 1 1 0-7.6z',
+  book: 'M8 4.6C6.4 3.5 4.4 3.3 2.4 3.9v8.3c2-.6 4-.4 5.6.7 1.6-1.1 3.6-1.3 5.6-.7V3.9c-2-.6-4-.4-5.6.7zM8 4.6v8.3',
+  cross: 'M4.6 4.6l6.8 6.8M11.4 4.6l-6.8 6.8'
+};
+var TAG = {
+  brillante:    { label: 'Brillante', c: '#26C6DA', txt: '!!' },
+  ottima:       { label: 'Ottima', c: '#5B95E6', txt: '!' },
+  migliore:     { label: 'Migliore', c: '#5FA83B', icon: 'star', fill: true },
+  eccellente:   { label: 'Eccellente', c: '#8BC56A', icon: 'check' },
+  buona:        { label: 'Buona', c: '#A8B5AE', icon: 'ring' },
+  teoria:       { label: 'Teoria', c: '#C39A6B', icon: 'book' },
+  imprecisione: { label: 'Imprecisione', c: '#F4D23C', txt: '?!' },
+  errore:       { label: 'Errore', c: '#E8662A', txt: '?' },
+  occasione:    { label: 'Occasione mancata', c: '#D66A9A', icon: 'cross' },
+  svista:       { label: 'Svista', c: '#D23B30', txt: '??', fg: '#FFFFFF' }
+};
+var TAG_ORDER = ['brillante', 'ottima', 'migliore', 'eccellente', 'buona', 'teoria', 'imprecisione', 'errore', 'occasione', 'svista'];
+var FONT_FOR = { 24: 14, 28: 14, 32: 15, 40: 18 };
+
+function tagView(key, size, ring) {
+  var d = TAG[key];
+  return {
+    label: d.label, c: d.c, fg: d.fg || '#14262B', ring: ring,
+    size: size + 'px', font: (FONT_FOR[size] || 14) + 'px', svg: Math.round(size * 0.55) + 'px',
+    isTxt: !!d.txt, txt: d.txt || '', isIcon: !!d.icon, path: d.icon ? ICON[d.icon] : '', fill: d.fill ? 'currentColor' : 'none'
+  };
+}
+
+var FIG = { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞' };
+function fig(s) {
+  return s.replace(/\b([KQRBN])(?=[a-h]?[1-8]?x?[a-h][1-8])/g, function (m, p) { return FIG[p] + FE; });
+}
+
+// Original piece drawings, viewBox 0 0 45 45. Sub-shapes touch without overlapping.
+var BASE = 'M11.5 33h22a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-22A1.5 1.5 0 0 1 10 37.5v-3A1.5 1.5 0 0 1 11.5 33z';
+var BASE_LINE = 'M13.5 36h18';
+var BAND = 'M14 30h17l.8 3H13.2z';
+var PIECES = {
+  p: { body: 'M22.5 8.5a5.5 5.5 0 1 1 0 11a5.5 5.5 0 1 1 0-11zM17 19.5h11a1.5 1.5 0 0 1 0 3H17a1.5 1.5 0 0 1 0-3zM18 22.5h9c.8 4 2.3 7.5 4.5 10.5h-18c2.2-3 3.7-6.5 4.5-10.5z' + BASE, detail: BASE_LINE },
+  r: { body: 'M12.5 8H16.5V11H20V8H25V11H28.5V8H32.5V15.5H12.5ZM14 15.5h17l-1.5 2.5h-14zM15.5 18h14l1.2 13H14.3zM13 31h19v2H13z' + BASE, detail: 'M17 24.5h11' + BASE_LINE },
+  n: { body: 'M14 33C14 28 16 25.5 19 23.5C17 24.5 15 25.2 13 24.5C11.3 24 10 23 10 21.5C10 20.3 10.3 19.3 11 18.5C13.5 16 16 13 18 11L19 6.5L22 9.5C27.5 9.5 31.5 13 31.5 19.5C31.5 25 31 29 32 33Z' + BASE,
+       detail: 'M17.3 14.8a.9.9 0 1 0 1.8 0a.9.9 0 1 0-1.8 0M24 10.6C28.6 12.5 30 17 29.6 24M11.8 20.6h1' + BASE_LINE },
+  b: { body: 'M22.5 6a2.5 2.5 0 1 1 0 5a2.5 2.5 0 1 1 0-5zM22.5 11C18.5 13.8 16.3 17.6 16.6 21.2C16.8 23.6 18.6 25 22.5 25C26.4 25 28.2 23.6 28.4 21.2C28.7 17.6 26.5 13.8 22.5 11ZM17.5 25h10a1.5 1.5 0 0 1 0 3h-10a1.5 1.5 0 0 1 0-3zM18.5 28h8l2 5h-12z' + BASE,
+       detail: 'M24.6 14.8L21.2 19.6' + BASE_LINE },
+  q: { body: 'M10.5 11a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM16.5 8a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM22.5 6.5a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM28.5 8a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM34.5 11a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM10.5 15L16 23.5L16.5 12L20.2 22.5L22.5 10.5L24.8 22.5L28.5 12L29 23.5L34.5 15L31 30H14Z' + BAND + BASE,
+       detail: 'M15.2 26.5h14.6' + BASE_LINE },
+  k: { body: 'M21.25 3.5h2.5V6h2.5v2.5h-2.5v4h-2.5v-4h-2.5V6h2.5zM21.5 12.5h2v4h-2zM22.5 16.5C25 14 30.5 13.8 32.5 17.5C34.3 21 32.5 26 31 30H14C12.5 26 10.7 21 12.5 17.5C14.5 13.8 20 14 22.5 16.5Z' + BAND + BASE,
+       detail: 'M14.8 26.5h15.4M22.5 17.5v8' + BASE_LINE }
+};
+var SQ_LIGHT = '#DCE8E6', SQ_DARK = '#4A8590', SQ_TO = '#E8A33D', SQ_FROM = '#F1C06E';
+
+function parseFen(placement) {
+  return placement.split('/').map(function (row) {
+    var out = [];
+    for (var i = 0; i < row.length; i++) {
+      var ch = row[i];
+      if (ch >= '1' && ch <= '8') { for (var k = 0; k < +ch; k++) out.push(null); }
+      else out.push(ch);
+    }
+    return out;
+  });
+}
+
+function pieceView(pc) {
+  var white = pc === pc.toUpperCase();
+  var P = PIECES[pc.toLowerCase()];
+  return { body: P.body, detail: P.detail, fill: white ? '#FFFBF0' : '#1B2B30', dc: white ? '#14262B' : '#DCE8E6' };
+}
+
+// Arrow as one polygon (shaft + head), in board pixels.
+function arrowPoints(a, b, w) {
+  var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy);
+  var ux = dx / len, uy = dy / len, px = -uy, py = ux;
+  var hw = w / 2, headW = w * 1.15, headL = w * 1.9;
+  var sx = a[0] + ux * w * 0.6, sy = a[1] + uy * w * 0.6;
+  var tx = b[0] - ux * 4, ty = b[1] - uy * 4;
+  var bx = tx - ux * headL, by = ty - uy * headL;
+  var pts = [[sx + px * hw, sy + py * hw], [bx + px * hw, by + py * hw], [bx + px * headW, by + py * headW], [tx, ty],
+             [bx - px * headW, by - py * headW], [bx - px * hw, by - py * hw], [sx - px * hw, sy - py * hw]];
+  return pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+}
+
+function buildBoard(opts) {
+  var grid = parseFen(opts.fen), size = opts.size, s = size / 8;
+  var squares = [];
+  for (var r = 0; r < 8; r++) {
+    for (var f = 0; f < 8; f++) {
+      var name = 'abcdefgh'[f] + (8 - r);
+      var light = (r + f) % 2 === 0;
+      var isTo = name === opts.move.to, isFrom = name === opts.move.from;
+      var pc = grid[r][f];
+      var pv = pc ? pieceView(pc) : { body: '', detail: '', fill: 'none', dc: 'none' };
+      squares.push({
+        bg: isTo ? SQ_TO : (isFrom ? SQ_FROM : (light ? SQ_LIGHT : SQ_DARK)),
+        showRank: f === 0, rank: String(8 - r), showFile: r === 7, file: 'abcdefgh'[f],
+        cc: (light || isTo || isFrom) ? '#14262B' : '#FFFFFF',
+        hasPiece: !!pc, body: pv.body, detail: pv.detail, fill: pv.fill, dc: pv.dc,
+        hasBadge: isTo, tag: tagView(opts.tag, 28, '#14262B')
+      });
+    }
+  }
+  function c(sq) { return [(sq.charCodeAt(0) - 97 + 0.5) * s, (8 - Number(sq[1]) + 0.5) * s]; }
+  return {
+    size: size + 'px', vb: '0 0 ' + size + ' ' + size, sw: opts.sw, squares: squares,
+    arrow: arrowPoints(c(opts.best.from), c(opts.best.to), opts.arrowW), caption: opts.caption
+  };
+}
+
+// White-win probability curve of the sample game (y = 100 - win%, 34 points).
+var Y = [46.1, 46.7, 46.6, 46.5, 45.6, 44.7, 41.9, 41.9, 37.6, 37.0, 37.1, 40.4, 32.1, 31.0, 29.5, 32.3, 33.1, 32.9, 24.8, 24.8,
+         14.2, 13.2, 12.7, 12.4, 12.6, 10.7, 9.3, 9.8, 4.7, 3.8, 0.4, 0.4, 0.4, 0.0];
+var AREA = 'M0,100 L' + Y.map(function (y, i) { return (i * 10) + ',' + y; }).join(' L') + ' L330,100 Z';
+var MARK_CANDIDATES = [
+  { k: 31, tag: 'brillante', aria: '16. Qb8+, brillante' },
+  { k: 30, tag: 'svista', aria: '15… Nxd7, svista' },
+  { k: 19, tag: 'ottima', aria: '10. Nxb5, ottima' },
+  { k: 27, tag: 'ottima', aria: '14. Rd1, ottima' },
+  { k: 20, tag: 'imprecisione', aria: '10… cxb5, imprecisione' }
+];
+
+function buildGraph(o) {
+  var W = o.plotW - 4, H = o.plotH - 4, size = o.mark, gap = 52;
+  var placed = [];
+  MARK_CANDIDATES.slice(0, o.max).forEach(function (m) {
+    var cx = m.k / 33 * W, cy = Y[m.k] / 100 * H;
+    var inWhite = cy < H / 2;
+    var dir = inWhite ? 1 : -1;
+    var x = Math.max(size / 2 + 2, Math.min(W - size / 2 - 2, cx));
+    var y = cy + dir * (size / 2 + 10);
+    var guard = 0;
+    while (guard < 6 && placed.some(function (p) { return Math.abs(p.x - x) < gap && Math.abs(p.y - y) < gap; })) {
+      y += dir * gap;
+      guard++;
+    }
+    placed.push({ x: x, y: y, cx: cx, cy: cy, inWhite: inWhite, m: m });
+  });
+  var marks = placed.map(function (p) {
+    var ring = p.inWhite ? '#14262B' : '#F2EDE0';
+    var edge = p.inWhite ? p.y - size / 2 : p.y + size / 2;
+    var top = Math.min(p.cy, edge), h = Math.abs(edge - p.cy);
+    return {
+      x: (p.x - size / 2).toFixed(1) + 'px', y: (p.y - size / 2).toFixed(1) + 'px', size: size + 'px',
+      lx: (p.cx - 1).toFixed(1) + 'px', ly: top.toFixed(1) + 'px', lh: h.toFixed(1) + 'px',
+      ring: ring, tag: tagView(p.m.tag, size, ring), aria: p.m.aria
+    };
+  });
+  var ticks = [[1, '1'], [9, '5'], [19, '10'], [29, '15'], [33, '17']].map(function (t, i, arr) {
+    return { left: (t[0] / 33 * 100).toFixed(2) + '%', label: t[1], tf: i === arr.length - 1 ? 'translateX(-100%)' : (i === 0 ? 'translateX(-30%)' : 'translateX(-50%)') };
+  });
+  return {
+    caption: o.caption, cardW: o.cardW + 'px', pad: o.pad + 'px', titleSize: o.titleSize + 'px',
+    plotW: o.plotW + 'px', plotH: o.plotH + 'px', vb: '0 0 ' + W + ' ' + H, w: W, mid: H / 2,
+    marks: marks, ticks: ticks, bandFont: o.bandFont + 'px', showFinale: o.finale,
+    bands: [
+      { name: 'Apertura', range: 'mosse 1–10', white: 'Eccellente', black: 'Buona', grow: 20, bl: '1.5px', r: '8px 0 0 8px' },
+      { name: 'Mediogioco', range: 'mosse 11–17', white: 'Eccellente', black: 'Eccellente', grow: 13, bl: '0px', r: '0 8px 8px 0' }
+    ]
+  };
+}
+
+function evalBar(val, ev, caption, horizontal) {
+  var wp = val === 'Matto in 1' ? 1 : 1 / (1 + Math.exp(-0.00368208 * ev));
+  var onWhite = wp >= 0.5;
+  return {
+    val: horizontal ? val : val.replace('Matto in ', 'Matto\nin '), caption: caption,
+    wFlex: (wp * 100).toFixed(1), bFlex: ((1 - wp) * 100).toFixed(1), onWhite: onWhite, onBlack: !onWhite,
+    wPad: onWhite ? (horizontal ? '0 0 0 8px' : '0 0 10px') : '0', bPad: !onWhite ? (horizontal ? '0 8px 0 0' : '10px 0 0') : '0'
+  };
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    var dark = this.props.theme === 'Scuro';
+    var t = dark ? THEMES.Scuro : THEMES.Chiaro;
+    var fenB5 = 'rn2kb1r/p3qppp/2p2n2/1p2p1B1/2B1P3/1QN5/PPP2PPP/R3K2R';
+    var boards = [
+      buildBoard({ fen: fenB5, size: 480, sw: '2px', arrowW: 14, move: { from: 'b7', to: 'b5' }, best: { from: 'b8', to: 'a6' }, tag: 'imprecisione',
+                   caption: 'Desktop · 480 px · contorno pezzi 2 px · freccia 14 px' }),
+      buildBoard({ fen: fenB5, size: 350, sw: '1.5px', arrowW: 10, move: { from: 'b7', to: 'b5' }, best: { from: 'b8', to: 'a6' }, tag: 'imprecisione',
+                   caption: 'Telefono · 350 px · contorno pezzi 1,5 px · freccia 10 px' })
+    ];
+    var order = 'KQRBNPkqrbnp'.split('');
+    var names = { k: 'Re', q: 'Donna', r: 'Torre', b: 'Alfiere', n: 'Cavallo', p: 'Pedone' };
+    var specimen = [['Casa chiara', SQ_LIGHT], ['Casa scura', SQ_DARK], ['Casa di arrivo', SQ_TO], ['Casa di partenza', SQ_FROM]].map(function (row) {
+      return { label: row[0], cells: order.map(function (pc) { var v = pieceView(pc); v.bg = row[1]; return v; }) };
+    });
+    var pieceHead = order.map(function (pc) { return { label: names[pc.toLowerCase()].slice(0, 3) + (pc === pc.toUpperCase() ? ' B' : ' N') }; });
+
+    var ringTheme = t.ring;
+    return {
+      t: t, area: AREA, noop: function () {},
+      userValue: 'PaulMorphy', placeholderValue: 'il tuo nome utente',
+      tags: TAG_ORDER.map(function (k) { return tagView(k, 32, ringTheme); }),
+      tagSizes: [
+        Object.assign(tagView('brillante', 24, ringTheme), { caption: '24 · striscia mobile' }),
+        Object.assign(tagView('brillante', 28, ringTheme), { caption: '28 · liste, badge, marker desktop' }),
+        Object.assign(tagView('brillante', 32, ringTheme), { caption: '32 · marker telefono' }),
+        Object.assign(tagView('brillante', 40, t.onPetrol), { caption: '40 · card feedback' })
+      ],
+      accBars: [
+        { dot: '#FFFFFF', ring: t.line, name: 'Morphy', v: 98.4, rest: 1.6, label: '98,4' },
+        { dot: t.blackDot, ring: t.blackRing, name: 'Duca e Conte', v: 83.8, rest: 16.2, label: '83,8' }
+      ],
+      playerBars: [
+        { caption: 'Desktop · Bianco', w: '100%', dot: '#FFFFFF', ring: t.line, name: 'Paul Morphy', adv: '+3', acc: '98,4', nameSize: '20px', accSize: '28px' },
+        { caption: 'Desktop · Nero', w: '100%', dot: t.blackDot, ring: t.blackRing, name: 'Duca di Brunswick e Conte Isouard', adv: '', acc: '83,8', nameSize: '20px', accSize: '28px' },
+        { caption: 'Telefono · Bianco', w: '350px', dot: '#FFFFFF', ring: t.line, name: 'Paul Morphy', adv: '+3', acc: '98,4', nameSize: '18px', accSize: '22px' },
+        { caption: 'Telefono · Nero', w: '350px', dot: t.blackDot, ring: t.blackRing, name: 'Duca di Brunswick e Conte Isouard', adv: '', acc: '83,8', nameSize: '18px', accSize: '22px' }
+      ],
+      boards: boards, specimen: specimen, pieceHead: pieceHead,
+      evalV: [evalBar('+6,2', 620, 'Bianco avanti'), evalBar('−3,4', -340, 'Nero avanti'), evalBar('Matto in 1', 0, 'Matto in 1')],
+      evalH: [evalBar('+6,2', 620, 'Bianco avanti', true), evalBar('−3,4', -340, 'Nero avanti', true), evalBar('Matto in 1', 0, 'Matto in 1', true)],
+      graphs: [
+        buildGraph({ caption: 'Desktop · 8/12 · plot 280 px · max 5 marker', cardW: 864, pad: 32, titleSize: 28, plotW: 800, plotH: 280, mark: 28, max: 5, bandFont: 16, finale: true }),
+        buildGraph({ caption: 'Telefono · plot 200 px · max 4 marker', cardW: 350, pad: 20, titleSize: 24, plotW: 310, plotH: 200, mark: 32, max: 4, bandFont: 14, finale: false })
+      ],
+      feedback: [
+        { caption: 'Desktop · mossa migliore', w: '416px', pad: '32px', titleSize: '28px', textSize: '18px', evSize: '20px',
+          tag: tagView('brillante', 40, t.onPetrol), cat: 'Brillante', ev: 'Matto in 1', title: fig('16. Qb8+ è brillante'),
+          text: fig('Sacrificio di donna: Nxb8 è l\'unica risposta e la torre dà matto in d8.'), showActions: false,
+          best: fig('Qb8+ (giocata)'), line: fig('Qb8+ Nxb8 Rd8#') },
+        { caption: 'Desktop · mossa non migliore', w: '416px', pad: '32px', titleSize: '28px', textSize: '18px', evSize: '20px',
+          tag: tagView('svista', 40, t.onPetrol), cat: 'Svista', ev: 'Matto in 2', title: fig('15… Nxd7 è una svista'),
+          text: fig('Riprendere col cavallo libera la diagonale g5-e7: ora il Bianco ha matto in 2. Con Qxd7 il Nero restava in partita.'), showActions: true,
+          best: fig('Qxd7'), line: fig('Qxd7 Qb8+ Ke7 Qxe5+ Kd8') },
+        { caption: 'Telefono · mossa migliore', w: '350px', pad: '20px', titleSize: '22px', textSize: '17px', evSize: '16px',
+          tag: tagView('brillante', 40, t.onPetrol), cat: 'Brillante', ev: 'Matto in 1', title: fig('16. Qb8+ è brillante'),
+          text: fig('Sacrificio di donna: Nxb8 è l\'unica risposta e la torre dà matto in d8.'), showActions: false,
+          best: fig('Qb8+ (giocata)'), line: fig('Qb8+ Nxb8 Rd8#') },
+        { caption: 'Telefono · mossa non migliore', w: '350px', pad: '20px', titleSize: '22px', textSize: '17px', evSize: '16px',
+          tag: tagView('svista', 40, t.onPetrol), cat: 'Svista', ev: 'Matto in 2', title: fig('15… Nxd7 è una svista'),
+          text: fig('Riprendere col cavallo libera la diagonale g5-e7: ora il Bianco ha matto in 2. Con Qxd7 il Nero restava in partita.'), showActions: true,
+          best: fig('Qxd7'), line: fig('Qxd7 Qb8+ Ke7 Qxe5+ Kd8') }
+      ],
+      moveRows: [
+        { num: '15…', san: fig('Nxd7'), tag: 'svista' },
+        { num: '16.', san: fig('Qb8+'), tag: 'brillante', sel: true },
+        { num: '16…', san: fig('Nxb8'), tag: 'migliore' },
+        { num: '17.', san: fig('Rd8#'), tag: 'migliore' }
+      ].map(function (r) {
+        return {
+          num: r.num, san: r.san, current: r.sel ? 'true' : 'false', tag: tagView(r.tag, 28, ringTheme),
+          bg: r.sel ? t.sel : 'transparent', border: r.sel ? t.selBorder : 'transparent', bar: r.sel ? 'inset 4px 0 0 #E8A33D' : 'none'
+        };
+      }),
+      strip: [
+        { san: fig('15… Nxd7'), tag: 'svista' },
+        { san: fig('16. Qb8+'), tag: 'brillante', sel: true },
+        { san: fig('16… Nxb8'), tag: 'migliore' }
+      ].map(function (c) {
+        return {
+          san: c.san, current: c.sel ? 'true' : 'false', aria: c.san + ', ' + TAG[c.tag].label,
+          tag: tagView(c.tag, 24, c.sel ? '#14262B' : ringTheme),
+          bg: c.sel ? '#E8A33D' : t.card, fg: c.sel ? '#14262B' : t.text,
+          border: c.sel ? t.amberBorder : '1.5px solid ' + t.ctrlBorder
+        };
+      }),
+      games: [
+        { result: '1-0', title: "Partita dell'Opera", place: 'Parigi, 1858', white: 'Paul Morphy', black: 'Duca di Brunswick e Conte Isouard',
+          meta: 'C41 Difesa Philidor · 17 mosse', analyzed: true, acc: '98,4', action: 'Apri',
+          btnBg: '#0F4C57', btnFg: t.onPetrol, btnBorder: t.petrolBtnBorder },
+        { result: '1-0', title: 'Partita Immortale', place: 'Londra, 1851', white: 'Adolf Anderssen', black: 'Lionel Kieseritzky',
+          meta: 'C33 Gambetto di Re · 23 mosse', analyzed: false, acc: '', action: 'Analizza',
+          btnBg: 'transparent', btnFg: t.petrolOutlineText, btnBorder: t.petrolOutline }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

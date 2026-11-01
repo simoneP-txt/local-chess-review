@@ -1,4 +1,5 @@
-# Dev-only dependencies: needed to build the standalone .exe with build.ps1.
-# End users who just run the script don't need these.
+# Dev-only dependencies: pyinstaller builds the .exe (build.ps1), pytest runs tests/.
+# End users who just run the script need neither.
 -r requirements.txt
 pyinstaller>=6.0
+pytest>=8

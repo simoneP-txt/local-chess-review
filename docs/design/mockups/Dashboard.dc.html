@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Partite</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Symbols+2&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; min-height: 1310px; background: #E9E1CE; color: #14262B; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif">
+
+  <header style="position: relative; z-index: 20; height: 72px; box-sizing: border-box; padding-left: 32px; display: flex; align-items: center; gap: 16px; background: #0F4C57; color: #FBF8F0">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="12" height="12" rx="2.5" style="fill: #FBF8F0"></rect><rect x="15" y="1" width="12" height="12" rx="2.5" style="fill: #4A8590"></rect><rect x="1" y="15" width="12" height="12" rx="2.5" style="fill: #4A8590"></rect><rect x="15.75" y="15.75" width="10.5" height="10.5" rx="2" style="fill: #E8A33D; stroke: #14262B; stroke-width: 1.5"></rect></svg>
+      <span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600">Local Chess Review</span>
+    </div>
+    <nav aria-label="Sezioni" style="display: flex; gap: 4px; margin-left: 16px">
+      <a href="Dashboard.dc.html" aria-current="page" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; border: 1.5px solid #14262B; background: #E8A33D; color: #14262B; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 600">Partite</a>
+      <a href="Summary.dc.html" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; border: 1.5px solid transparent; color: #FBF8F0; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 500">Riepilogo</a>
+      <a href="Main.dc.html" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; border: 1.5px solid transparent; color: #FBF8F0; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 500">Revisione</a>
+    </nav>
+    <span style="flex: 1 1 auto"></span>
+    <div style="position: relative">
+      <button type="button" onClick="{{togglePanel}}" aria-expanded="{{panelExpanded}}" aria-controls="status-panel" style="height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1.5px solid #B9CFCF; background: transparent; color: #FBF8F0; display: inline-flex; align-items: center; gap: 10px; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">
+        <span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #FBF8F0"></span>Pronto
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <sc-if value="{{panelOpen}}" hint-placeholder-val="{{ false }}">
+        <div id="status-panel" role="region" aria-label="Stato del motore" style="position: absolute; top: 60px; right: 0; width: 380px; box-sizing: border-box; padding: 24px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08); color: #14262B; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #14262B"></span><span style="font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #0F4C57">Pronto</span></div>
+          <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; font-size: 16px">
+            <dt style="color: #44585C">Motore</dt><dd style="margin: 0">Stockfish 17.1 NNUE</dd>
+            <dt style="color: #44585C">Thread</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">8 di 8</dd>
+            <dt style="color: #44585C">Profondità</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">18</dd>
+            <dt style="color: #44585C">Cache Lichess</dt><dd style="margin: 0">Attiva</dd>
+          </dl>
+          <label style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding-top: 12px; border-top: 1.5px solid #8B7C5C; font-size: 16px; cursor: pointer">
+            <input type="checkbox" checked="{{cacheOn}}" onChange="{{toggleCache}}" style="flex: 0 0 22px; width: 22px; height: 22px; margin: 0; accent-color: #0F4C57">
+            Usa la cache cloud di Lichess
+          </label>
+          <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #44585C">Con la connessione attiva, le posizioni già valutate arrivano dalla cache cloud di Lichess. Le altre le calcola Stockfish sul tuo PC.</p>
+        </div>
+      </sc-if>
+    </div>
+    <button type="button" aria-label="Impostazioni" style="width: 48px; height: 48px; border-radius: 12px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+    <button type="button" aria-label="Tema scuro: disponibile in D5" title="Il tema è fissato per schermata: la variante scura è D5" style="width: 48px; height: 48px; border-radius: 12px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg></button>
+    <div style="display: flex; margin-left: 8px">
+      <button type="button" aria-label="Riduci a icona" style="width: 48px; height: 72px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2"><path d="M5 12h14"></path></svg></button>
+      <button type="button" aria-label="Ingrandisci" style="width: 48px; height: 72px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2"><rect x="5" y="5" width="14" height="14"></rect></svg></button>
+      <button type="button" aria-label="Chiudi" style="width: 48px; height: 72px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </header>
+
+  <main style="box-sizing: border-box; padding: 64px; display: flex; flex-direction: column; gap: 32px">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
+      <h1 style="margin: 0; padding-bottom: 8px; border-bottom: 4px solid #E8A33D; font-family: 'Fraunces', Georgia, serif; font-size: 48px; font-weight: 500; line-height: 1.1; color: #0F4C57">Rivedi le tue partite</h1>
+      <p style="margin: 0; font-size: 18px; line-height: 1.5; color: #44585C">Scarica le partite del mese dall'API pubblica e analizzale sul tuo PC.</p>
+    </div>
+
+    <section aria-label="Cerca partite" style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08)">
+      <form style="display: flex; align-items: flex-end; gap: 24px" onSubmit="{{noSubmit}}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span id="lbl-platform" style="font-size: 14px; font-weight: 600">Piattaforma</span>
+          <div role="group" aria-labelledby="lbl-platform" style="height: 56px; box-sizing: border-box; padding: 2px; display: flex; gap: 2px; border-radius: 12px; border: 1.5px solid #708183; background: #FFFFFF">
+            <button type="button" onClick="{{pickChesscom}}" aria-pressed="{{ccPressed}}" style="height: 49px; box-sizing: border-box; padding: 0 20px; border-radius: 10px; border: {{ccBorder}}; background: {{ccBg}}; color: #14262B; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Chess.com</button>
+            <button type="button" onClick="{{pickLichess}}" aria-pressed="{{liPressed}}" style="height: 49px; box-sizing: border-box; padding: 0 20px; border-radius: 10px; border: {{liBorder}}; background: {{liBg}}; color: #14262B; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Lichess</button>
+          </div>
+        </div>
+        <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+          <label for="d1-user" style="font-size: 14px; font-weight: 600">Nome utente</label>
+          <div style="position: relative">
+            <input id="d1-user" type="text" value="{{user}}" onChange="{{typeUser}}" autocomplete="off" style="width: 100%; height: 56px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid #708183; background: #FFFFFF; color: #14262B; font: 400 18px/1 'Instrument Sans', sans-serif">
+            <sc-if value="{{userEmpty}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="position: absolute; left: 17px; top: 0; height: 56px; display: flex; align-items: center; pointer-events: none; font-size: 18px; color: #44585C">il tuo nome utente</span></sc-if>
+          </div>
+        </div>
+        <div style="flex: 0 0 240px; display: flex; flex-direction: column; gap: 8px">
+          <label for="d1-month" style="font-size: 14px; font-weight: 600">Mese</label>
+          <select id="d1-month" style="height: 56px; box-sizing: border-box; padding: 0 12px; border-radius: 12px; border: 1.5px solid #708183; background: #FFFFFF; color: #14262B; font: 400 18px/1 'Instrument Sans', sans-serif"><option>Ottobre 2026</option><option>Settembre 2026</option><option>Agosto 2026</option></select>
+        </div>
+        <button type="button" style="flex: 0 0 auto; height: 56px; box-sizing: border-box; padding: 0 24px; border-radius: 12px; border: 1.5px solid #14262B; background: #E8A33D; color: #14262B; display: inline-flex; align-items: center; gap: 10px; font: 700 16px/1 'Instrument Sans', sans-serif; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round"><path d="M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0-13zM15.5 15.5L20 20"></path></svg>Cerca partite</button>
+      </form>
+    </section>
+
+    <div style="display: grid; grid-template-columns: 864px 416px; gap: 32px; align-items: start">
+      <section aria-label="Partite d'esempio" style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08); display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; line-height: 1.2; color: #0F4C57">Partite d'esempio</h2>
+          <p style="margin: 0; font-size: 16px; color: #44585C">Sei partite storiche al posto delle tue, finché non cerchi un utente.</p>
+        </div>
+        <div role="group" aria-label="Filtra le partite" style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+            <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 999px; border: {{f.border}}; background: {{f.bg}}; color: #14262B; font: {{f.weight}} 16px/1 'Instrument Sans', sans-serif; cursor: pointer">{{f.label}}</button>
+          </sc-for>
+        </div>
+        <ul style="margin: 0; padding: 0; list-style: none; border-top: 1px solid #E3DAC4">
+          <sc-for list="{{games}}" as="g" hint-placeholder-count="6">
+            <li style="height: 96px; box-sizing: border-box; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #E3DAC4">
+              <span style="flex: 0 0 56px; height: 40px; box-sizing: border-box; border-radius: 8px; border: 1.5px solid #708183; display: flex; align-items: center; justify-content: center; font: 600 16px/1 'IBM Plex Mono', monospace">{{g.result}}</span>
+              <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+                <div style="display: flex; align-items: baseline; gap: 12px; white-space: nowrap"><span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: #0F4C57">{{g.title}}</span><span style="font-size: 16px; color: #44585C">{{g.place}}</span></div>
+                <div style="display: flex; gap: 16px; font-size: 16px; white-space: nowrap; overflow: hidden">
+                  <span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="flex: 0 0 16px; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid #14262B"></span>{{g.white}}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 8px; min-width: 0"><span aria-hidden="true" style="flex: 0 0 16px; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #14262B; border: 1.5px solid #14262B"></span><span style="overflow: hidden; text-overflow: ellipsis">{{g.black}}</span></span>
+                </div>
+                <span style="font-size: 14px; color: #44585C">{{g.meta}}</span>
+              </div>
+              <sc-if value="{{g.analyzed}}" hint-placeholder-val="{{ false }}"><span style="flex: 0 0 auto; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: #F1EAD8; border: 1.5px solid #708183; display: inline-flex; align-items: center; gap: 6px; font-size: 16px">Precisione <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600">{{g.acc}}</span></span></sc-if>
+              <a href="{{g.href}}" style="flex: 0 0 auto; height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid #0F4C57; background: {{g.btnBg}}; color: {{g.btnFg}}; text-decoration: none; display: inline-flex; align-items: center; font: 600 16px/1 'Instrument Sans', sans-serif">{{g.action}}</a>
+            </li>
+          </sc-for>
+        </ul>
+      </section>
+
+      <section aria-label="Ultima revisione" style="box-sizing: border-box; padding: 32px; border-radius: 16px; background: #E8A33D; border: 1.5px solid #14262B; color: #14262B; display: flex; flex-direction: column; gap: 24px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase">Ultima revisione</span>
+          <h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; line-height: 1.2">Partita dell'Opera</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600"><span aria-hidden="true" style="width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid #14262B"></span>Morphy</span>
+            <span style="font: 600 56px/1.05 'IBM Plex Mono', monospace; letter-spacing: -0.02em">98,4</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600"><span aria-hidden="true" style="width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: #14262B; border: 1.5px solid #14262B"></span>Duca e Conte</span>
+            <span style="font: 600 56px/1.05 'IBM Plex Mono', monospace; letter-spacing: -0.02em">83,8</span>
+          </div>
+        </div>
+        <a href="Main.dc.html" style="align-self: flex-start; height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid #0F4C57; background: #0F4C57; color: #FBF8F0; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font: 600 16px/1 'Instrument Sans', sans-serif">Riprendi revisione<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg></a>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1310}}'>
+// D1 · Dashboard. Historical sample games stand in for the user's monthly archive.
+var GAMES = [
+  { result: '1-0', title: "Partita dell'Opera", place: 'Parigi, 1858', white: 'Paul Morphy', black: 'Duca di Brunswick e Conte Isouard',
+    meta: 'C41 Difesa Philidor · 17 mosse', analyzed: true, acc: '98,4' },
+  { result: '1-0', title: 'Partita Immortale', place: 'Londra, 1851', white: 'Adolf Anderssen', black: 'Lionel Kieseritzky',
+    meta: 'C33 Gambetto di Re · 23 mosse', analyzed: false },
+  { result: '1-0', title: 'Partita Sempreverde', place: 'Berlino, 1852', white: 'Adolf Anderssen', black: 'Jean Dufresne',
+    meta: 'C52 Gambetto Evans · 24 mosse', analyzed: false },
+  { result: '0-1', title: 'Partita del Secolo', place: 'New York, 1956', white: 'Donald Byrne', black: 'Bobby Fischer',
+    meta: 'D92 Difesa Grünfeld · 41 mosse', analyzed: false },
+  { result: '1-0', title: "L'Immortale di Kasparov", place: 'Wijk aan Zee, 1999', white: 'Garry Kasparov', black: 'Veselin Topalov',
+    meta: 'B07 Difesa Pirc · 44 mosse', analyzed: false },
+  { result: '1-0', title: 'Deep Blue, partita 6', place: 'New York, 1997', white: 'Deep Blue', black: 'Garry Kasparov',
+    meta: 'B17 Caro-Kann · 19 mosse', analyzed: false }
+];
+
+class Component extends DCLogic {
+  constructor() {
+    super(...arguments);
+    this.state = { platform: 'chesscom', filter: 'all', user: '', panel: false, cache: true };
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state;
+    var cc = s.platform === 'chesscom';
+    function seg(on) { return { bg: on ? '#E8A33D' : 'transparent', border: on ? '1.5px solid #14262B' : '1.5px solid transparent' }; }
+    var a = seg(cc), b = seg(!cc);
+    var counts = { all: GAMES.length, done: GAMES.filter(function (g) { return g.analyzed; }).length };
+    counts.todo = counts.all - counts.done;
+    var filters = [['all', 'Tutte'], ['done', 'Analizzate'], ['todo', 'Da analizzare']].map(function (f) {
+      var on = s.filter === f[0];
+      return {
+        label: f[1] + ' · ' + counts[f[0]], pressed: on ? 'true' : 'false', weight: on ? '600' : '500',
+        bg: on ? '#E8A33D' : '#F1EAD8', border: on ? '1.5px solid #14262B' : '1.5px solid #708183',
+        pick: function () { self.setState({ filter: f[0] }); }
+      };
+    });
+    var games = GAMES.filter(function (g) {
+      return s.filter === 'all' || (s.filter === 'done' ? g.analyzed : !g.analyzed);
+    }).map(function (g) {
+      return {
+        result: g.result, title: g.title, place: g.place, white: g.white, black: g.black, meta: g.meta,
+        analyzed: g.analyzed, acc: g.acc || '', action: g.analyzed ? 'Apri' : 'Analizza',
+        href: g.analyzed ? 'Summary.dc.html' : 'Loading.dc.html',
+        btnBg: g.analyzed ? '#0F4C57' : 'transparent', btnFg: g.analyzed ? '#FBF8F0' : '#0F4C57'
+      };
+    });
+    return {
+      filters: filters, games: games,
+      ccPressed: cc ? 'true' : 'false', liPressed: cc ? 'false' : 'true',
+      ccBg: a.bg, ccBorder: a.border, liBg: b.bg, liBorder: b.border,
+      user: s.user, userEmpty: !s.user,
+      panelOpen: s.panel, panelExpanded: s.panel ? 'true' : 'false', cacheOn: s.cache,
+      pickChesscom: function () { self.setState({ platform: 'chesscom' }); },
+      pickLichess: function () { self.setState({ platform: 'lichess' }); },
+      typeUser: function (e) { self.setState({ user: e.target.value }); },
+      noSubmit: function (e) { e.preventDefault(); },
+      togglePanel: function () { self.setState({ panel: !self.state.panel }); },
+      toggleCache: function () { self.setState({ cache: !self.state.cache }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

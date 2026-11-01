@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Analisi completata</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Symbols+2&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; background: #E9E1CE; color: #14262B; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif">
+
+  <header style="position: relative; z-index: 20; height: 72px; box-sizing: border-box; padding-left: 32px; display: flex; align-items: center; gap: 16px; background: #0F4C57; color: #FBF8F0">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="12" height="12" rx="2.5" style="fill: #FBF8F0"></rect><rect x="15" y="1" width="12" height="12" rx="2.5" style="fill: #4A8590"></rect><rect x="1" y="15" width="12" height="12" rx="2.5" style="fill: #4A8590"></rect><rect x="15.75" y="15.75" width="10.5" height="10.5" rx="2" style="fill: #E8A33D; stroke: #14262B; stroke-width: 1.5"></rect></svg>
+      <span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600">Local Chess Review</span>
+    </div>
+    <nav aria-label="Sezioni" style="display: flex; gap: 4px; margin-left: 16px">
+      <a href="Dashboard.dc.html" aria-current="page" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; border: 1.5px solid #14262B; background: #E8A33D; color: #14262B; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 600">Partite</a>
+      <a href="Summary.dc.html" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; border: 1.5px solid transparent; color: #FBF8F0; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 500">Riepilogo</a>
+      <a href="Main.dc.html" style="height: 48px; box-sizing: border-box; padding: 0 18px; border-radius: 999px; border: 1.5px solid transparent; color: #FBF8F0; text-decoration: none; display: inline-flex; align-items: center; font-size: 16px; font-weight: 500">Revisione</a>
+    </nav>
+    <span style="flex: 1 1 auto"></span>
+    <div style="position: relative">
+      <button type="button" onClick="{{togglePanel}}" aria-expanded="{{panelExpanded}}" aria-controls="status-panel" style="height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1.5px solid #B9CFCF; background: transparent; color: #FBF8F0; display: inline-flex; align-items: center; gap: 10px; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">
+        <span aria-hidden="true" style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #FBF8F0"></span>Pronto
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <sc-if value="{{panelOpen}}" hint-placeholder-val="{{ false }}">
+        <div id="status-panel" role="region" aria-label="Stato del motore" style="position: absolute; top: 60px; right: 0; width: 380px; box-sizing: border-box; padding: 24px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08); color: #14262B; display: flex; flex-direction: column; gap: 16px">
+          <div style="display: flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #14262B"></span><span style="font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #0F4C57">Pronto</span></div>
+          <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; font-size: 16px">
+            <dt style="color: #44585C">Motore</dt><dd style="margin: 0">Stockfish 17.1 NNUE</dd>
+            <dt style="color: #44585C">Thread</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">8 di 8</dd>
+            <dt style="color: #44585C">Profondità</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace">18</dd>
+            <dt style="color: #44585C">Cache Lichess</dt><dd style="margin: 0">Attiva</dd>
+          </dl>
+          <label style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding-top: 12px; border-top: 1.5px solid #8B7C5C; font-size: 16px; cursor: pointer">
+            <input type="checkbox" checked="{{cacheOn}}" onChange="{{toggleCache}}" style="flex: 0 0 22px; width: 22px; height: 22px; margin: 0; accent-color: #0F4C57">
+            Usa la cache cloud di Lichess
+          </label>
+        </div>
+      </sc-if>
+    </div>
+    <button type="button" aria-label="Impostazioni" style="width: 48px; height: 48px; border-radius: 12px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+    <button type="button" aria-label="Tema scuro: disponibile in D5" title="Il tema è fissato per schermata: la variante scura è D5" style="width: 48px; height: 48px; border-radius: 12px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg></button>
+    <div style="display: flex; margin-left: 8px">
+      <button type="button" aria-label="Riduci a icona" style="width: 48px; height: 72px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2"><path d="M5 12h14"></path></svg></button>
+      <button type="button" aria-label="Ingrandisci" style="width: 48px; height: 72px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2"><rect x="5" y="5" width="14" height="14"></rect></svg></button>
+      <button type="button" aria-label="Chiudi" style="width: 48px; height: 72px; border: 0; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </header>
+
+  <main style="height: 828px; box-sizing: border-box; padding: 0 64px; display: flex; flex-direction: column; justify-content: center; gap: 32px">
+    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px">
+      <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #44585C">Analisi completata</span>
+      <h1 style="margin: 0; padding-bottom: 8px; border-bottom: 4px solid #E8A33D; font-family: 'Fraunces', Georgia, serif; font-size: 48px; font-weight: 500; line-height: 1.1; color: #0F4C57">Partita dell'Opera</h1>
+      <p style="margin: 0; font-size: 18px; line-height: 1.5; color: #44585C">Paul Morphy contro Duca di Brunswick e Conte Isouard · Parigi, 1858</p>
+    </div>
+
+    <div style="display: flex; gap: 32px; align-items: stretch">
+      <section aria-label="Avanzamento" style="flex: 0 0 416px; width: 416px; box-sizing: border-box; padding: 32px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08); display: flex; flex-direction: column">
+        <span style="font: 600 96px/1 'IBM Plex Mono', monospace; letter-spacing: -0.03em">100%</span>
+        <div role="progressbar" aria-label="Avanzamento analisi" aria-valuemin="0" aria-valuemax="33" aria-valuenow="33" aria-valuetext="semimossa 33 di 33" style="margin-top: 16px; height: 12px; box-sizing: border-box; border-radius: 999px; background: #E6DCC4; border: 1.5px solid #14262B; overflow: hidden; display: flex">
+          <span style="flex: 1 1 0px; background: #E8A33D"></span>
+        </div>
+        <span style="margin-top: 10px; font-size: 16px; color: #44585C">semimossa <span style="font-family: 'IBM Plex Mono', monospace; color: #14262B">33</span> di <span style="font-family: 'IBM Plex Mono', monospace; color: #14262B">33</span></span>
+        <ol style="margin: 24px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 18px">
+          <li style="display: flex; align-items: center; gap: 12px"><span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #14262B; color: #14262B; display: flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 16 16" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M3.5 8.4l3 3 6-6.8"></path></svg></span><span>Partita scaricata</span><span style="position: absolute; left: -9999px">completato</span></li>
+          <li style="display: flex; align-items: center; gap: 12px"><span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #14262B; color: #14262B; display: flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 16 16" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M3.5 8.4l3 3 6-6.8"></path></svg></span><span>Apertura: Difesa Philidor</span><span style="position: absolute; left: -9999px">completato</span></li>
+          <li style="display: flex; align-items: center; gap: 12px"><span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #14262B; color: #14262B; display: flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 16 16" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M3.5 8.4l3 3 6-6.8"></path></svg></span><span>Posizioni analizzate sul tuo PC</span><span style="position: absolute; left: -9999px">completato</span></li>
+          <li style="display: flex; align-items: center; gap: 12px"><span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; border: 1.5px solid #14262B; color: #14262B; display: flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 16 16" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M3.5 8.4l3 3 6-6.8"></path></svg></span><span>Mosse classificate e riepilogo</span><span style="position: absolute; left: -9999px">completato</span></li>
+        </ol>
+        <details style="margin-top: 16px; border-top: 1.5px solid #8B7C5C">
+          <summary style="list-style: none; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-size: 16px; font-weight: 600">Posizione finale<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg></summary>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 4px 0 8px">
+            <span style="font: 600 18px/1 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{lastMove}}</span>
+            <span style="padding: 6px 8px; border-radius: 8px; background: #FFFFFF; border: 1.5px solid #708183; font: 600 16px/1 'IBM Plex Mono', monospace">1-0</span>
+          </div>
+        </details>
+        <div style="margin-top: auto; padding-top: 24px; display: flex; gap: 8px">
+          <a href="Summary.dc.html" style="flex: 1 1 auto; height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid #14262B; background: #E8A33D; color: #14262B; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 10px; font: 700 16px/1 'Instrument Sans', sans-serif">Apri il riepilogo<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg></a>
+        </div>
+      </section>
+
+      <section aria-label="Mini-puzzle" style="flex: 0 0 864px; width: 864px; box-sizing: border-box; padding: 32px; border-radius: 16px; background: #FBF8F0; border: 1.5px solid #8B7C5C; box-shadow: 0 1px 0 rgba(20,38,43,.08); display: flex; gap: 32px">
+        <div style="flex: 0 0 auto; width: 480px; height: 480px; border: 2px solid #14262B">
+          <div style="display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px)">
+            <sc-for list="{{squares}}" as="sq" hint-placeholder-count="64">
+              <div style="position: relative; display: flex; align-items: center; justify-content: center; background: {{sq.bg}}">
+                <sc-if value="{{sq.showRank}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; top: 3px; left: 4px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.rank}}</span></sc-if>
+                <sc-if value="{{sq.showFile}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; bottom: 3px; right: 4px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.file}}</span></sc-if>
+                <sc-if value="{{sq.hasPiece}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 45 45" role="img" aria-label="{{sq.label}}" style="width: 54px; height: 54px; overflow: visible"><path d="{{sq.body}}" style="fill: {{sq.fill}}; stroke: #14262B; stroke-width: 2px; stroke-linejoin: round; vector-effect: non-scaling-stroke"></path><path d="{{sq.detail}}" style="fill: none; stroke: {{sq.dc}}; stroke-width: 1px; stroke-linecap: round; vector-effect: non-scaling-stroke"></path></svg></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <div style="position: relative; display: flex; align-items: flex-start; gap: 8px">
+            <h2 style="flex: 1 1 auto; margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 32px; font-weight: 500; line-height: 1.15; color: #0F4C57">Il Bianco dà matto in 2</h2>
+            <button type="button" onClick="{{toggleTip}}" aria-expanded="{{tipExpanded}}" aria-controls="puzzle-tip" aria-label="Informazioni sul puzzle" style="flex: 0 0 48px; width: 48px; height: 48px; border-radius: 12px; border: 1.5px solid #708183; background: transparent; color: #14262B; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z"></path><path d="M12 11v6M12 7.5v.5"></path></svg></button>
+            <sc-if value="{{tipOpen}}" hint-placeholder-val="{{ false }}">
+              <div id="puzzle-tip" role="tooltip" style="position: absolute; top: 56px; right: 0; z-index: 5; width: 280px; box-sizing: border-box; padding: 16px; border-radius: 12px; background: #0F4C57; color: #FBF8F0; font-size: 16px; line-height: 1.45">Temi: matto affogato, sacrificio. I puzzle arrivano dal database Lichess (licenza CC0), filtrati per difficoltà.</div>
+            </sc-if>
+          </div>
+          <p aria-live="polite" style="margin: 0; font-size: 18px; line-height: 1.5">{{puzzleText}}</p>
+          <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+            <button type="button" onClick="{{step}}" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid #708183; background: transparent; color: #14262B; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">{{stepLabel}}</button>
+            <button type="button" onClick="{{reset}}" style="height: 48px; box-sizing: border-box; padding: 0 20px; border-radius: 12px; border: 1.5px solid #708183; background: transparent; color: #14262B; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Altro puzzle</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+// S2 · D2 once the analysis is complete: the summary button becomes the primary action.
+var FE = '︎';
+var PIECE_NAME = { k: 'Re', q: 'Donna', r: 'Torre', b: 'Alfiere', n: 'Cavallo', p: 'Pedone' };
+var BASE = 'M11.5 33h22a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-22A1.5 1.5 0 0 1 10 37.5v-3A1.5 1.5 0 0 1 11.5 33z';
+var BASE_LINE = 'M13.5 36h18';
+var BAND = 'M14 30h17l.8 3H13.2z';
+var PIECES = {
+  p: { body: 'M22.5 8.5a5.5 5.5 0 1 1 0 11a5.5 5.5 0 1 1 0-11zM17 19.5h11a1.5 1.5 0 0 1 0 3H17a1.5 1.5 0 0 1 0-3zM18 22.5h9c.8 4 2.3 7.5 4.5 10.5h-18c2.2-3 3.7-6.5 4.5-10.5z' + BASE, detail: BASE_LINE },
+  r: { body: 'M12.5 8H16.5V11H20V8H25V11H28.5V8H32.5V15.5H12.5ZM14 15.5h17l-1.5 2.5h-14zM15.5 18h14l1.2 13H14.3zM13 31h19v2H13z' + BASE, detail: 'M17 24.5h11' + BASE_LINE },
+  n: { body: 'M14 33C14 28 16 25.5 19 23.5C17 24.5 15 25.2 13 24.5C11.3 24 10 23 10 21.5C10 20.3 10.3 19.3 11 18.5C13.5 16 16 13 18 11L19 6.5L22 9.5C27.5 9.5 31.5 13 31.5 19.5C31.5 25 31 29 32 33Z' + BASE,
+       detail: 'M17.3 14.8a.9.9 0 1 0 1.8 0a.9.9 0 1 0-1.8 0M24 10.6C28.6 12.5 30 17 29.6 24M11.8 20.6h1' + BASE_LINE },
+  b: { body: 'M22.5 6a2.5 2.5 0 1 1 0 5a2.5 2.5 0 1 1 0-5zM22.5 11C18.5 13.8 16.3 17.6 16.6 21.2C16.8 23.6 18.6 25 22.5 25C26.4 25 28.2 23.6 28.4 21.2C28.7 17.6 26.5 13.8 22.5 11ZM17.5 25h10a1.5 1.5 0 0 1 0 3h-10a1.5 1.5 0 0 1 0-3zM18.5 28h8l2 5h-12z' + BASE,
+       detail: 'M24.6 14.8L21.2 19.6' + BASE_LINE },
+  q: { body: 'M10.5 11a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM16.5 8a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM22.5 6.5a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM28.5 8a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM34.5 11a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM10.5 15L16 23.5L16.5 12L20.2 22.5L22.5 10.5L24.8 22.5L28.5 12L29 23.5L34.5 15L31 30H14Z' + BAND + BASE,
+       detail: 'M15.2 26.5h14.6' + BASE_LINE },
+  k: { body: 'M21.25 3.5h2.5V6h2.5v2.5h-2.5v4h-2.5v-4h-2.5V6h2.5zM21.5 12.5h2v4h-2zM22.5 16.5C25 14 30.5 13.8 32.5 17.5C34.3 21 32.5 26 31 30H14C12.5 26 10.7 21 12.5 17.5C14.5 13.8 20 14 22.5 16.5Z' + BAND + BASE,
+       detail: 'M14.8 26.5h15.4M22.5 17.5v8' + BASE_LINE }
+};
+
+// Philidor's legacy, mate in 2 (checked with python-chess): 1.Qg8+ Rxg8 2.Nf7#
+var STEPS = [
+  { fen: '5r1k/6pp/7N/3Q4/8/8/6PP/6K1', from: '', to: '', text: 'Cerca uno scacco che costringa il Nero a chiudersi da solo.' },
+  { fen: '5rQk/6pp/7N/8/8/8/6PP/6K1', from: 'd5', to: 'g8', text: '♛' + FE + 'g8+! La donna si offre e il Re non può prenderla: il cavallo controlla g8.' },
+  { fen: '6rk/6pp/7N/8/8/8/6PP/6K1', from: 'f8', to: 'g8', text: '♜' + FE + 'xg8 è forzata. Ora la torre occupa l’ultima casa di fuga del Re.' },
+  { fen: '6rk/5Npp/8/8/8/8/6PP/6K1', from: 'h6', to: 'f7', text: '♞' + FE + 'f7#. Matto affogato: il Re è murato dai suoi stessi pezzi.' }
+];
+var STEP_LABELS = ['Mostra la soluzione', 'Avanti', 'Avanti', 'Ricomincia'];
+
+function parseFen(placement) {
+  return placement.split('/').map(function (row) {
+    var out = [];
+    for (var i = 0; i < row.length; i++) {
+      var ch = row[i];
+      if (ch >= '1' && ch <= '8') { for (var k = 0; k < +ch; k++) out.push(null); }
+      else out.push(ch);
+    }
+    return out;
+  });
+}
+
+class Component extends DCLogic {
+  constructor() {
+    super(...arguments);
+    this.state = { step: 0, tip: false, panel: false, cache: true };
+  }
+
+  renderVals() {
+    var self = this;
+    var s = STEPS[this.state.step];
+    var grid = parseFen(s.fen);
+    var squares = [];
+    for (var r = 0; r < 8; r++) {
+      for (var f = 0; f < 8; f++) {
+        var name = 'abcdefgh'[f] + (8 - r);
+        var light = (r + f) % 2 === 0;
+        var isTo = name === s.to, isFrom = name === s.from;
+        var pc = grid[r][f];
+        var white = !!pc && pc === pc.toUpperCase();
+        var P = pc ? PIECES[pc.toLowerCase()] : null;
+        squares.push({
+          bg: isTo ? '#E8A33D' : (isFrom ? '#F1C06E' : (light ? '#DCE8E6' : '#4A8590')),
+          showRank: f === 0, rank: String(8 - r), showFile: r === 7, file: 'abcdefgh'[f],
+          cc: (light || isTo || isFrom) ? '#14262B' : '#FFFFFF',
+          hasPiece: !!pc, body: P ? P.body : '', detail: P ? P.detail : '',
+          fill: white ? '#FFFBF0' : '#1B2B30', dc: white ? '#14262B' : '#DCE8E6',
+          label: pc ? PIECE_NAME[pc.toLowerCase()] + (white ? ' bianco ' : ' nero ') + 'in ' + name : ''
+        });
+      }
+    }
+    var step = this.state.step;
+    return {
+      squares: squares, puzzleText: s.text, stepLabel: STEP_LABELS[step],
+      lastMove: '17. ♜' + FE + 'd8#',
+      tipOpen: this.state.tip, tipExpanded: this.state.tip ? 'true' : 'false',
+      panelOpen: this.state.panel, panelExpanded: this.state.panel ? 'true' : 'false', cacheOn: this.state.cache,
+      step: function () { self.setState({ step: (step + 1) % STEPS.length }); },
+      reset: function () { self.setState({ step: 0 }); },
+      toggleTip: function () { self.setState({ tip: !self.state.tip }); },
+      togglePanel: function () { self.setState({ panel: !self.state.panel }); },
+      toggleCache: function () { self.setState({ cache: !self.state.cache }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

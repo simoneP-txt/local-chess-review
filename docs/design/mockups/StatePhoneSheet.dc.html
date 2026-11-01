@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Revisione su telefono, tutte le mosse</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Symbols+2&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{t.bg}}; color: {{t.text}}; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif">
+
+  <header style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; height: 56px; box-sizing: border-box; padding: 0 4px; display: flex; align-items: center; gap: 4px; background: #0F4C57; border-bottom: {{t.headerBorder}}; color: {{t.onPetrol}}">
+    <a href="PhoneSummary.dc.html" aria-label="Torna al riepilogo" style="flex: 0 0 48px; width: 48px; height: 48px; border-radius: 12px; color: {{t.onPetrol}}; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+      <span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; line-height: 1.1">Revisione</span>
+      <span style="font-size: 14px; color: {{t.onPetrol2}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Partita dell'Opera · Parigi 1858</span>
+    </div>
+    <button type="button" onClick="{{flip}}" aria-label="Gira scacchiera" style="flex: 0 0 48px; width: 48px; height: 48px; border-radius: 12px; border: 0; background: transparent; color: {{t.onPetrol}}; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M7 4v14"></path><path d="M4 15l3 3 3-3"></path><path d="M17 20V6"></path><path d="M14 9l3-3 3 3"></path></svg></button>
+  </header>
+
+  <div style="position: absolute; top: 56px; bottom: 80px; left: 0; right: 0; overflow-x: hidden; overflow-y: auto">
+    <div style="height: 48px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 10px">
+      <span aria-hidden="true" style="flex: 0 0 16px; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: {{top.dot}}; border: 1.5px solid {{top.ring}}"></span>
+      <span style="flex: 0 1 auto; min-width: 0; font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{top.name}}</span>
+      <span style="flex: 0 0 auto; font: 500 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">{{top.adv}}</span>
+      <span style="flex: 1 1 auto"></span>
+      <span style="flex: 0 0 auto; font: 600 22px/1 'IBM Plex Mono', monospace">{{top.acc}}</span>
+    </div>
+
+    <div aria-hidden="true" style="margin-left: 1px; width: 388px; height: 20px; box-sizing: border-box; border: 2px solid {{t.line}}; border-radius: 8px; overflow: hidden; display: flex; flex-direction: {{evalDir}}">
+      <div style="flex: {{evW}} 1 0px; box-sizing: border-box; padding: {{wPad}}; background: #FFFFFF; display: flex; align-items: center; justify-content: {{wJust}}; transition: flex-grow 0.35s ease">
+        <sc-if value="{{labelOnWhite}}" hint-placeholder-val="{{ true }}"><span style="font: 600 14px/16px 'IBM Plex Mono', monospace; color: #14262B; white-space: nowrap">{{evLabel}}</span></sc-if>
+      </div>
+      <div style="flex: {{evB}} 1 0px; box-sizing: border-box; padding: {{bPad}}; background: {{t.evB}}; display: flex; align-items: center; justify-content: {{bJust}}; transition: flex-grow 0.35s ease">
+        <sc-if value="{{labelOnBlack}}" hint-placeholder-val="{{ false }}"><span style="font: 600 14px/16px 'IBM Plex Mono', monospace; color: {{t.evBText}}; white-space: nowrap">{{evLabel}}</span></sc-if>
+      </div>
+    </div>
+
+    <div style="position: relative; margin-left: 1px; width: 384px; height: 384px; border: 2px solid {{t.line}}">
+      <div style="display: grid; grid-template-columns: repeat(8, 48px); grid-template-rows: repeat(8, 48px)">
+        <sc-for list="{{squares}}" as="sq" hint-placeholder-count="64">
+          <div style="position: relative; display: flex; align-items: center; justify-content: center; background: {{sq.bg}}">
+            <sc-if value="{{sq.showRank}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; top: 2px; left: 3px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.rank}}</span></sc-if>
+            <sc-if value="{{sq.showFile}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; bottom: 2px; right: 3px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.file}}</span></sc-if>
+            <sc-if value="{{sq.hasPiece}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 45 45" role="img" aria-label="{{sq.label}}" style="width: 43px; height: 43px; overflow: visible"><path d="{{sq.body}}" style="fill: {{sq.fill}}; stroke: #14262B; stroke-width: 1.5px; stroke-linejoin: round; vector-effect: non-scaling-stroke"></path><path d="{{sq.detail}}" style="fill: none; stroke: {{sq.dc}}; stroke-width: 1px; stroke-linecap: round; vector-effect: non-scaling-stroke"></path></svg></sc-if>
+            <sc-if value="{{sq.hasBadge}}" hint-placeholder-val="{{ false }}">
+              <span aria-hidden="true" style="position: absolute; top: 1px; right: 1px; z-index: 3; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{sq.tag.c}}; color: {{sq.tag.fg}}; border: 1.5px solid #14262B; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
+                <sc-if value="{{sq.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{sq.tag.txt}}</span></sc-if>
+                <sc-if value="{{sq.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 15px; height: 15px; fill: {{sq.tag.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{sq.tag.path}}"></path></svg></sc-if>
+              </span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{arrow.show}}" hint-placeholder-val="{{ false }}">
+        <svg viewBox="0 0 384 384" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 384px; height: 384px; pointer-events: none; z-index: 2"><polygon points="{{arrow.points}}" style="fill: #14262B; stroke: #14262B; stroke-width: 7; stroke-linejoin: round"></polygon><polygon points="{{arrow.points}}" style="fill: #FBF8F0; stroke: #FBF8F0; stroke-width: 4; stroke-linejoin: round"></polygon><polygon points="{{arrow.points}}" style="fill: #5FA83B"></polygon></svg>
+      </sc-if>
+    </div>
+
+    <div style="height: 48px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 10px">
+      <span aria-hidden="true" style="flex: 0 0 16px; width: 16px; height: 16px; box-sizing: border-box; border-radius: 50%; background: {{bottom.dot}}; border: 1.5px solid {{bottom.ring}}"></span>
+      <span style="flex: 0 1 auto; min-width: 0; font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{bottom.name}}</span>
+      <span style="flex: 0 0 auto; font: 500 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">{{bottom.adv}}</span>
+      <span style="flex: 1 1 auto"></span>
+      <span style="flex: 0 0 auto; font: 600 22px/1 'IBM Plex Mono', monospace">{{bottom.acc}}</span>
+    </div>
+
+    <section aria-label="Commento alla mossa" aria-live="polite" style="margin: 8px 20px 0; box-sizing: border-box; padding: 12px 16px; border-radius: 16px; background: #0F4C57; border: {{t.panelBorder}}; color: {{t.onPetrol}}; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 48px">
+        <span aria-hidden="true" style="flex: 0 0 40px; width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; background: {{coach.tag.c}}; color: {{coach.tag.fg}}; border: 1.5px solid {{t.onPetrol}}; display: flex; align-items: center; justify-content: center; font: 700 18px/1 'Instrument Sans', 'Noto Sans Symbols 2', sans-serif">
+          <sc-if value="{{coach.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{coach.tag.txt}}</span></sc-if>
+          <sc-if value="{{coach.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 22px; height: 22px; fill: {{coach.tag.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{coach.tag.path}}"></path></svg></sc-if>
+        </span>
+        <h2 style="flex: 1 1 auto; min-width: 0; margin: 0; font-family: 'Fraunces', 'Noto Sans Symbols 2', Georgia, serif; font-size: 22px; font-weight: 500; line-height: 1.1">{{coach.head}}</h2>
+        <span style="flex: 0 0 auto; padding: 6px 8px; border-radius: 8px; background: {{coach.evBg}}; border: 1.5px solid {{coach.evBorder}}; color: {{coach.evFg}}; font: 600 16px/1 'IBM Plex Mono', monospace; white-space: nowrap">{{coach.ev}}</span>
+      </div>
+      <p style="margin: 0; font-size: 17px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{coach.text}}</p>
+      <sc-if value="{{coach.showActions}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px">
+          <button type="button" onClick="{{prev}}" style="width: 100%; height: 48px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid {{t.onPetrol}}; background: transparent; color: {{t.onPetrol}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Riprova da qui</button>
+          <button type="button" onClick="{{toggleBest}}" aria-pressed="{{bestPressed}}" style="width: 100%; height: 48px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid {{t.onPetrol}}; background: {{bestBg}}; color: {{t.onPetrol}}; display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M5 19L19 5"></path><path d="M10 5h9v9"></path></svg>{{bestLabel}}</button>
+          <details style="border-top: 1.5px solid {{t.petrolSep}}">
+            <summary style="list-style: none; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-size: 16px; font-weight: 600">Linea del motore<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg></summary>
+            <dl style="margin: 0 0 4px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: 16px">
+              <dt style="color: {{t.onPetrol2}}">Migliore</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{coach.best}}</dd>
+              <dt style="color: {{t.onPetrol2}}">Linea</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace">{{coach.line}}</dd>
+            </dl>
+          </details>
+        </div>
+      </sc-if>
+    </section>
+
+    <div style="margin-top: 8px; height: 56px; box-sizing: border-box; padding: 0 20px; display: flex; align-items: center; gap: 8px">
+      <nav ref="{{setStrip}}" aria-label="Mosse" style="position: relative; flex: 1 1 auto; min-width: 0; height: 56px; overflow-x: auto; overflow-y: hidden; display: flex; gap: 8px; scrollbar-width: none">
+        <sc-for list="{{strip}}" as="c" hint-placeholder-count="5">
+          <button type="button" onClick="{{c.pick}}" aria-current="{{c.current}}" aria-label="{{c.aria}}" style="flex: 0 0 auto; min-width: 96px; height: 56px; box-sizing: border-box; padding: 0 12px; border-radius: 999px; border: {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer">
+            <span style="font: 600 17px/1.15 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace; white-space: nowrap">{{c.san}}</span>
+            <span style="display: inline-flex; align-items: center; gap: 4px; font: 500 14px/1 'Instrument Sans', sans-serif; white-space: nowrap">
+              <span aria-hidden="true" style="flex: 0 0 24px; width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; background: {{c.tag.c}}; color: {{c.tag.fg}}; border: 1.5px solid {{c.tag.ring}}; display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
+                <sc-if value="{{c.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{c.tag.txt}}</span></sc-if>
+                <sc-if value="{{c.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 13px; height: 13px; fill: {{c.tag.fill}}; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="{{c.tag.path}}"></path></svg></sc-if>
+              </span>{{c.tag.label}}
+            </span>
+          </button>
+        </sc-for>
+      </nav>
+      <button type="button" onClick="{{openSheet}}" aria-haspopup="dialog" aria-expanded="{{sheetExpanded}}" aria-label="Tutte le mosse" style="flex: 0 0 auto; height: 48px; box-sizing: border-box; padding: 0 12px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Tutte</button>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; height: 80px; box-sizing: border-box; padding: 12px 20px; background: {{t.card}}; border-top: 1.5px solid {{t.cardBorder}}; display: flex; gap: 8px">
+    <button type="button" aria-label="Inizio partita" onClick="{{first}}" disabled="{{atStart}}" style="flex: 0 0 56px; height: 56px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid {{startBorder}}; background: {{startBg}}; color: {{startFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 5v14"></path><path d="M18 6l-8 6 8 6z"></path></svg></button>
+    <button type="button" aria-label="Mossa precedente" onClick="{{prev}}" disabled="{{atStart}}" style="flex: 0 0 56px; height: 56px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid {{startBorder}}; background: {{startBg}}; color: {{startFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M15 6l-6 6 6 6"></path></svg></button>
+    <button type="button" onClick="{{next}}" disabled="{{atEnd}}" style="flex: 1 1 auto; height: 56px; box-sizing: border-box; border-radius: 12px; border: {{nextBorder}}; background: {{nextBg}}; color: {{nextFg}}; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Avanti<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg></button>
+    <button type="button" aria-label="Fine partita" onClick="{{last}}" disabled="{{atEnd}}" style="flex: 0 0 56px; height: 56px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid {{endBorder}}; background: {{endBg}}; color: {{endFg}}; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round"><path d="M18 5v14"></path><path d="M6 6l8 6-8 6z"></path></svg></button>
+  </div>
+
+  <sc-if value="{{sheetOpen}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 30">
+      <div onClick="{{closeSheet}}" aria-hidden="true" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(20,38,43,.55)"></div>
+      <section role="dialog" aria-modal="true" aria-labelledby="s6-title" style="position: absolute; top: 112px; right: 0; bottom: 0; left: 0; box-sizing: border-box; border-radius: 20px 20px 0 0; background: {{t.card}}; border-top: 1.5px solid {{t.cardBorder}}; color: {{t.text}}; display: flex; flex-direction: column">
+        <div aria-hidden="true" style="flex: 0 0 20px; display: flex; align-items: flex-end; justify-content: center"><span style="width: 40px; height: 4px; border-radius: 2px; background: {{t.ctrlBorder}}"></span></div>
+        <div style="flex: 0 0 56px; box-sizing: border-box; padding: 0 8px 0 20px; display: flex; align-items: center; gap: 8px">
+          <h2 id="s6-title" style="flex: 1 1 auto; margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: {{t.title}}">Tutte le mosse</h2>
+          <button type="button" onClick="{{closeSheet}}" aria-label="Chiudi" style="flex: 0 0 48px; width: 48px; height: 48px; border-radius: 12px; border: 0; background: transparent; color: {{t.text}}; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+        <div role="tablist" aria-label="Vista" style="flex: 0 0 auto; margin: 0 20px; display: flex; gap: 4px; padding: 3px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}">
+          <button type="button" role="tab" aria-selected="{{tabMovesSel}}" onClick="{{showMoves}}" style="flex: 1 1 0px; height: 48px; box-sizing: border-box; border-radius: 9px; border: {{tabMovesBorder}}; background: {{tabMovesBg}}; color: {{tabMovesFg}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Mosse</button>
+          <button type="button" role="tab" aria-selected="{{tabGraphSel}}" onClick="{{showGraph}}" style="flex: 1 1 0px; height: 48px; box-sizing: border-box; border-radius: 9px; border: {{tabGraphBorder}}; background: {{tabGraphBg}}; color: {{tabGraphFg}}; font: 600 16px/1 'Instrument Sans', sans-serif; cursor: pointer">Andamento</button>
+        </div>
+
+        <sc-if value="{{tabMoves}}" hint-placeholder-val="{{ true }}">
+          <ol ref="{{setList}}" aria-label="Mosse della partita" style="position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 12px 0 0; padding: 0 20px 20px; list-style: none; display: flex; flex-direction: column; gap: 4px">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+              <li style="flex: 0 0 auto">
+                <button type="button" onClick="{{r.pick}}" aria-current="{{r.current}}" aria-label="{{r.aria}}" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 10px 0 14px; border-radius: 12px; border: 1.5px solid {{r.border}}; background: {{r.bg}}; box-shadow: {{r.bar}}; color: {{t.text}}; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left">
+                  <span style="flex: 0 0 40px; font: 500 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">{{r.num}}</span>
+                  <span style="flex: 1 1 auto; min-width: 0; font: 500 18px/1 'IBM Plex Mono', 'Noto Sans Symbols 2', monospace; white-space: nowrap">{{r.san}}</span>
+                  <span aria-hidden="true" style="flex: 0 0 28px; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{r.tag.c}}; color: {{r.tag.fg}}; border: 1.5px solid {{r.tag.ring}}; display: inline-flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
+                    <sc-if value="{{r.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{r.tag.txt}}</span></sc-if>
+                    <sc-if value="{{r.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 15px; height: 15px; fill: {{r.tag.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{r.tag.path}}"></path></svg></sc-if>
+                  </span>
+                  <span style="flex: 0 0 104px; font: 500 16px/1.15 'Instrument Sans', sans-serif">{{r.tag.label}}</span>
+                </button>
+              </li>
+            </sc-for>
+          </ol>
+        </sc-if>
+
+        <sc-if value="{{tabGraph}}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 12px 20px 20px; display: flex; flex-direction: column">
+            <span style="font-size: 14px; line-height: 1.4; color: {{t.text2}}">Probabilità di vittoria · chiaro = Bianco, scuro = Nero</span>
+            <div style="position: relative; flex: 0 0 auto; margin-top: 12px; width: 350px; height: 240px; box-sizing: border-box; border: 2px solid {{t.line}}; border-radius: 8px; overflow: hidden">
+              <svg viewBox="0 0 330 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"><rect x="0" y="0" width="330" height="100" style="fill: {{t.evB}}"></rect><path d="{{graph.area}}" style="fill: #FFFFFF"></path></svg>
+              <svg viewBox="0 0 346 236" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%">
+                <line x1="0" y1="118" x2="346" y2="118" style="stroke: #14262B; stroke-width: 5; stroke-dasharray: 10 7"></line>
+                <line x1="0" y1="118" x2="346" y2="118" style="stroke: #E8A33D; stroke-width: 3; stroke-dasharray: 10 7"></line>
+                <line x1="{{graph.cursor}}" y1="0" x2="{{graph.cursor}}" y2="236" style="stroke: #14262B; stroke-width: 5"></line>
+                <line x1="{{graph.cursor}}" y1="0" x2="{{graph.cursor}}" y2="236" style="stroke: #E8A33D; stroke-width: 3"></line>
+                <sc-for list="{{graph.marks}}" as="m" hint-placeholder-count="4">
+                  <line x1="{{m.x1}}" y1="{{m.y1}}" x2="{{m.x2}}" y2="{{m.y2}}" style="stroke: #14262B; stroke-width: 2"></line>
+                </sc-for>
+              </svg>
+              <sc-for list="{{graph.marks}}" as="m" hint-placeholder-count="4">
+                <button type="button" onClick="{{m.pick}}" aria-label="{{m.aria}}" style="position: absolute; left: {{m.hx}}; top: {{m.hy}}; width: 48px; height: 48px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer">
+                  <span aria-hidden="true" style="width: 32px; height: 32px; box-sizing: border-box; border-radius: 50%; background: {{m.tag.c}}; color: {{m.tag.fg}}; border: 1.5px solid #14262B; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">{{m.tag.txt}}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="position: relative; flex: 0 0 18px; margin-top: 8px; width: 350px; height: 18px; font: 500 14px/18px 'IBM Plex Mono', monospace; color: {{t.text2}}">
+              <sc-for list="{{graph.ticks}}" as="k" hint-placeholder-count="5"><span style="position: absolute; left: {{k.left}}; transform: {{k.tf}}">{{k.label}}</span></sc-for>
+            </div>
+            <dl style="flex: 0 0 auto; margin: 12px 0 0; border-radius: 8px; border: 1.5px solid {{t.ctrlBorder}}; background: {{t.s2}}; overflow: hidden">
+              <sc-for list="{{bands}}" as="b" hint-placeholder-count="2">
+                <div style="box-sizing: border-box; padding: 8px 12px; border-top: {{b.bt}}; display: flex; flex-direction: column; gap: 4px">
+                  <dt style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">{{b.name}}</span><span style="font-size: 14px; color: {{t.text2}}">{{b.range}}</span></dt>
+                  <dd style="margin: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 16px; line-height: 1.35">
+                    <span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #FFFFFF; border: 1.5px solid {{t.line}}"></span><span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Morphy: </span>{{b.white}}</span></span>
+                    <span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: {{t.blackDot}}; border: 1.5px solid {{t.blackRing}}"></span><span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Duca e Conte: </span>{{b.black}}</span></span>
+                  </dd>
+                </div>
+              </sc-for>
+            </dl>
+            <div style="flex: 0 0 auto; margin-top: 12px; box-sizing: border-box; padding: 12px; border-radius: 8px; background: {{t.disFill}}; border: 1.5px dashed {{t.disBorder}}; color: {{t.disText}}; font-size: 16px">Finale · non raggiunto</div>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":null,"default":"Chiaro"},"tab":{"editor":null,"default":"Mosse"},"$preview":{"width":390,"height":844}}'>
+// S6 · M4 with the "Tutte" bottom sheet open. The S6 trend frame mounts this file with tab="Andamento".
+var PLIES = [{"n":1,"w":true,"san":"e4","from":"e2","to":"e4","fen":"rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR","cls":"book","ev":"+0.4","wpW":53.3,"best":"e4","bf":"e2","bt":"e4","line":"e4 e5 Nc3 Nc6 Nf3"},{"n":1,"w":false,"san":"e5","from":"e7","to":"e5","fen":"rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR","cls":"book","ev":"+0.4","wpW":53.4,"best":"e5","bf":"e7","bt":"e5","line":"e5 Nf3 Nc6 Nc3 Nf6"},{"n":2,"w":true,"san":"Nf3","from":"g1","to":"f3","fen":"rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R","cls":"book","ev":"+0.4","wpW":53.5,"best":"Nf3","bf":"g1","bt":"f3","line":"Nf3 Nf6 Nxe5 d6 Nf3"},{"n":2,"w":false,"san":"d6","from":"d7","to":"d6","fen":"rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R","cls":"book","ev":"+0.5","wpW":54.4,"best":"Nc6","bf":"b8","bt":"c6","line":"Nc6 d4 exd4 Nxd4 Nf6"},{"n":3,"w":true,"san":"d4","from":"d2","to":"d4","fen":"rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R","cls":"book","ev":"+0.6","wpW":55.3,"best":"d4","bf":"d2","bt":"d4","line":"d4 exd4 Nxd4 Nf6 Nc3"},{"n":3,"w":false,"san":"Bg4","from":"c8","to":"g4","fen":"rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R","cls":"book","ev":"+0.9","wpW":58.1,"best":"Nf6","bf":"g8","bt":"f6","line":"Nf6 Nc3 Nbd7 Bc4 Be7"},{"n":4,"w":true,"san":"dxe5","from":"d4","to":"e5","fen":"rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R","cls":"book","ev":"+0.9","wpW":58.1,"best":"Be3","bf":"c1","bt":"e3","line":"Be3 exd4 Qxd4 Nc6 Qd2"},{"n":4,"w":false,"san":"Bxf3","from":"g4","to":"f3","fen":"rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R","cls":"book","ev":"+1.4","wpW":62.4,"best":"Nd7","bf":"b8","bt":"d7","line":"Nd7 exd6 Bxd6 Be2 Ngf6"},{"n":5,"w":true,"san":"Qxf3","from":"d1","to":"f3","fen":"rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R","cls":"book","ev":"+1.4","wpW":63.0,"best":"Qxf3","bf":"d1","bt":"f3","line":"Qxf3 dxe5 Qb3 Nd7 Qxb7"},{"n":5,"w":false,"san":"dxe5","from":"d6","to":"e5","fen":"rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R","cls":"book","ev":"+1.4","wpW":62.9,"best":"dxe5","bf":"d6","bt":"e5","line":"dxe5 Qb3 Nd7 Qxb7 Ngf6"},{"n":6,"w":true,"san":"Bc4","from":"f1","to":"c4","fen":"rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R","cls":"good","ev":"+1.1","wpW":59.6,"best":"Qb3","bf":"f3","bt":"b3","line":"Qb3 Nd7 Qxb7 Ngf6 Nd2"},{"n":6,"w":false,"san":"Nf6","from":"g8","to":"f6","fen":"rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R","cls":"inaccuracy","ev":"+2.0","wpW":67.9,"best":"Qf6","bf":"d8","bt":"f6","line":"Qf6 Qb3 Nd7 Qxb7 Rb8"},{"n":7,"w":true,"san":"Qb3","from":"f3","to":"b3","fen":"rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/1Q6/PPP2PPP/RNB1K2R","cls":"best","ev":"+2.2","wpW":69.0,"best":"Qb3","bf":"f3","bt":"b3","line":"Qb3 Bc5 Bxf7+ Ke7 Bd5"},{"n":7,"w":false,"san":"Qe7","from":"d8","to":"e7","fen":"rn2kb1r/ppp1qppp/5n2/4p3/2B1P3/1Q6/PPP2PPP/RNB1K2R","cls":"excellent","ev":"+2.4","wpW":70.5,"best":"Bc5","bf":"f8","bt":"c5","line":"Bc5 Bxf7+ Ke7 Bd5 Nc6"},{"n":8,"w":true,"san":"Nc3","from":"b1","to":"c3","fen":"rn2kb1r/ppp1qppp/5n2/4p3/2B1P3/1QN5/PPP2PPP/R1B1K2R","cls":"excellent","ev":"+2.0","wpW":67.7,"best":"Qxb7","bf":"b3","bt":"b7","line":"Qxb7 Qb4+ Qxb4 Bxb4+ c3"},{"n":8,"w":false,"san":"c6","from":"c7","to":"c6","fen":"rn2kb1r/pp2qppp/2p2n2/4p3/2B1P3/1QN5/PPP2PPP/R1B1K2R","cls":"best","ev":"+1.9","wpW":66.9,"best":"c6","bf":"c7","bt":"c6","line":"c6 Bg5 Na6 Bxa6 bxa6"},{"n":9,"w":true,"san":"Bg5","from":"c1","to":"g5","fen":"rn2kb1r/pp2qppp/2p2n2/4p1B1/2B1P3/1QN5/PPP2PPP/R3K2R","cls":"best","ev":"+1.9","wpW":67.1,"best":"Bg5","bf":"c1","bt":"g5","line":"Bg5 Na6 Bxa6 bxa6 a3"},{"n":9,"w":false,"san":"b5","from":"b7","to":"b5","fen":"rn2kb1r/p3qppp/2p2n2/1p2p1B1/2B1P3/1QN5/PPP2PPP/R3K2R","cls":"inaccuracy","ev":"+3.0","wpW":75.2,"best":"Na6","bf":"b8","bt":"a6","line":"Na6 Bxa6 bxa6 a3 Qe6"},{"n":10,"w":true,"san":"Nxb5","from":"c3","to":"b5","fen":"rn2kb1r/p3qppp/2p2n2/1N2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R","cls":"great","ev":"+3.0","wpW":75.2,"best":"Nxb5","bf":"c3","bt":"b5","line":"Nxb5 Qb4+ Qxb4 Bxb4+ c3"},{"n":10,"w":false,"san":"cxb5","from":"c6","to":"b5","fen":"rn2kb1r/p3qppp/5n2/1p2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R","cls":"inaccuracy","ev":"+4.9","wpW":85.8,"best":"Qb4+","bf":"e7","bt":"b4","line":"Qb4+ Qxb4 Bxb4+ c3 cxb5"},{"n":11,"w":true,"san":"Bxb5+","from":"c4","to":"b5","fen":"rn2kb1r/p3qppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R","cls":"best","ev":"+5.1","wpW":86.8,"best":"Bxb5+","bf":"c4","bt":"b5","line":"Bxb5+ Nbd7 O-O-O Qc5 Bxf6"},{"n":11,"w":false,"san":"Nbd7","from":"b8","to":"d7","fen":"r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R","cls":"best","ev":"+5.2","wpW":87.3,"best":"Nbd7","bf":"b8","bt":"d7","line":"Nbd7 O-O-O Rb8 Bxf6 Rxb5"},{"n":12,"w":true,"san":"O-O-O","from":"e1","to":"c1","fen":"r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR3R","cls":"best","ev":"+5.3","wpW":87.6,"best":"O-O-O","bf":"e1","bt":"c1","line":"O-O-O Rb8 Bxf6 Rxb5 Qxb5"},{"n":12,"w":false,"san":"Rd8","from":"a8","to":"d8","fen":"3rkb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR3R","cls":"excellent","ev":"+5.2","wpW":87.4,"best":"Rb8","bf":"a8","bt":"b8","line":"Rb8 Bxf6 Rxb5 Qxb5 gxf6"},{"n":13,"w":true,"san":"Rxd7","from":"d1","to":"d7","fen":"3rkb1r/p2Rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2K4R","cls":"best","ev":"+5.8","wpW":89.3,"best":"Rxd7","bf":"d1","bt":"d7","line":"Rxd7 Rxd7 Rd1 Qb4 Bxf6"},{"n":13,"w":false,"san":"Rxd7","from":"d8","to":"d7","fen":"4kb1r/p2rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2K4R","cls":"excellent","ev":"+6.2","wpW":90.7,"best":"Nxd7","bf":"f6","bt":"d7","line":"Nxd7 Bxe7 Bxe7 Bxd7+ Rxd7"},{"n":14,"w":true,"san":"Rd1","from":"h1","to":"d1","fen":"4kb1r/p2rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR4","cls":"great","ev":"+6.0","wpW":90.2,"best":"Rd1","bf":"h1","bt":"d1","line":"Rd1 Qb4 Bxf6 gxf6 Bxd7+"},{"n":14,"w":false,"san":"Qe6","from":"e7","to":"e6","fen":"4kb1r/p2r1ppp/4qn2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR4","cls":"good","ev":"+8.2","wpW":95.3,"best":"h6","bf":"h7","bt":"h6","line":"h6 Bxf6 gxf6 Bxd7+ Qxd7"},{"n":15,"w":true,"san":"Bxd7+","from":"b5","to":"d7","fen":"4kb1r/p2B1ppp/4qn2/4p1B1/4P3/1Q6/PPP2PPP/2KR4","cls":"best","ev":"+8.7","wpW":96.2,"best":"Bxd7+","bf":"b5","bt":"d7","line":"Bxd7+ Qxd7 Qb8+ Ke7 Qxe5+"},{"n":15,"w":false,"san":"Nxd7","from":"f6","to":"d7","fen":"4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4","cls":"blunder","ev":"M2","wpW":99.6,"best":"Qxd7","bf":"e6","bt":"d7","line":"Qxd7 Qb8+ Ke7 Qxe5+ Kd8"},{"n":16,"w":true,"san":"Qb8+","from":"b3","to":"b8","fen":"1Q2kb1r/p2n1ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4","cls":"brilliant","ev":"M1","wpW":99.6,"best":"Qb8+","bf":"b3","bt":"b8","line":"Qb8+ Nxb8 Rd8#"},{"n":16,"w":false,"san":"Nxb8","from":"d7","to":"b8","fen":"1n2kb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4","cls":"best","ev":"M1","wpW":99.6,"best":"Nxb8","bf":"d7","bt":"b8","line":"Nxb8 Rd8#"},{"n":17,"w":true,"san":"Rd8#","from":"d1","to":"d8","fen":"1n1Rkb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2K5","cls":"best","ev":"1-0","wpW":100.0,"best":"Rd8#","bf":"d1","bt":"d8","line":"Rd8#"}];
+
+var START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+var FE = '︎';
+var VALUE = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+var PIECE_NAME = { k: 'Re', q: 'Donna', r: 'Torre', b: 'Alfiere', n: 'Cavallo', p: 'Pedone' };
+var THEMES = {
+  Chiaro: {
+    bg: '#E9E1CE', card: '#FBF8F0', text: '#14262B', text2: '#44585C',
+    onPetrol: '#FBF8F0', onPetrol2: '#B9CFCF', petrolSep: 'rgba(251,248,240,.35)', panelBorder: '1.5px solid #0F4C57', headerBorder: '0px solid transparent',
+    cardBorder: '#8B7C5C', ctrlBorder: '#708183', line: '#14262B', disFill: '#E3DAC4', disText: '#526164', disBorder: '#8B7C5C',
+    amberBorder: '1.5px solid #14262B', evB: '#14262B', evBText: '#FFFFFF', ring: '#14262B', blackDot: '#14262B', blackRing: '#14262B',
+    sel: '#F7DCA6', selBorder: '#14262B', s2: '#F1EAD8', title: '#0F4C57'
+  },
+  Scuro: {
+    bg: '#0B1E22', card: '#143339', text: '#F2EDE0', text2: '#B7C4C3',
+    onPetrol: '#F2EDE0', onPetrol2: '#B7C4C3', petrolSep: 'rgba(242,237,224,.35)', panelBorder: '1.5px solid #5D8791', headerBorder: '1.5px solid #5D8791',
+    cardBorder: '#3C707B', ctrlBorder: '#5D8791', line: '#F2EDE0', disFill: '#143339', disText: '#8FA4A5', disBorder: '#3C707B',
+    amberBorder: '1.5px solid #E8A33D', evB: '#0B1E22', evBText: '#F2EDE0', ring: '#F2EDE0', blackDot: '#14262B', blackRing: '#F2EDE0',
+    sel: 'rgba(232,163,61,.18)', selBorder: '#E8A33D', s2: '#1B434B', title: '#F2EDE0'
+  }
+};
+
+var ICON = {
+  star: 'M8 1.8l1.9 3.9 4.2.6-3.05 3 .72 4.2L8 11.5l-3.77 2 .72-4.2-3.05-3 4.2-.6z',
+  check: 'M3.5 8.4l3 3 6-6.8',
+  ring: 'M8 4.2a3.8 3.8 0 1 1 0 7.6a3.8 3.8 0 1 1 0-7.6z',
+  book: 'M8 4.6C6.4 3.5 4.4 3.3 2.4 3.9v8.3c2-.6 4-.4 5.6.7 1.6-1.1 3.6-1.3 5.6-.7V3.9c-2-.6-4-.4-5.6.7zM8 4.6v8.3',
+  cross: 'M4.6 4.6l6.8 6.8M11.4 4.6l-6.8 6.8'
+};
+var CLS = {
+  brilliant:  { l: 'Brillante', h: 'è brillante', txt: '!!', c: '#26C6DA' },
+  great:      { l: 'Ottima', h: "è un'ottima mossa", txt: '!', c: '#5B95E6' },
+  best:       { l: 'Migliore', h: 'è la migliore', icon: 'star', fill: true, c: '#5FA83B' },
+  excellent:  { l: 'Eccellente', h: 'è eccellente', icon: 'check', c: '#8BC56A' },
+  good:       { l: 'Buona', h: 'è buona', icon: 'ring', c: '#A8B5AE' },
+  book:       { l: 'Teoria', h: 'è teoria', icon: 'book', c: '#C39A6B' },
+  inaccuracy: { l: 'Imprecisione', h: "è un'imprecisione", txt: '?!', c: '#F4D23C' },
+  mistake:    { l: 'Errore', h: 'è un errore', txt: '?', c: '#E8662A' },
+  miss:       { l: 'Occasione mancata', h: "è un'occasione mancata", icon: 'cross', c: '#D66A9A' },
+  blunder:    { l: 'Svista', h: 'è una svista', txt: '??', c: '#D23B30', fg: '#FFFFFF' }
+};
+function tag(cls, ring) {
+  var c = CLS[cls];
+  return { label: c.l, c: c.c, fg: c.fg || '#14262B', ring: ring, isTxt: !!c.txt, txt: c.txt || '', isIcon: !!c.icon,
+           path: c.icon ? ICON[c.icon] : '', fill: c.fill ? 'currentColor' : 'none' };
+}
+
+var BASE = 'M11.5 33h22a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-22A1.5 1.5 0 0 1 10 37.5v-3A1.5 1.5 0 0 1 11.5 33z';
+var BASE_LINE = 'M13.5 36h18';
+var BAND = 'M14 30h17l.8 3H13.2z';
+var PIECES = {
+  p: { body: 'M22.5 8.5a5.5 5.5 0 1 1 0 11a5.5 5.5 0 1 1 0-11zM17 19.5h11a1.5 1.5 0 0 1 0 3H17a1.5 1.5 0 0 1 0-3zM18 22.5h9c.8 4 2.3 7.5 4.5 10.5h-18c2.2-3 3.7-6.5 4.5-10.5z' + BASE, detail: BASE_LINE },
+  r: { body: 'M12.5 8H16.5V11H20V8H25V11H28.5V8H32.5V15.5H12.5ZM14 15.5h17l-1.5 2.5h-14zM15.5 18h14l1.2 13H14.3zM13 31h19v2H13z' + BASE, detail: 'M17 24.5h11' + BASE_LINE },
+  n: { body: 'M14 33C14 28 16 25.5 19 23.5C17 24.5 15 25.2 13 24.5C11.3 24 10 23 10 21.5C10 20.3 10.3 19.3 11 18.5C13.5 16 16 13 18 11L19 6.5L22 9.5C27.5 9.5 31.5 13 31.5 19.5C31.5 25 31 29 32 33Z' + BASE,
+       detail: 'M17.3 14.8a.9.9 0 1 0 1.8 0a.9.9 0 1 0-1.8 0M24 10.6C28.6 12.5 30 17 29.6 24M11.8 20.6h1' + BASE_LINE },
+  b: { body: 'M22.5 6a2.5 2.5 0 1 1 0 5a2.5 2.5 0 1 1 0-5zM22.5 11C18.5 13.8 16.3 17.6 16.6 21.2C16.8 23.6 18.6 25 22.5 25C26.4 25 28.2 23.6 28.4 21.2C28.7 17.6 26.5 13.8 22.5 11ZM17.5 25h10a1.5 1.5 0 0 1 0 3h-10a1.5 1.5 0 0 1 0-3zM18.5 28h8l2 5h-12z' + BASE,
+       detail: 'M24.6 14.8L21.2 19.6' + BASE_LINE },
+  q: { body: 'M10.5 11a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM16.5 8a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM22.5 6.5a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM28.5 8a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM34.5 11a2 2 0 1 1 0 4a2 2 0 1 1 0-4zM10.5 15L16 23.5L16.5 12L20.2 22.5L22.5 10.5L24.8 22.5L28.5 12L29 23.5L34.5 15L31 30H14Z' + BAND + BASE,
+       detail: 'M15.2 26.5h14.6' + BASE_LINE },
+  k: { body: 'M21.25 3.5h2.5V6h2.5v2.5h-2.5v4h-2.5v-4h-2.5V6h2.5zM21.5 12.5h2v4h-2zM22.5 16.5C25 14 30.5 13.8 32.5 17.5C34.3 21 32.5 26 31 30H14C12.5 26 10.7 21 12.5 17.5C14.5 13.8 20 14 22.5 16.5Z' + BAND + BASE,
+       detail: 'M14.8 26.5h15.4M22.5 17.5v8' + BASE_LINE }
+};
+
+// Short commentary for the phone card: two lines at most.
+var COACH = {
+  3: "Nasce la Difesa Philidor: solida, però concede spazio. Il motore preferisce Nc6.",
+  7: "Cambia l'alfiere per riprendere in e5. Nd7 era più flessibile.",
+  10: "Minaccia Qxf7 matto. Qb3 attaccava b7 e f7 insieme.",
+  11: "Para il matto, ma il cavallo f6 diventerà un bersaglio. Qf6 difendeva meglio.",
+  17: "Attacca l'alfiere, però b5 diventa il bersaglio del sacrificio. Na6 era più solida.",
+  18: "Cavallo per due pedoni: le linee si aprono verso il Re rimasto al centro.",
+  19: "Accettare apre la diagonale a4-e8. Con Qb4+ il Nero cambiava le donne.",
+  25: "Riprende in d7, ma il cavallo f6 resta inchiodato e la colonna d resta aperta.",
+  26: "Porta l'ultima torre contro d7: il Nero non respira più.",
+  29: "Libera la diagonale g5-e7: ora il Bianco ha matto in 2. Qxd7 teneva la partita in vita.",
+  30: "Sacrificio di donna: Nxb8 è l'unica risposta e la torre dà matto in d8.",
+  32: "Scacco matto: l'alfiere g5 controlla e7 e la torre chiude l'ottava."
+};
+var FIG = { K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞' };
+function fig(s) {
+  return s.replace(/\b([KQRBN])(?=[a-h]?[1-8]?x?[a-h][1-8])/g, function (m, p) { return FIG[p] + FE; });
+}
+function evText(ev) {
+  if (ev === '1-0' || ev === '0-1') return ev;
+  if (ev.charAt(0) === 'M') return 'Matto in ' + ev.slice(1);
+  return ev.replace('.', ',').replace('-', '−');
+}
+function coachText(i, p) {
+  if (COACH[i]) return fig(COACH[i]);
+  if (p.cls === 'book') return 'Mossa di teoria della Difesa Philidor.';
+  if (p.cls === 'best') return 'La scelta del motore in questa posizione.';
+  if (p.cls === 'excellent') return fig('Quasi perfetta. Il motore preferiva ' + p.best + '.');
+  if (p.cls === 'good') return fig('Giocabile. ' + p.best + ' era più precisa.');
+  return fig(p.best + ' era più forte.');
+}
+function parseFen(placement) {
+  return placement.split('/').map(function (row) {
+    var out = [];
+    for (var i = 0; i < row.length; i++) {
+      var ch = row[i];
+      if (ch >= '1' && ch <= '8') { for (var k = 0; k < +ch; k++) out.push(null); }
+      else out.push(ch);
+    }
+    return out;
+  });
+}
+function center(sq, flipped) {
+  var x = sq.charCodeAt(0) - 97 + 0.5, y = 8 - Number(sq[1]) + 0.5;
+  if (flipped) { x = 8 - x; y = 8 - y; }
+  return [x * 48, y * 48];
+}
+function arrowPoints(a, b, w) {
+  var dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy);
+  var ux = dx / len, uy = dy / len, px = -uy, py = ux;
+  var hw = w / 2, headW = w * 1.15, headL = w * 1.9;
+  var sx = a[0] + ux * w * 0.6, sy = a[1] + uy * w * 0.6;
+  var tx = b[0] - ux * 3, ty = b[1] - uy * 3;
+  var bx = tx - ux * headL, by = ty - uy * headL;
+  var pts = [[sx + px * hw, sy + py * hw], [bx + px * hw, by + py * hw], [bx + px * headW, by + py * headW], [tx, ty],
+             [bx - px * headW, by - py * headW], [bx - px * hw, by - py * hw], [sx - px * hw, sy - py * hw]];
+  return pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+}
+function material(placement) {
+  var c = {};
+  'PNBRQpnbrq'.split('').forEach(function (k) { c[k] = 0; });
+  for (var i = 0; i < placement.length; i++) if (c[placement[i]] !== undefined) c[placement[i]]++;
+  var w = 0, b = 0;
+  ['q', 'r', 'b', 'n', 'p'].forEach(function (t) { w += VALUE[t] * c[t.toUpperCase()]; b += VALUE[t] * c[t]; });
+  var d = w - b;
+  return { advW: d > 0 ? '+' + d : '', advB: d < 0 ? '+' + (-d) : '' };
+}
+
+// Win-probability curve (y = 100 - white win %, 34 points) for the sheet's "Andamento" tab.
+var Y = [46.1, 46.7, 46.6, 46.5, 45.6, 44.7, 41.9, 41.9, 37.6, 37.0, 37.1, 40.4, 32.1, 31.0, 29.5, 32.3, 33.1, 32.9, 24.8, 24.8,
+         14.2, 13.2, 12.7, 12.4, 12.6, 10.7, 9.3, 9.8, 4.7, 3.8, 0.4, 0.4, 0.4, 0.0];
+var AREA = 'M0,100 L' + Y.map(function (y, i) { return (i * 10) + ',' + y; }).join(' L') + ' L330,100 Z';
+// Plot interior is 346 x 236. Plies 27, 30 and 31 sit within 42 px, so the four marker centres are
+// placed by hand (48 px hit areas never overlap) and joined to the curve by a leader line.
+var GW = 346, GH = 236, GR = 16;
+var SHEET_MARKS = [
+  { k: 31, cls: 'brilliant', x: 322, y: 48 }, { k: 30, cls: 'blunder', x: 226, y: 48 },
+  { k: 27, cls: 'great', x: 274, y: 104 }, { k: 19, cls: 'great', x: 199.2, y: 104 }
+];
+var BANDS = [
+  { name: 'Apertura', range: 'mosse 1–10', white: 'Eccellente', black: 'Buona', bt: '0' },
+  { name: 'Mediogioco', range: 'mosse 11–17', white: 'Eccellente', black: 'Eccellente', bt: '1.5px solid #708183' }
+];
+function buildGraph(self, ply) {
+  return {
+    area: AREA, cursor: ((ply + 1) / 33 * GW).toFixed(1),
+    marks: SHEET_MARKS.map(function (m) {
+      var cx = m.k / 33 * GW, cy = Y[m.k] / 100 * GH;
+      var dx = m.x - cx, dy = m.y - cy, len = Math.sqrt(dx * dx + dy * dy);
+      var i = m.k - 1, pl = PLIES[i];
+      return {
+        x1: cx.toFixed(1), y1: cy.toFixed(1), x2: (m.x - dx / len * GR).toFixed(1), y2: (m.y - dy / len * GR).toFixed(1),
+        hx: (m.x - 24).toFixed(1) + 'px', hy: (m.y - 24).toFixed(1) + 'px', tag: tag(m.cls, '#14262B'),
+        aria: pl.n + (pl.w ? '. ' : '… ') + pl.san + ', ' + CLS[m.cls].l,
+        pick: function () { self.setState({ ply: i, sheet: false }); }
+      };
+    }),
+    ticks: [[1, '1'], [9, '5'], [19, '10'], [29, '15'], [33, '17']].map(function (t, i, arr) {
+      return { left: (t[0] / 33 * 100).toFixed(2) + '%', label: t[1], tf: i === arr.length - 1 ? 'translateX(-100%)' : (i === 0 ? 'translateX(-30%)' : 'translateX(-50%)') };
+    })
+  };
+}
+
+class Component extends DCLogic {
+  constructor() {
+    super(...arguments);
+    // tab stays null until the user picks one, so the mounted prop decides the first view.
+    this.state = { ply: 30, flipped: false, showBest: true, sheet: true, tab: null };
+    this.stripEl = null;
+    this.lastScrolled = null;
+    this.setStrip = (el) => { this.stripEl = el; };
+    this.listEl = null;
+    this.lastListed = null;
+    this.setList = (el) => { this.listEl = el; };
+  }
+
+  componentDidMount() { this.scrollStrip(); this.scrollList(); }
+  componentDidUpdate() { this.scrollStrip(); this.scrollList(); }
+
+  // Keep the selected row centred in the sheet's move list (only the list scrolls).
+  scrollList() {
+    var box = this.listEl;
+    if (!box) { this.lastListed = null; return; }
+    if (this.lastListed === this.state.ply) return;
+    var el = box.querySelector('[aria-current="true"]');
+    if (!el) return;
+    var row = el.parentNode;
+    box.scrollTop = Math.max(0, row.offsetTop - box.clientHeight / 2 + row.offsetHeight / 2);
+    this.lastListed = this.state.ply;
+  }
+
+  // Center the selected chip inside the horizontal strip (only the strip scrolls).
+  scrollStrip() {
+    var box = this.stripEl;
+    if (!box || this.lastScrolled === this.state.ply) return;
+    var el = box.querySelector('[aria-current="true"]');
+    if (!el) return;
+    box.scrollLeft = Math.max(0, el.offsetLeft - (box.clientWidth - el.offsetWidth) / 2);
+    this.lastScrolled = this.state.ply;
+  }
+
+  renderVals() {
+    var self = this;
+    var dark = this.props.theme === 'Scuro';
+    var t = dark ? THEMES.Scuro : THEMES.Chiaro;
+    var ply = this.state.ply, flipped = this.state.flipped, showBest = this.state.showBest;
+    var last = PLIES.length - 1;
+    var cur = ply >= 0 ? PLIES[ply] : null;
+    var placement = cur ? cur.fen : START_FEN;
+    var grid = parseFen(placement);
+    var curTag = cur ? tag(cur.cls, '#14262B') : tag('best', '#14262B');
+
+    var squares = [];
+    for (var a = 0; a < 8; a++) {
+      for (var b = 0; b < 8; b++) {
+        var r = flipped ? 7 - a : a, f = flipped ? 7 - b : b;
+        var name = 'abcdefgh'[f] + (8 - r);
+        var light = (r + f) % 2 === 0;
+        var isTo = !!cur && name === cur.to, isFrom = !!cur && name === cur.from;
+        var pc = grid[r][f];
+        var white = !!pc && pc === pc.toUpperCase();
+        var P = pc ? PIECES[pc.toLowerCase()] : null;
+        squares.push({
+          bg: isTo ? '#E8A33D' : (isFrom ? '#F1C06E' : (light ? '#DCE8E6' : '#4A8590')),
+          showRank: b === 0, rank: String(8 - r), showFile: a === 7, file: 'abcdefgh'[f],
+          cc: (light || isTo || isFrom) ? '#14262B' : '#FFFFFF',
+          hasPiece: !!pc, body: P ? P.body : '', detail: P ? P.detail : '',
+          fill: white ? '#FFFBF0' : '#1B2B30', dc: white ? '#14262B' : '#DCE8E6',
+          label: pc ? PIECE_NAME[pc.toLowerCase()] + (white ? ' bianco ' : ' nero ') + 'in ' + name : '',
+          hasBadge: isTo, tag: curTag
+        });
+      }
+    }
+
+    var playedIsBest = !!cur && cur.bf === cur.from && cur.bt === cur.to;
+    var arrow = { show: false, points: '' };
+    if (showBest && cur && !playedIsBest) arrow = { show: true, points: arrowPoints(center(cur.bf, flipped), center(cur.bt, flipped), 10) };
+
+    var wp = cur ? cur.wpW / 100 : 0.539;
+    var ev = cur ? evText(cur.ev) : '+0,4';
+    var onWhite = wp >= 0.5;
+    var mat = material(placement);
+    var whiteP = { name: 'Paul Morphy', acc: '98,4', dot: '#FFFFFF', ring: t.line, adv: mat.advW };
+    var blackP = { name: 'Duca di Brunswick e Conte Isouard', acc: '83,8', dot: t.blackDot, ring: t.blackRing, adv: mat.advB };
+
+    var strip = PLIES.map(function (p, i) {
+      var active = i === ply;
+      return {
+        san: p.n + (p.w ? '. ' : '… ') + fig(p.san), current: active ? 'true' : 'false',
+        aria: p.n + (p.w ? '. ' : '… ') + p.san + ', ' + CLS[p.cls].l,
+        tag: tag(p.cls, active ? '#14262B' : t.ring),
+        bg: active ? '#E8A33D' : t.card, fg: active ? '#14262B' : t.text,
+        border: active ? t.amberBorder : '1.5px solid ' + t.ctrlBorder,
+        pick: function () { self.setState({ ply: i }); }
+      };
+    });
+
+    var coach;
+    if (!cur) {
+      coach = { tag: { c: '#FBF8F0', fg: '#14262B', isTxt: true, txt: '♚' + FE, isIcon: false, path: '', fill: 'none' },
+        head: 'Posizione iniziale', ev: '+0,4', showActions: false,
+        text: "Morphy contro il Duca di Brunswick e il Conte Isouard, Parigi 1858.", best: 'e4', line: fig(PLIES[0].line) };
+    } else {
+      coach = { tag: tag(cur.cls, t.onPetrol), head: cur.n + (cur.w ? '. ' : '… ') + fig(cur.san) + ' ' + CLS[cur.cls].h,
+        ev: ev, showActions: !playedIsBest, text: coachText(ply, cur), best: fig(cur.best), line: fig(cur.line) };
+    }
+    var blackAhead = coach.ev.charAt(0) === '−' || coach.ev === '0-1';
+    coach.evBg = blackAhead ? '#14262B' : '#FFFFFF';
+    coach.evFg = blackAhead ? '#FFFFFF' : '#14262B';
+    coach.evBorder = blackAhead ? t.onPetrol : '#FFFFFF';
+
+    var rows = PLIES.map(function (p, i) {
+      var active = i === ply;
+      return {
+        num: p.n + (p.w ? '.' : '…'), san: fig(p.san), current: active ? 'true' : 'false',
+        aria: p.n + (p.w ? '. ' : '… ') + p.san + ', ' + CLS[p.cls].l, tag: tag(p.cls, t.ring),
+        bg: active ? t.sel : 'transparent', border: active ? t.selBorder : 'transparent', bar: active ? 'inset 4px 0 0 #E8A33D' : 'none',
+        pick: function () { self.setState({ ply: i, sheet: false }); }
+      };
+    });
+    var tab = this.state.tab || (this.props.tab === 'Andamento' ? 'graph' : 'moves');
+    var tabMoves = tab === 'moves';
+    function tabStyle(active) {
+      return { bg: active ? '#E8A33D' : 'transparent', fg: active ? '#14262B' : t.text, border: active ? t.amberBorder : '1.5px solid transparent' };
+    }
+    var tm = tabStyle(tabMoves), tg = tabStyle(!tabMoves);
+
+    var atStart = ply <= -1, atEnd = ply >= last;
+    return {
+      t: t, squares: squares, arrow: arrow, strip: strip, coach: coach, setStrip: this.setStrip,
+      sheetOpen: this.state.sheet, sheetExpanded: this.state.sheet ? 'true' : 'false',
+      rows: rows, setList: this.setList, graph: buildGraph(self, ply), bands: BANDS,
+      tabMoves: tabMoves, tabGraph: !tabMoves, tabMovesSel: tabMoves ? 'true' : 'false', tabGraphSel: tabMoves ? 'false' : 'true',
+      tabMovesBg: tm.bg, tabMovesFg: tm.fg, tabMovesBorder: tm.border, tabGraphBg: tg.bg, tabGraphFg: tg.fg, tabGraphBorder: tg.border,
+      openSheet: function () { self.setState({ sheet: true }); },
+      closeSheet: function () { self.setState({ sheet: false }); },
+      showMoves: function () { self.setState({ tab: 'moves' }); },
+      showGraph: function () { self.setState({ tab: 'graph' }); },
+      top: flipped ? whiteP : blackP, bottom: flipped ? blackP : whiteP,
+      evW: (wp * 100).toFixed(1), evB: ((1 - wp) * 100).toFixed(1), evalDir: flipped ? 'row-reverse' : 'row', evLabel: ev,
+      labelOnWhite: onWhite, labelOnBlack: !onWhite,
+      wPad: onWhite ? (flipped ? '0 8px 0 0' : '0 0 0 8px') : '0', bPad: !onWhite ? (flipped ? '0 0 0 8px' : '0 8px 0 0') : '0',
+      wJust: flipped ? 'flex-end' : 'flex-start', bJust: flipped ? 'flex-start' : 'flex-end',
+      atStart: atStart, atEnd: atEnd,
+      startBg: atStart ? t.disFill : 'transparent', startFg: atStart ? t.disText : t.text, startBorder: atStart ? t.disBorder : t.ctrlBorder,
+      endBg: atEnd ? t.disFill : 'transparent', endFg: atEnd ? t.disText : t.text, endBorder: atEnd ? t.disBorder : t.ctrlBorder,
+      nextBg: atEnd ? t.disFill : '#E8A33D', nextFg: atEnd ? t.disText : '#14262B', nextBorder: atEnd ? '1.5px solid ' + t.disBorder : t.amberBorder,
+      bestPressed: showBest ? 'true' : 'false', bestBg: showBest ? 'rgba(251,248,240,.16)' : 'transparent',
+      bestLabel: showBest ? 'Nascondi freccia migliore' : 'Freccia migliore',
+      first: function () { self.setState({ ply: -1 }); },
+      prev: function () { self.setState({ ply: Math.max(-1, ply - 1) }); },
+      next: function () { self.setState({ ply: Math.min(last, ply + 1) }); },
+      last: function () { self.setState({ ply: last }); },
+      flip: function () { self.setState({ flipped: !flipped }); },
+      toggleBest: function () { self.setState({ showBest: !showBest }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
