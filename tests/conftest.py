@@ -11,11 +11,10 @@ import threading
 
 import chess
 import pytest
-from chess.engine import Cp, PovScore
 from werkzeug.serving import make_server
 
 import app
-from tests.engine_replay import patch_popen
+from tests.engine_replay import ScriptedEngine, patch_popen
 
 PHONE, DESKTOP = (390, 844), (1440, 900)
 GAME = {
@@ -43,26 +42,18 @@ def seed_local_storage(page, items):
         for key, value in items.items()))
 
 
-class FakeEngine:
-    """Scores every position 0 cp. Its first search waits until `release` is set."""
+class FakeEngine(ScriptedEngine):
+    """ScriptedEngine at 0 cp. Its first search waits until `release` is set."""
 
     def __init__(self, release):
+        super().__init__(lambda board: 0)
         self.release, self.started = release, False
-
-    def configure(self, options):
-        pass
 
     def analyse(self, board, limit, multipv=None):
         if not self.started:
             self.started = True
             self.release.wait()
-        moves = list(board.legal_moves)[: multipv or 1]
-        infos = [{"score": PovScore(Cp(0), board.turn), "pv": [m], "depth": limit.depth}
-                 for m in moves]
-        return infos if multipv is not None else infos[0]
-
-    def quit(self):
-        pass
+        return super().analyse(board, limit, multipv)
 
 
 @pytest.fixture

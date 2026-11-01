@@ -1,10 +1,12 @@
 import itertools
+import threading
 
 import chess
 import pytest
 from chess.engine import Cp, Mate, PovScore
 
 import analyzer as A
+from tests.conftest import FakeEngine
 from tests.engine_replay import ScriptedEngine, patch_popen
 
 W, B = chess.WHITE, chess.BLACK
@@ -39,13 +41,11 @@ def test_score_side_to_move_is_mated():
     assert A.score_to_cp(s, W) == -10000
 
 
-@pytest.mark.xfail(strict=True, reason=PHASE1)
 def test_score_mate_given_wp_is_a_win():
     s = PovScore(Mate(0), W)
     assert A.score_to_wp(s, B) == 1.0
 
 
-@pytest.mark.xfail(strict=True, reason=PHASE1)
 def test_score_mate_given_cp_is_a_win():
     s = PovScore(Mate(0), W)
     assert A.score_to_cp(s, B) == 10000
@@ -216,6 +216,8 @@ def test_compute_phases():
 
 
 OPENING = "1. e4 e5 2. Nf3 Nc6 *\n"
+BLACK_MATES = "1. f3 e5 2. g4 Qh4# 0-1\n"
+WHITE_MATES = "1. e4 f6 2. d4 g5 3. Qh5# 1-0\n"
 ONE_MOVE_THEN_STALEMATE = '[SetUp "1"]\n[FEN "7k/8/6K1/5Q2/8/8/8/8 b - - 0 1"]\n\n1... Kg8 2. Qf6 1/2-1/2\n'
 
 
@@ -224,12 +226,19 @@ def _analyze(pgn, engine):
         return A.GameAnalyzer("scripted", depth=15, threads=1).analyze_pgn(pgn)
 
 
+def _first_legal(fen):
+    return [move.uci() for move in chess.Board(fen).legal_moves][:1]
+
+
 def test_analyze_searches_each_position_once():
     engine = ScriptedEngine()
-    _analyze(OPENING, engine)
+    moves = _analyze(OPENING, engine)["moves"]
     assert len(engine.calls) == 5
     assert all(multipv == 2 for _, multipv in engine.calls)
     assert len({fen for fen, _ in engine.calls}) == 5
+    for m in moves:  # line 1 plays the first legal move: reading line 2 instead fails here
+        assert [m["best_move_uci"]] == _first_legal(m["fen_before"])
+        assert m["pv_after_uci"][:1] == _first_legal(m["fen_after"])
 
 
 def test_analyze_reuses_after_eval_as_next_before():
@@ -241,6 +250,26 @@ def test_analyze_reuses_after_eval_as_next_before():
 
 
 def test_analyze_handles_mate_and_single_move():
-    assert len(_analyze("1. f3 e5 2. g4 Qh4# 0-1\n", ScriptedEngine())["moves"]) == 4
+    assert len(_analyze(BLACK_MATES, ScriptedEngine())["moves"]) == 4
     moves = _analyze(ONE_MOVE_THEN_STALEMATE, ScriptedEngine())["moves"]  # Kg8 is the only legal move
     assert len(moves) == 2 and moves[0]["color"] == "black"
+
+
+@pytest.mark.parametrize("pgn, white_cp, white_wp", [
+    (BLACK_MATES, -10000, 0.0), (WHITE_MATES, 10000, 1.0),
+], ids=["black-mates", "white-mates"])
+def test_analyze_scores_a_given_mate_as_a_win(pgn, white_cp, white_wp):
+    last = _analyze(pgn, ScriptedEngine())["moves"][-1]  # answers Mate(0) for the mated side
+    assert (last["eval_after_cp"], last["wp_after"], last["cp_loss"]) == (10000, 1.0, 0)
+    assert (last["eval_white_cp"], last["wp_white_after"]) == (white_cp, white_wp)
+
+
+def test_analyze_move_number_from_fen():
+    moves = _analyze(ONE_MOVE_THEN_STALEMATE, ScriptedEngine())["moves"]
+    assert [(m["san"], m["move_number"]) for m in moves] == [("Kg8", 1), ("Qf6", 2)]
+
+
+def test_browser_fake_engine_answers_a_mated_position():
+    release = threading.Event()
+    release.set()  # its first search waits for this
+    assert len(_analyze(BLACK_MATES, FakeEngine(release))["moves"]) == 4

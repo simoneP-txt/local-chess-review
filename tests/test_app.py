@@ -4,6 +4,7 @@ import os
 import pytest
 
 import app
+from tests.engine_replay import ScriptedEngine
 
 PGN = '[Event "Test"]\n\n1. e4 e5 *\n'
 
@@ -122,3 +123,12 @@ def test_analyze_defaults_to_review_depth(client, analyzer_calls, monkeypatch):
     monkeypatch.setenv("REVIEW_DEPTH", "18")
     client.post("/api/analyze", json={"pgn": PGN})
     assert analyzer_calls == [("stub-engine", {"depth": 18, "threads": 1})]
+
+
+def test_eval_after_white_mates(client, monkeypatch):
+    monkeypatch.setattr(app, "_get_engine", lambda: ScriptedEngine())  # Mate(0) for the mated side
+    fen = "rnbqkbnr/ppppp2p/5p2/6pQ/3PP3/8/PPP2PPP/RNB1KBNR b KQkq - 1 3"  # 1. e4 f6 2. d4 g5 3. Qh5#
+    resp = client.post("/api/eval", json={"fen": fen})
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert (data["eval_white_cp"], data["wp_white"], data["eval_cp"]) == (10000, 1.0, -10000)

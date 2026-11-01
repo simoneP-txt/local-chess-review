@@ -147,10 +147,8 @@ def cp_to_wp(cp: int) -> float:
 def score_to_wp(score: chess.engine.PovScore, pov_color: chess.Color) -> float:
     pov = score.pov(pov_color)
     if pov.is_mate():
-        m = pov.mate()
-        if m is None:
-            return 0.5
-        return 1.0 if m > 0 else 0.0
+        # mate() is 0 for MateGiven (we won) and Mate(0) (we lost): the score order splits them
+        return 1.0 if pov > chess.engine.Cp(0) else 0.0
     cp = pov.score()
     return 0.5 if cp is None else cp_to_wp(cp)
 
@@ -158,11 +156,8 @@ def score_to_wp(score: chess.engine.PovScore, pov_color: chess.Color) -> float:
 def score_to_cp(score: chess.engine.PovScore, pov_color: chess.Color) -> int:
     pov = score.pov(pov_color)
     if pov.is_mate():
-        m = pov.mate()
-        if m is None:
-            return 0
-        magnitude = 10000 - max(0, abs(m) - 1) * 10
-        return magnitude if m > 0 else -magnitude
+        magnitude = 10000 - max(0, abs(pov.mate()) - 1) * 10
+        return magnitude if pov > chess.engine.Cp(0) else -magnitude  # see score_to_wp
     cp = pov.score()
     return 0 if cp is None else cp
 
@@ -692,7 +687,7 @@ class GameAnalyzer:
                 ply_index += 1
                 color_to_move = board.turn
                 color_str = "white" if color_to_move == chess.WHITE else "black"
-                move_number = (ply_index + 1) // 2
+                move_number = board.fullmove_number
                 phase = detect_phase(board, ply_index)
 
                 # 1) BEFORE: the search of the current position (line 1 best, line 2 2nd best)
