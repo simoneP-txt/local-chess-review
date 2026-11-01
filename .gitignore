@@ -53,3 +53,16 @@ htmlcov/
 
 # --- Recorded test fixtures: local only ---
 tests/fixtures/
+
+# --- Local planning, state and measurement docs: never published ---
+docs/BRIEF.md
+docs/DECISIONS.md
+docs/PROGRESS.md
+docs/progress-archive.md
+docs/backlog.md
+docs/audit.md
+docs/phase-0/
+docs/phase-1/
+docs/measurements/
+tests/fixtures-phase0/
+.superpowers/
