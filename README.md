@@ -40,7 +40,8 @@ dashboard.
 ## Main features
 
 - 📥 Download of the **current month's games** for the specified user.
-- 🐟 Analysis with **local Stockfish** (configurable depth, default 15).
+- 🐟 Analysis with **local Stockfish**. You pick the depth and the Threads
+  from the dashboard (default: depth 15, 1 Thread).
 - 🏷️ Per-move tags: *Brilliant, Great move, Best, Excellent, Good, Book,
   Inaccuracy, Mistake, Missed opportunity, Blunder* (Win-Probability based
   *Expected Points* model).
@@ -128,14 +129,19 @@ takes precedence over the bundled one.
    chess platform (the app uses its public read-only games API), press
    *Search*. Games for the current month appear sorted from most recent
    first.
-2. Click **Analyze**: Stockfish analysis starts (1–3 minutes at depth 15).
+2. Optional: press **Engine** in the top bar to choose the review depth
+   (10 to 22) and how many Threads Stockfish may use. Threads go from 1 up
+   to the logical cores of the PC that runs the server, even when you open
+   the page on a phone. The defaults are depth 15 (12 on a PC with 2 cores
+   or fewer) and 1 Thread. A change saves at once and the browser keeps it.
+3. Click **Analyze**: Stockfish analysis starts (1–3 minutes at depth 15).
    While you wait, a mini-puzzle and a progress bar are shown.
-3. When the analysis ends, a **Review ready** notice appears above the
+4. When the analysis ends, a **Review ready** notice appears above the
    puzzle. The page does not switch screens on its own, so a puzzle in
    progress stays put. Press **Open review** to see the **Summary screen**:
    accuracy %, Performance Elo, Win-Probability chart, game phases. If you
    dismiss the notice, a compact **Open review** button stays in its place.
-4. Press **▶ Start review** to enter move-by-move mode:
+5. Press **▶ Start review** to enter move-by-move mode:
    - centered board, oriented from the searched player's POV;
    - eval bar on the left;
    - per-move tag overlay on the destination square + arrow on the best
@@ -202,7 +208,9 @@ python app.py
 The console prints the URLs the app is reachable on. Open
 <http://127.0.0.1:5000>.
 
-For higher precision (slower):
+`REVIEW_DEPTH` sets the default depth of the **Engine** panel, clamped to
+10–22. Without it the default is 15, or 12 on a PC with 2 cores or fewer.
+To start from depth 18 (more precise, slower):
 
 ```powershell
 $env:REVIEW_DEPTH = "18"
@@ -277,10 +285,13 @@ which is not tracked.
   the engine, so tests need no `stockfish.exe`.
 - `test_analyzer.py`, `test_engine_replay.py`, `test_baseline.py` — unit tests,
   always run.
+- `test_app.py` — Flask test client: engine limits and the `/api/analyze`
+  checks. Needs no engine; always runs.
 - `test_fixtures.py` — checks the stored fixtures; skipped when `tests/fixtures/`
   is missing.
-- `test_review_page.py` (Playwright): opens the review page in Chromium against
-  a live server and a fake engine. Skipped without Playwright.
+- `conftest.py`, `test_review_page.py`, `test_dashboard_page.py` (Playwright):
+  open the review page and the dashboard in Chromium against a live server
+  and a fake engine. Skipped without Playwright.
 - `fixtures/` — local only (git-ignored). Per game: `<id>.pgn` (public API),
   `<id>.engine.json` (every recorded Stockfish answer), `<id>.analysis.json`
   (analyzer output).
@@ -328,10 +339,13 @@ local-chess-review/
 │   └── baseline.py         # baseline: fetch, fixtures, replay, timing
 ├── tests/
 │   ├── engine_replay.py    # record/replay layer for Stockfish answers
+│   ├── conftest.py         # browser tests: live server, fake engine, Chromium
 │   ├── test_analyzer.py
+│   ├── test_app.py         # Flask API tests: engine limits, /api/analyze checks
 │   ├── test_engine_replay.py
 │   ├── test_baseline.py
 │   ├── test_fixtures.py    # skipped without fixtures/
+│   ├── test_dashboard_page.py # browser test of the engine panel; skipped without Playwright
 │   ├── test_review_page.py # browser test of the review page; skipped without Playwright
 │   └── fixtures/           # LOCAL ONLY: PGNs, recorded engine answers, analyses
 ├── engine/
@@ -345,6 +359,7 @@ local-chess-review/
     ├── css/style.css
     └── js/
         ├── i18n.js         # IT/EN dictionaries + t() helper
+        ├── engine_settings.js # depth/Threads choice kept in localStorage
         ├── index.js
         └── review.js
 ```
@@ -353,8 +368,9 @@ local-chess-review/
 
 ## Quick customizations
 
-- **More precision → slower**: increase `REVIEW_DEPTH` (env) or `depth=`
-  in `GameAnalyzer`.
+- **More precision → slower**: pick a higher depth in the **Engine** panel,
+  raise the default with `REVIEW_DEPTH` (env), or change `depth=` in
+  `GameAnalyzer`.
 - **Classification thresholds**: `WP_THRESHOLDS` in `analyzer.py` (in WP).
 - **Brilliant more / less restrictive**: `BRILLIANT_SEE_MAX`,
   `BRILLIANT_WP_FLOOR`, `BRILLIANT_WP_CEILING`, `BRILLIANT_2ND_GAP`.
@@ -372,6 +388,6 @@ local-chess-review/
   requests. Increase the delay or customize the header in `chess_api.py`.
 - **Phone can't see the PC** → Windows firewall: allow inbound TCP port
   5000 for private networks; PC and phone must be on the same Wi-Fi.
-- **Analysis too slow** → lower `REVIEW_DEPTH` (e.g. 12) or pick a
-  shorter game.
+- **Analysis too slow** → lower the depth in the **Engine** panel (e.g.
+  12) or pick a shorter game.
 - **"Puzzle DB not installed"** → run `python scripts\download_puzzles.py` once.

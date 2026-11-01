@@ -24,6 +24,40 @@ const btnSearch = document.getElementById("btn-search");
 })();
 
 // =============================================================
+// Engine settings panel (depth, Threads). The limits come from the machine that
+// runs Stockfish (GET /api/engine), not from this browser. A choice is saved at
+// once; the review page reads it when it starts the analysis.
+// =============================================================
+(async function bindEngineDialog() {
+  let limits;
+  try {
+    const resp = await fetch("/api/engine");
+    if (!resp.ok) throw new Error(resp.status);
+    limits = await resp.json();
+  } catch { return; }  // no limits: the button stays disabled
+
+  const depthSelect = document.getElementById("engine-depth");
+  const threadsSelect = document.getElementById("engine-threads");
+  for (let n = limits.depth.min; n <= limits.depth.max; n++) {
+    depthSelect.add(new Option(n, n));
+  }
+  for (let n = limits.threads.min; n <= limits.threads.max; n++) {
+    threadsSelect.add(new Option(t("engine.threads_option", { n, cores: limits.cores }), n));
+  }
+  const settings = loadEngineSettings(limits);
+  depthSelect.value = settings.depth;
+  threadsSelect.value = settings.threads;
+
+  const save = () => saveEngineSettings({ depth: +depthSelect.value, threads: +threadsSelect.value });
+  depthSelect.addEventListener("change", save);
+  threadsSelect.addEventListener("change", save);
+
+  const button = document.getElementById("btn-engine");
+  button.addEventListener("click", () => document.getElementById("engine-dialog").showModal());
+  button.disabled = false;
+})();
+
+// =============================================================
 // MRU cache of searched usernames (localStorage)
 // - Stores up to RECENT_MAX unique names, MRU order.
 // - Populates both the native <datalist> (for browser autocomplete)

@@ -35,6 +35,14 @@ const TRANSLATIONS = {
     "dashboard.lang_label":      "Lingua",
     "dashboard.remove_recent":   "Rimuovi",
 
+    // ----- engine settings panel -----
+    "engine.btn":                "Motore",
+    "engine.title":              "Impostazioni del motore",
+    "engine.depth":              "Profondità",
+    "engine.threads":            "Threads",
+    "engine.threads_option":     "{n} di {cores} core",
+    "engine.close":              "Chiudi",
+
     // ----- game card -----
     "game.win":                  "Vittoria",
     "game.loss":                 "Sconfitta",
@@ -172,6 +180,14 @@ const TRANSLATIONS = {
     "dashboard.fetching":        "Downloading games...",
     "dashboard.lang_label":      "Language",
     "dashboard.remove_recent":   "Remove",
+
+    // ----- engine settings panel -----
+    "engine.btn":                "Engine",
+    "engine.title":              "Engine settings",
+    "engine.depth":              "Depth",
+    "engine.threads":            "Threads",
+    "engine.threads_option":     "{n} of {cores} cores",
+    "engine.close":              "Close",
 
     // ----- game card -----
     "game.win":                  "Win",

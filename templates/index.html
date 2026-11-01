@@ -16,8 +16,10 @@
     <div class="container-fluid">
       <span class="navbar-brand mb-0 h1" data-i18n="dashboard.brand">♟️ Local Chess Review</span>
 
-      <!-- Language toggle: IT default, EN optional. Stored in localStorage. -->
+      <!-- Engine panel button (enabled by index.js once /api/engine answers), then the
+           language toggle: IT default, EN optional. Stored in localStorage. -->
       <div class="d-flex align-items-center gap-2">
+        <button id="btn-engine" type="button" class="btn btn-outline-light btn-sm" data-i18n="engine.btn" disabled>Motore</button>
         <label class="text-light small mb-0" for="lang-select" data-i18n="dashboard.lang_label">Lingua</label>
         <select id="lang-select" class="form-select form-select-sm" style="width: auto;">
           <option value="it">Italiano</option>
@@ -68,7 +70,22 @@
     <div id="games-wrapper" class="row mt-4 g-3"></div>
   </main>
 
+  <!-- Engine settings. Native dialog: Esc and the close button (a form with
+       method="dialog") close it. The options are filled by index.js. -->
+  <dialog id="engine-dialog" aria-labelledby="engine-title"
+          class="bg-secondary-subtle text-dark rounded shadow border-0 p-4" style="width: min(92vw, 24rem);">
+    <h5 id="engine-title" class="mb-3" data-i18n="engine.title">Impostazioni del motore</h5>
+    <label for="engine-depth" class="form-label" data-i18n="engine.depth">Profondità</label>
+    <select id="engine-depth" class="form-select form-select-lg mb-3"></select>
+    <label for="engine-threads" class="form-label" data-i18n="engine.threads">Threads</label>
+    <select id="engine-threads" class="form-select form-select-lg mb-4"></select>
+    <form method="dialog">
+      <button id="btn-engine-close" class="btn btn-secondary btn-lg w-100" data-i18n="engine.close">Chiudi</button>
+    </form>
+  </dialog>
+
   <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/engine_settings.js') }}"></script>
   <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 </html>

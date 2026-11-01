@@ -5,7 +5,12 @@ Endpoints:
   GET  /                           -> dashboard (username form + games list)
   GET  /api/games?username=...     -> JSON of the games for the current month
   GET  /api/game/<u>/<id>          -> single PGN from cache
-  POST /api/analyze                -> {pgn, white_elo, black_elo, depth?} -> full analysis
+  GET  /api/engine                 -> {cores, threads: {min, max, default},
+                                        depth: {min, max, default}} of the host that runs
+                                        Stockfish. Used by the dashboard engine panel.
+  POST /api/analyze                -> {pgn, white_elo, black_elo, depth?, threads?} -> full
+                                        analysis; 400 if depth or threads is not an integer
+                                        inside the range of /api/engine
   POST /api/eval                   -> {fen, depth?} -> {eval_cp, eval_white_cp,
                                         wp_white, best_move_uci, best_move_san}
                                         Used by the frontend "variation explorer".
@@ -55,8 +60,8 @@ ENGINE_CANDIDATES = [
 ]
 ENGINE_PATH = next((str(p) for p in ENGINE_CANDIDATES if p.exists()), None)
 
-# Analysis depth: env override for higher precision.
-ANALYSIS_DEPTH = int(os.environ.get("REVIEW_DEPTH", "15"))
+# Range of the review depth the user may choose (enforced by /api/analyze).
+DEPTH_MIN, DEPTH_MAX = 10, 22
 
 # Depth for "fast" evaluations of the variation explorer: lower to keep UI
 # latency low when the user explores alternative moves.
@@ -139,6 +144,33 @@ def api_game_pgn(username: str, game_id: int):
     return jsonify(games[game_id])
 
 
+# ============================================================
+# /api/engine - what the host that runs Stockfish allows
+# ============================================================
+def _host_cores() -> int:
+    """Logical CPUs the engine host may use (os.process_cpu_count exists from Python 3.13)."""
+    return (getattr(os, "process_cpu_count", None) or os.cpu_count)() or 1
+
+
+def engine_limits(cores: int) -> dict:
+    """Range and default of the review depth and of the Stockfish Threads."""
+    # The default is 1 Thread: more of them made depth-15 searches slower on the test PC.
+    # REVIEW_DEPTH (documented) replaces the default depth, clamped like any choice.
+    depth = int(os.environ.get("REVIEW_DEPTH") or (12 if cores <= 2 else 15))
+    return {
+        "cores": cores,
+        "threads": {"min": 1, "max": cores, "default": 1},
+        "depth": {"min": DEPTH_MIN, "max": DEPTH_MAX,
+                  "default": max(DEPTH_MIN, min(DEPTH_MAX, depth))},
+    }
+
+
+@app.route("/api/engine")
+def api_engine():
+    """Limits and defaults of the engine host, for the dashboard panel and the review page."""
+    return jsonify(engine_limits(_host_cores()))
+
+
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
     """Runs the Stockfish analysis on the provided PGN."""
@@ -152,11 +184,20 @@ def api_analyze():
     if not pgn:
         return jsonify({"error": "missing 'pgn' field"}), 400
 
-    depth = int(payload.get("depth", ANALYSIS_DEPTH))
+    limits = engine_limits(_host_cores())
+    chosen = {}
+    for name in ("depth", "threads"):
+        low, high = limits[name]["min"], limits[name]["max"]
+        value = payload.get(name, limits[name]["default"])
+        # type() is int: a JSON true is a bool, and bool is a subclass of int.
+        if type(value) is not int or not low <= value <= high:
+            return jsonify({"error": f"{name} must be an integer between {low} and {high}"}), 400
+        chosen[name] = value
+
     white_elo = payload.get("white_elo")
     black_elo = payload.get("black_elo")
     try:
-        analyzer = GameAnalyzer(ENGINE_PATH, depth=depth)
+        analyzer = GameAnalyzer(ENGINE_PATH, **chosen)
         result = analyzer.analyze_pgn(pgn, white_elo=white_elo, black_elo=black_elo)
     except Exception as exc:  # noqa: BLE001
         return jsonify({"error": f"analysis error: {exc}"}), 500
@@ -277,7 +318,7 @@ def api_health():
         "ok": True,
         "engine_found": bool(ENGINE_PATH),
         "engine_path": ENGINE_PATH,
-        "depth_default": ANALYSIS_DEPTH,
+        "depth_default": engine_limits(_host_cores())["depth"]["default"],
         "eval_depth": EVAL_DEPTH,
         "puzzles_db_present": PUZZLE_DB_PATH.exists(),
     })

@@ -129,6 +129,18 @@ function setLoadingStatus(msg) {
   if (el) el.textContent = msg;
 }
 
+/* Time per ply of the last successful review, by engine settings:
+   {"<depth>x<threads>": ms}. The estimate above uses it; a setting never run uses 600 ms. */
+const MS_PER_PLY_KEY = "chessreview.review_ms_per_ply";
+function loadMsPerPly() {
+  try { return JSON.parse(localStorage.getItem(MS_PER_PLY_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveMsPerPly(settingsKey, ms) {
+  try { localStorage.setItem(MS_PER_PLY_KEY, JSON.stringify({ ...loadMsPerPly(), [settingsKey]: ms })); }
+  catch { /* storage full or disabled: ignore */ }
+}
+
 /* =============================================================
    MINI PUZZLE (Lichess) during loading
    - Loads /api/puzzle?difficulty=...
@@ -297,11 +309,17 @@ async function init() {
       `${meta.white} (${t("review.color_white")[0]}) vs ${meta.black} (${t("review.color_black")[0]}) · ${meta.date}`;
     orientation = meta.user_color || "white";
 
-    // Estimate analysis time: ~600ms per ply at depth 15.
-    const plyEstimate = (meta.pgn.match(/[0-9]+\./g) || []).length * 2;
-    startProgressBar(Math.max(20000, plyEstimate * 600));
-    setLoadingStatus(t("review.loading_estimate", { plies: plyEstimate, depth: 15 }));
+    // Depth and Threads chosen on the dashboard, brought into this host's range.
+    const { depth, threads } = loadEngineSettings(await fetch("/api/engine").then((r) => r.json()));
 
+    // Estimate analysis time from the last review with the same settings, else 600 ms per ply.
+    const plyEstimate = (meta.pgn.match(/[0-9]+\./g) || []).length * 2;
+    const settingsKey = `${depth}x${threads}`;
+    const savedMs = loadMsPerPly()[settingsKey];
+    startProgressBar(Math.max(20000, plyEstimate * (savedMs > 0 ? savedMs : 600)));
+    setLoadingStatus(t("review.loading_estimate", { plies: plyEstimate, depth }));
+
+    const startedAt = performance.now();
     const resp = await fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -309,12 +327,17 @@ async function init() {
         pgn: meta.pgn,
         white_elo: meta.white_rating,
         black_elo: meta.black_rating,
+        depth,
+        threads,
       }),
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || "analysis error");
 
     analysis = data;
+    if (analysis.moves.length) {
+      saveMsPerPly(settingsKey, Math.round((performance.now() - startedAt) / analysis.moves.length));
+    }
     finishProgressBar();
     // No screen change: the user may be in the middle of a puzzle. The notice
     // stays until they open the review or dismiss it.
