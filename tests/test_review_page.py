@@ -6,10 +6,12 @@ test releases it, so the test decides when the analysis ends. Needs
 `python -m playwright install chromium` and internet (CDN scripts, piece images);
 skipped when Playwright is not installed.
 """
+import re
+
 import pytest
 
 import app
-from tests.conftest import DESKTOP, GAME, PHONE, pretend_host, seed_local_storage
+from tests.conftest import DESKTOP, FakeEngine, GAME, PHONE, pretend_host, seed_local_storage
 
 sync_api = pytest.importorskip("playwright.sync_api")
 expect = sync_api.expect
@@ -67,6 +69,8 @@ def test_ready_notice_leaves_the_puzzle_alone(page, base_url, release, dismiss_f
     row = page.locator("#loading-row")
     expect(row).to_have_attribute("aria-live", "polite")
     expect(row.locator("#btn-open-review")).to_be_visible()
+    expect(page.get_by_role("button", name="Chiudi")).to_have_attribute("id", "btn-dismiss-ready")
+    assert "progress-bar-animated" not in page.get_attribute("#loading-progress-bar", "class")
 
     if dismiss_first:
         page.click("#btn-dismiss-ready")
@@ -88,9 +92,53 @@ def test_analysis_error_shows_in_the_status_row_and_keeps_the_puzzle(page, base_
     monkeypatch.setattr(app, "ENGINE_PATH", None)  # /api/analyze now answers 500
     page.reload()
     expect(page.locator("#loading-row")).to_contain_text("Errore: Stockfish not found")
+    expect(page.locator("#loading-status")).to_have_class(re.compile("loading-error"))
+    bar = page.locator("#loading-progress-bar")
+    expect(bar).to_have_class(re.compile("bg-danger"))
+    expect(bar).not_to_have_class(re.compile("progress-bar-animated|bg-primary"))
     page.wait_for_function("puzzleStep === 1")
     expect(page.locator("#puzzle-board")).to_be_visible()
     assert box(page, ".puzzle-card")[1] == card_top
+
+
+def test_long_analysis_error_does_not_move_the_puzzle(page, base_url, monkeypatch):
+    page.goto(f"{base_url}/review")
+    card = box(page, ".puzzle-card")
+
+    def boom(self, *args, **kwargs):
+        raise RuntimeError("engine crashed " * 25)
+
+    monkeypatch.setattr(FakeEngine, "analyse", boom)
+    page.reload()
+    status = page.locator("#loading-status")
+    expect(status).to_contain_text("engine crashed engine crashed")
+    assert len(status.get_attribute("title")) >= 300
+    assert box(page, ".puzzle-card") == card
+
+
+def test_ready_notice_in_english(page, base_url, release):
+    seed_local_storage(page, {"chessreview.lang": "en"})
+    page.goto(f"{base_url}/review")
+    release.set()
+    expect(page.get_by_text("Review ready")).to_be_visible()
+    expect(page.get_by_role("button", name="Open review")).to_be_visible()
+
+
+def test_arrow_keys_on_the_loading_screen_raise_nothing(page, base_url, release):
+    errors = []
+    page.on("pageerror", lambda err: errors.append(err))
+    page.goto(f"{base_url}/review")
+    release.set()
+    expect(page.locator("#review-ready")).to_be_visible()
+    page.keyboard.press("ArrowLeft")
+    page.keyboard.press("ArrowRight")
+    assert errors == []
+
+
+def test_failing_engine_endpoint_shows_in_the_status_row(page, base_url):
+    page.route("**/api/engine", lambda route: route.fulfill(status=500, json={"error": "no engine info"}))
+    page.goto(f"{base_url}/review")
+    expect(page.locator("#loading-row")).to_contain_text("Errore: no engine info")
 
 
 def test_missing_game_shows_the_error_and_the_puzzle_still_starts(page, base_url, monkeypatch):

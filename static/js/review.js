@@ -122,11 +122,17 @@ function startProgressBar(estimatedMs) {
 function finishProgressBar() {
   if (progressTimer) clearInterval(progressTimer);
   const bar = document.getElementById("loading-progress-bar");
-  if (bar) bar.style.width = "100%";
+  if (bar) {
+    bar.style.width = "100%";
+    bar.classList.remove("progress-bar-animated");
+  }
 }
 function setLoadingStatus(msg) {
   const el = document.getElementById("loading-status");
-  if (el) el.textContent = msg;
+  if (el) {
+    el.textContent = msg;
+    el.title = msg;  // the full text, since the CSS clamps it to two lines
+  }
 }
 
 /* Time per ply of the last successful review, by engine settings:
@@ -291,6 +297,13 @@ function bindPuzzleControls() {
   });
 }
 
+async function fetchEngineLimits() {
+  const resp = await fetch("/api/engine");
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || "/api/engine error");
+  return data;
+}
+
 /* ---------- bootstrap ---------- */
 async function init() {
   if (!username || gameId === null) {
@@ -310,7 +323,7 @@ async function init() {
     orientation = meta.user_color || "white";
 
     // Depth and Threads chosen on the dashboard, brought into this host's range.
-    const { depth, threads } = loadEngineSettings(await fetch("/api/engine").then((r) => r.json()));
+    const { depth, threads } = loadEngineSettings(await fetchEngineLimits());
 
     // Estimate analysis time from the last review with the same settings, else 600 ms per ply.
     const plyEstimate = (meta.pgn.match(/[0-9]+\./g) || []).length * 2;
@@ -345,6 +358,8 @@ async function init() {
     document.getElementById("review-ready").classList.remove("d-none");
   } catch (err) {
     finishProgressBar();
+    const bar = document.getElementById("loading-progress-bar");
+    bar.classList.replace("bg-primary", "bg-danger");
     setLoadingStatus(`${t("common.error")}: ${err.message}`);
     document.getElementById("loading-status").classList.add("loading-error");
   }
@@ -1173,7 +1188,7 @@ document.getElementById("btn-back-nav").addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (!analysis) return;
+  if (!analysis || !chess) return;
   if (e.key === "ArrowLeft")  goToPly(currentPly - 1);
   if (e.key === "ArrowRight") goToPly(currentPly + 1);
 });

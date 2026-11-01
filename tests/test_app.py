@@ -51,6 +51,12 @@ def test_review_depth_env_sets_the_default_depth_inside_the_range(monkeypatch, v
     assert app.engine_limits(4)["depth"]["default"] == depth
 
 
+@pytest.mark.parametrize("cores, depth", [(4, 15), (2, 12)])
+def test_unparsable_review_depth_is_ignored(monkeypatch, cores, depth):
+    monkeypatch.setenv("REVIEW_DEPTH", "abc")
+    assert app.engine_limits(cores)["depth"]["default"] == depth
+
+
 def test_review_depth_env_wins_on_a_small_host(monkeypatch):
     monkeypatch.setenv("REVIEW_DEPTH", "18")
     assert app.engine_limits(2)["depth"]["default"] == 18

@@ -156,7 +156,10 @@ def engine_limits(cores: int) -> dict:
     """Range and default of the review depth and of the Stockfish Threads."""
     # The default is 1 Thread: more of them made depth-15 searches slower on the test PC.
     # REVIEW_DEPTH (documented) replaces the default depth, clamped like any choice.
-    depth = int(os.environ.get("REVIEW_DEPTH") or (12 if cores <= 2 else 15))
+    try:
+        depth = int(os.environ["REVIEW_DEPTH"])
+    except (KeyError, ValueError):  # unset, empty or not a number: use the computed default
+        depth = 12 if cores <= 2 else 15
     return {
         "cores": cores,
         "threads": {"min": 1, "max": cores, "default": 1},

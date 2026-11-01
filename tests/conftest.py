@@ -88,7 +88,10 @@ def base_url(monkeypatch, release):
 def browser():
     sync_api = pytest.importorskip("playwright.sync_api")
     with sync_api.sync_playwright() as playwright:
-        browser = playwright.chromium.launch()
+        try:
+            browser = playwright.chromium.launch()
+        except sync_api.Error:
+            pytest.skip("Chromium for Playwright is not installed: run python -m playwright install chromium")
         yield browser
         browser.close()
 

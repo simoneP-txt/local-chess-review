@@ -10,5 +10,6 @@ Risultato finale atteso:
 
 Linux/Mac (opzionale): metti l'eseguibile come "engine/stockfish".
 
-Per cambiare la profondità di analisi (default 15) imposta la variabile d'ambiente:
+La profondità si sceglie dal pannello Engine della dashboard: default 15 (12 con 2 core o meno).
+REVIEW_DEPTH cambia il default:
    PowerShell:  $env:REVIEW_DEPTH = "18"; python app.py

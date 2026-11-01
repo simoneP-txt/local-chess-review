@@ -298,13 +298,19 @@ body {
 
 /* Status row above the puzzle. Its height is reserved from the start (two lines
    of small text: enough for the notice at 390 px and for a typical error), so the
-   board does not move when the notice or an error replaces the estimate.
-   shortcut: an error longer than two lines still grows the row, clamp the text if that happens. */
+   board does not move when the notice or an error replaces the estimate. The status
+   text is clamped to two lines; its title holds the full message. */
 .loading-row {
   min-height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+#loading-status {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .loading-error { color: #ff6b6b; }
 .review-ready {
