@@ -35,9 +35,19 @@
            class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
            role="progressbar" style="width: 0%"></div>
     </div>
-    <p class="small text-muted text-center mt-2 mb-0">
+    <!-- Status row with a reserved height (see style.css), so the puzzle below does
+         not move. Shows the estimate, then the "review ready" notice or an error. -->
+    <div id="loading-row" class="loading-row small text-muted text-center mt-2" aria-live="polite">
       <span id="loading-status"></span>
-    </p>
+      <div id="review-ready" class="review-ready d-none">
+        <span class="ready-only" data-i18n="review.ready">Revisione pronta</span>
+        <button id="btn-open-review" class="btn btn-sm btn-success" data-i18n="review.btn_open_review">Apri revisione</button>
+        <button id="btn-dismiss-ready" class="btn btn-sm btn-outline-light ready-only">
+          <span aria-hidden="true">✕</span>
+          <span class="visually-hidden" data-i18n="review.btn_dismiss">Chiudi</span>
+        </button>
+      </div>
+    </div>
 
     <div class="puzzle-card mt-4">
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-2">

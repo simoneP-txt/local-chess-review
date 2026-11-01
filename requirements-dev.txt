@@ -1,5 +1,7 @@
-# Dev-only dependencies: pyinstaller builds the .exe (build.ps1), pytest runs tests/.
-# End users who just run the script need neither.
+# Dev-only dependencies: pyinstaller builds the .exe (build.ps1), pytest runs tests/,
+# playwright drives the browser tests (also run: python -m playwright install chromium).
+# End users who just run the script need none of them.
 -r requirements.txt
 pyinstaller>=6.0
 pytest>=8
+playwright>=1.64

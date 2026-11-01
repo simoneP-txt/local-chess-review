@@ -296,6 +296,32 @@ body {
 .puzzle-status-error { color: #e58a3a; }
 .puzzle-status-info  { color: #c9c5bf; }
 
+/* Status row above the puzzle. Its height is reserved from the start (two lines
+   of small text: enough for the notice at 390 px and for a typical error), so the
+   board does not move when the notice or an error replaces the estimate.
+   shortcut: an error longer than two lines still grows the row, clamp the text if that happens. */
+.loading-row {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loading-error { color: #ff6b6b; }
+.review-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #81b64c;
+  border-radius: 8px;
+  background: rgba(129, 182, 76, 0.15);
+  color: #e8e6e3;
+  font-weight: 600;
+}
+/* Dismissed: only the compact "open" button stays, without the highlight. */
+.review-ready.dismissed { border-color: transparent; background: none; }
+.review-ready.dismissed .ready-only { display: none; }
+
 /* ============================================================
    Variation banner above the chessboard
    ============================================================ */

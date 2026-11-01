@@ -286,6 +286,9 @@ async function init() {
     window.location.href = "/";
     return;
   }
+  // The puzzle starts first, so it stays playable if the game or the analysis fails.
+  bindPuzzleControls();
+  loadPuzzle();   // not awaited: runs in parallel with the analysis
   try {
     meta = await fetch(`/api/game/${encodeURIComponent(username)}/${gameId}`).then((r) => r.json());
     if (meta.error) throw new Error(meta.error);
@@ -298,10 +301,6 @@ async function init() {
     const plyEstimate = (meta.pgn.match(/[0-9]+\./g) || []).length * 2;
     startProgressBar(Math.max(20000, plyEstimate * 600));
     setLoadingStatus(t("review.loading_estimate", { plies: plyEstimate, depth: 15 }));
-
-    // Run in parallel: puzzle + analysis.
-    bindPuzzleControls();
-    loadPuzzle();   // not awaited: runs in parallel with analysis
 
     const resp = await fetch("/api/analyze", {
       method: "POST",
@@ -317,17 +316,25 @@ async function init() {
 
     analysis = data;
     finishProgressBar();
-    setLoadingStatus(t("review.loading_complete"));
-    setTimeout(() => {
-      document.getElementById("loading").classList.add("d-none");
-      showSummary();
-    }, 350);
+    // No screen change: the user may be in the middle of a puzzle. The notice
+    // stays until they open the review or dismiss it.
+    document.getElementById("loading-status").classList.add("d-none");
+    document.getElementById("review-ready").classList.remove("d-none");
   } catch (err) {
     finishProgressBar();
-    document.getElementById("loading").innerHTML =
-      `<div class="alert alert-danger">${t("common.error")}: ${err.message}</div>`;
+    setLoadingStatus(`${t("common.error")}: ${err.message}`);
+    document.getElementById("loading-status").classList.add("loading-error");
   }
 }
+
+document.getElementById("btn-open-review").addEventListener("click", () => {
+  document.getElementById("loading").classList.add("d-none");
+  showSummary();
+});
+
+document.getElementById("btn-dismiss-ready").addEventListener("click", () => {
+  document.getElementById("review-ready").classList.add("dismissed");
+});
 
 /* ============================================================
    SUMMARY

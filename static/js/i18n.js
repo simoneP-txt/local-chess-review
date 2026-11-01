@@ -47,7 +47,9 @@ const TRANSLATIONS = {
     "review.loading_title":      "Analisi in corso con Stockfish",
     "review.loading_status":     "Avvio analisi (profondità {depth})...",
     "review.loading_estimate":   "Analizzo ~{plies} mosse a profondità {depth}...",
-    "review.loading_complete":   "Analisi completata.",
+    "review.ready":              "Revisione pronta",
+    "review.btn_open_review":    "Apri revisione",
+    "review.btn_dismiss":        "Chiudi",
 
     // ----- puzzle card -----
     "puzzle.title":              "🧩 Allenati con un puzzle mentre aspetti",
@@ -183,7 +185,9 @@ const TRANSLATIONS = {
     "review.loading_title":      "Analysis in progress with Stockfish",
     "review.loading_status":     "Starting analysis (depth {depth})...",
     "review.loading_estimate":   "Analyzing ~{plies} moves at depth {depth}...",
-    "review.loading_complete":   "Analysis complete.",
+    "review.ready":              "Review ready",
+    "review.btn_open_review":    "Open review",
+    "review.btn_dismiss":        "Dismiss",
 
     // ----- puzzle card -----
     "puzzle.title":              "🧩 Train with a puzzle while you wait",

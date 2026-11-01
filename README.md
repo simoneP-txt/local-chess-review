@@ -130,8 +130,11 @@ takes precedence over the bundled one.
    first.
 2. Click **Analyze**: Stockfish analysis starts (1–3 minutes at depth 15).
    While you wait, a mini-puzzle and a progress bar are shown.
-3. The **Summary screen** appears: accuracy %, Performance Elo,
-   Win-Probability chart, game phases.
+3. When the analysis ends, a **Review ready** notice appears above the
+   puzzle. The page does not switch screens on its own, so a puzzle in
+   progress stays put. Press **Open review** to see the **Summary screen**:
+   accuracy %, Performance Elo, Win-Probability chart, game phases. If you
+   dismiss the notice, a compact **Open review** button stays in its place.
 4. Press **▶ Start review** to enter move-by-move mode:
    - centered board, oriented from the searched player's POV;
    - eval bar on the left;
@@ -211,7 +214,7 @@ python app.py
 To produce the `ChessReview.exe` distributed via Releases:
 
 ```powershell
-pip install -r requirements-dev.txt   # one-time: adds pyinstaller and pytest
+pip install -r requirements-dev.txt   # one-time: adds pyinstaller, pytest and playwright
 .\build.ps1 -Clean -Zip
 ```
 
@@ -234,12 +237,17 @@ Build inputs picked up automatically:
 
 ## Tests and baseline
 
-Install the dev dependencies once, then run the tests from the project root:
+Install the dev dependencies and the test browser once, then run the tests
+from the project root:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m playwright install chromium
 .\.venv\Scripts\python.exe -m pytest
 ```
+
+The browser tests skip without Playwright and need internet for the CDN
+scripts and the piece images.
 
 `scripts/baseline.py` measures the analyzer before any change to it. Run it
 from the project root with `.\.venv\Scripts\python.exe scripts\baseline.py <command>`:
@@ -271,6 +279,8 @@ which is not tracked.
   always run.
 - `test_fixtures.py` — checks the stored fixtures; skipped when `tests/fixtures/`
   is missing.
+- `test_review_page.py` (Playwright): opens the review page in Chromium against
+  a live server and a fake engine. Skipped without Playwright.
 - `fixtures/` — local only (git-ignored). Per game: `<id>.pgn` (public API),
   `<id>.engine.json` (every recorded Stockfish answer), `<id>.analysis.json`
   (analyzer output).
@@ -308,7 +318,7 @@ local-chess-review/
 ├── chess_api.py            # public API wrapper (game download)
 ├── analyzer.py             # engine + move classification algorithm
 ├── requirements.txt        # runtime dependencies
-├── requirements-dev.txt    # extra deps: pyinstaller (build the .exe) and pytest
+├── requirements-dev.txt    # extra deps: pyinstaller (build the .exe), pytest, playwright
 ├── chessreview.spec        # PyInstaller build config
 ├── build.ps1               # builds dist\ChessReview\ChessReview.exe
 ├── start.ps1               # quick launcher for dev mode
@@ -322,6 +332,7 @@ local-chess-review/
 │   ├── test_engine_replay.py
 │   ├── test_baseline.py
 │   ├── test_fixtures.py    # skipped without fixtures/
+│   ├── test_review_page.py # browser test of the review page; skipped without Playwright
 │   └── fixtures/           # LOCAL ONLY: PGNs, recorded engine answers, analyses
 ├── engine/
 │   ├── README.txt          # how to download Stockfish
