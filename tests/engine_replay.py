@@ -73,6 +73,27 @@ class ReplayEngine:
         pass
 
 
+class ScriptedEngine:
+    """Fake engine for tests: line i plays the i-th legal move, every line scores cp_for(board)."""
+
+    def __init__(self, cp_for=None):
+        self.cp_for, self.calls = cp_for, []
+
+    def configure(self, options):
+        pass
+
+    def analyse(self, board, limit, multipv=None):
+        self.calls.append((board.fen(), multipv))
+        score = PovScore(Cp(self.cp_for(board) if self.cp_for else 10), board.turn)
+        infos = [{"score": score, "pv": [m]} for m in list(board.legal_moves)[: multipv or 1]]
+        if not infos:  # Stockfish gives one line without moves: mated, or stalemate
+            infos = [{"score": PovScore(Mate(0) if board.is_checkmate() else Cp(0), board.turn), "pv": []}]
+        return infos if multipv is not None else infos[0]
+
+    def quit(self):
+        pass
+
+
 def patch_popen(factory):
     return mock.patch.object(chess.engine.SimpleEngine, "popen_uci", staticmethod(factory))
 

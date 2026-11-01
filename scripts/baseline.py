@@ -1,4 +1,4 @@
-"""Baseline tooling. Subcommands: fetch, fixtures, replay, timing."""
+"""Baseline tooling. Subcommands: fetch, fixtures, replay, diff, timing."""
 import argparse
 import json
 import os
@@ -149,6 +149,25 @@ def cmd_replay(ids: list[str]) -> None:
         _write_analysis(path, new)
 
 
+def diff_fixtures(current: Path, other: Path, ids: list[str]) -> list[dict]:
+    rows = []
+    for gid in ids:
+        new, old = (json.loads((d / f"{gid}.analysis.json").read_text(encoding="utf-8")) for d in (current, other))
+        rows.append({"id": gid, "class_changes": class_changes(old["moves"], new["moves"]),
+                     "accuracy_old": old["accuracy"], "accuracy_new": new["accuracy"]})
+    return rows
+
+
+def cmd_diff(other: Path, ids: list[str]) -> None:
+    rows = diff_fixtures(FIXTURES_DIR, other, ids or fixture_ids())
+    for r in rows:
+        print(f"{r['id']}: {len(r['class_changes'])} class changes {r['class_changes']}, "
+              f"accuracy {r['accuracy_old']} -> {r['accuracy_new']}")
+    print(f"total: {sum(len(r['class_changes']) for r in rows)} class changes in "
+          f"{sum(1 for r in rows if r['class_changes'])} games, "
+          f"{sum(1 for r in rows if r['accuracy_old'] != r['accuracy_new'])} accuracy changes")
+
+
 def engine_seconds(calls: list[dict]) -> float:
     return sum(max((i.get("time", 0) for i in c["infos"]), default=0) for c in calls)
 
@@ -244,6 +263,9 @@ def main(argv: list[str] | None = None) -> None:
     for name, help_ in (("fixtures", "record Stockfish and freeze the analysis"),
                         ("replay", "regenerate analysis.json from the recorded searches")):
         sub.add_parser(name, help=help_).add_argument("ids", nargs="*")
+    p = sub.add_parser("diff", help="compare the fixture analyses with another folder")
+    p.add_argument("dir", type=Path)
+    p.add_argument("ids", nargs="*")
     p = sub.add_parser("timing", help="measure speed and run-to-run noise")
     p.add_argument("--power", required=True, choices=("rete", "batteria"))
     p.add_argument("--label", required=True, help="goes in the file name, e.g. fase1")
@@ -254,6 +276,8 @@ def main(argv: list[str] | None = None) -> None:
         print(cmd_timing(args.power, args.label))
     elif args.command == "fixtures":
         cmd_fixtures(args.ids)
+    elif args.command == "diff":
+        cmd_diff(args.dir, args.ids)
     else:
         cmd_replay(args.ids)
 

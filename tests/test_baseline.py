@@ -49,6 +49,27 @@ def _moves(*classes):
     return [{"ply": i + 1, "classification": c} for i, c in enumerate(classes)]
 
 
+def _write_analyses(folder, analyses):
+    folder.mkdir()
+    for gid, (classes, white) in analyses.items():
+        (folder / f"{gid}.analysis.json").write_text(json.dumps(
+            {"moves": _moves(*classes), "accuracy": {"white": white, "black": 90.0}}), encoding="utf-8")
+
+
+def test_diff_fixtures(monkeypatch, tmp_path, capsys):
+    current, other = tmp_path / "current", tmp_path / "other"
+    _write_analyses(other, {"1": (("best", "good"), 80.0), "2": (("best",), 60.0)})
+    _write_analyses(current, {"1": (("best", "mistake"), 80.0), "2": (("best",), 65.0)})
+    assert baseline.diff_fixtures(current, other, ["1", "2"]) == [
+        {"id": "1", "class_changes": [(2, "good", "mistake")],
+         "accuracy_old": {"white": 80.0, "black": 90.0}, "accuracy_new": {"white": 80.0, "black": 90.0}},
+        {"id": "2", "class_changes": [],
+         "accuracy_old": {"white": 60.0, "black": 90.0}, "accuracy_new": {"white": 65.0, "black": 90.0}}]
+    monkeypatch.setattr(baseline, "FIXTURES_DIR", current)
+    baseline.main(["diff", str(other), "1", "2"])
+    assert capsys.readouterr().out.splitlines()[-1] == "total: 1 class changes in 1 games, 1 accuracy changes"
+
+
 def test_analyzer_commit_marks_uncommitted_edits(monkeypatch):
     def git(status):
         return lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout=status if "status" in cmd else "abc\n")

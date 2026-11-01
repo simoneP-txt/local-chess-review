@@ -2,10 +2,11 @@
 PHASE 2 + PHASE 3 (strict refactor) - Stockfish-based analysis engine using
 the "Expected Points Model".
 
-Per-move pipeline:
-  1. Stockfish analyses the BEFORE position with multipv=2 -> best + 2nd best
+Per-move pipeline (Stockfish searches every position once, with multipv=2):
+  1. The search of the BEFORE position gives the best line and the 2nd best line
   2. The eval (cp/mate) is converted to Win Probability [0..1] via Lichess sigmoid
-  3. The played move is pushed, Stockfish re-evaluates -> WP AFTER
+  3. The played move is pushed; line 1 of the AFTER position's search -> WP AFTER.
+     That search is the BEFORE of the next move.
   4. Drop = WP_best - WP_played; classification via standard thresholds
   5. Special move detection with hierarchy: Brilliant > Great > Book > Miss > base
 
@@ -382,6 +383,7 @@ def is_brilliant(
     eval_after_cp: int,
     second_best_wp: Optional[float],
     base_class: str,
+    is_best: bool,
 ) -> bool:
     """
     Brilliant !! - VERY STRICT rules. A move is brilliant when:
@@ -398,8 +400,9 @@ def is_brilliant(
          SEE >= 0 = favourable trade or "free" capture, not a sacrifice.
          SEE = -1 = exchange sacrifice (minor), too trivial for brilliant.
       7. Sacrificed piece must be of value >= 3 (no pawns)
-      8. 2nd-best move must be substantially worse: the brilliant idea is
-         unique, not one of many good options (gap WP >= BRILLIANT_2ND_GAP)
+      8. The move is Stockfish's best and the 2nd line of the same search is
+         substantially worse: the brilliant idea is unique, not one of many
+         good options (best line WP - 2nd line WP >= BRILLIANT_2ND_GAP)
     """
     if base_class not in {"best", "excellent"}:
         return False
@@ -423,7 +426,10 @@ def is_brilliant(
         return False
 
     # 2nd-best must be visibly worse (unique brilliant move, not one of many).
-    if second_best_wp is not None and (wp_after - second_best_wp) < BRILLIANT_2ND_GAP:
+    # A move other than the best has a better move, so it is never unique.
+    if not is_best:
+        return False
+    if second_best_wp is not None and (wp_before - second_best_wp) < BRILLIANT_2ND_GAP:
         return False
 
     return True
@@ -446,9 +452,10 @@ def is_great_move(
     if wp_before < GREAT_TURNAROUND_FROM and wp_after > GREAT_TURNAROUND_TO:
         return True
 
-    # Only-move: played move is best AND every alternative is significantly worse.
+    # Only-move: played move is best AND every alternative is significantly worse
+    # (wp_before is the best line, same search as second_best_wp).
     if is_best and second_best_wp is not None:
-        if (wp_after - second_best_wp) >= GREAT_ONLY_2ND_DROP:
+        if (wp_before - second_best_wp) >= GREAT_ONLY_2ND_DROP:
             return True
 
     return False
@@ -670,6 +677,9 @@ class GameAnalyzer:
             engine.configure({"Threads": self.threads, "Hash": self.hash_mb})
 
             board = game.board()
+            # Each position is searched once: its search is the AFTER of the move
+            # that reached it and the BEFORE of the next move.
+            infos = engine.analyse(board, self.limit, multipv=2)
             ply_index = 0
 
             # Iterate nodes (not just moves) to read the [%clk ...] PGN annotation
@@ -685,10 +695,9 @@ class GameAnalyzer:
                 move_number = (ply_index + 1) // 2
                 phase = detect_phase(board, ply_index)
 
-                # 1) BEFORE analysis with multipv=2
-                infos_before = engine.analyse(board, self.limit, multipv=2)
-                best_info = infos_before[0]
-                second_info = infos_before[1] if len(infos_before) > 1 else None
+                # 1) BEFORE: the search of the current position (line 1 best, line 2 2nd best)
+                best_info = infos[0]
+                second_info = infos[1] if len(infos) > 1 else None
 
                 best_pv = best_info.get("pv", []) or []
                 best_move = best_pv[0] if best_pv else None
@@ -715,9 +724,10 @@ class GameAnalyzer:
                 board.push(played)
                 fen_after = board.fen()
 
-                # 2) AFTER analysis -> residual WP + "punishment" PV
+                # 2) AFTER: search the new position -> residual WP + "punishment" PV
                 #    (the line the opponent uses to exploit the just-played move)
-                info_after = engine.analyse(board, self.limit)
+                infos = engine.analyse(board, self.limit, multipv=2)
+                info_after = infos[0]
                 score_after = info_after.get("score")
                 wp_after = score_to_wp(score_after, color_to_move) if score_after else 0.5
                 eval_after_cp = score_to_cp(score_after, color_to_move) if score_after else 0
@@ -745,7 +755,7 @@ class GameAnalyzer:
                 if is_brilliant(
                     board_before_snap, played,
                     wp_before_best, wp_after, eval_after_cp,
-                    second_best_wp, base_class,
+                    second_best_wp, base_class, is_best,
                 ):
                     final_class = "brilliant"
                 elif is_great_move(is_best, wp_before_best, wp_after, second_best_wp):

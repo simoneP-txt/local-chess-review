@@ -270,6 +270,10 @@ from the project root with `.\.venv\Scripts\python.exe scripts\baseline.py <comm
   Stockfish needed), prints every move whose class changed and every game
   whose accuracy changed, and overwrites `<id>.analysis.json`. Use it after
   editing `analyzer.py`.
+- `diff <dir> [id...]` — compares each `tests/fixtures/<id>.analysis.json` with
+  the file of the same name in `<dir>`: prints per game the moves whose class
+  changed and the old and new accuracy, then the totals. Writes nothing. Use it
+  to measure a change against an older copy of the fixtures.
 - `timing --power rete|batteria --label <label>` — analyzes all fixtures twice
   with the real engine (2 threads) and writes seconds per ply, engine share and
   run-to-run noise to `docs/measurements/<date>-tempi-<label>.md`. Run it only
@@ -336,7 +340,7 @@ local-chess-review/
 ├── scripts/
 │   ├── download_puzzles.py # one-shot: downloads + filters Lichess puzzles
 │   ├── trim_puzzles.py     # one-shot: trims an existing puzzles.db
-│   └── baseline.py         # baseline: fetch, fixtures, replay, timing
+│   └── baseline.py         # baseline: fetch, fixtures, replay, diff, timing
 ├── tests/
 │   ├── engine_replay.py    # record/replay layer for Stockfish answers
 │   ├── conftest.py         # browser tests: live server, fake engine, Chromium

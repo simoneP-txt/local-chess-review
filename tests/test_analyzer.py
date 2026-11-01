@@ -1,8 +1,11 @@
+import itertools
+
 import chess
 import pytest
 from chess.engine import Cp, Mate, PovScore
 
 import analyzer as A
+from tests.engine_replay import ScriptedEngine, patch_popen
 
 W, B = chess.WHITE, chess.BLACK
 PHASE1 = "Phase 1 bug, see docs/phase-0/notes.md"
@@ -103,6 +106,8 @@ def test_is_book_move(ply, before, after, base, expected):
     (False, 0.39, 0.50, None, False), (True, 0.6, 0.6, 0.39, True),
     (True, 0.6, 0.6, 0.41, False), (False, 0.6, 0.6, 0.30, False),
     (True, 0.6, 0.6, None, False),
+    (True, 0.5, 0.75, 0.4, False),  # 2nd line 0.10 below the best line; wp_after plays no part
+    (True, 0.65, 0.6, 0.44, True),  # 2nd line 0.21 below the best line
 ])
 def test_is_great_move(is_best, before, after, second, expected):
     assert A.is_great_move(is_best, before, after, second) is expected
@@ -110,7 +115,7 @@ def test_is_great_move(is_best, before, after, second, expected):
 
 SAC = ("4k3/8/3p4/8/8/5N2/8/4K3 w - - 0 1", "f3e5")  # knight sacrifice, SEE -3
 SOUND = dict(wp_before=0.6, wp_after=0.6, eval_after_cp=100,
-             second_best_wp=0.45, base_class="best")
+             second_best_wp=0.45, base_class="best", is_best=True)
 
 
 def _brilliant(fen=SAC[0], uci=SAC[1], **override):
@@ -122,6 +127,11 @@ def test_brilliant_accepts_sound_sacrifice():
     assert _brilliant(second_best_wp=None)
 
 
+@pytest.mark.parametrize("base_class", ["best", "excellent"])
+def test_brilliant_requires_the_best_move(base_class):
+    assert not _brilliant(is_best=False, base_class=base_class)
+
+
 @pytest.mark.parametrize("override", [
     {"base_class": "good"},
     {"wp_after": 0.57},                     # WP drops 0.03 > 0.02
@@ -129,6 +139,7 @@ def test_brilliant_accepts_sound_sacrifice():
     {"wp_before": 0.86, "wp_after": 0.86},  # before above 0.85
     {"eval_after_cp": 9500},                # forced mate after the move
     {"second_best_wp": 0.55},               # second best only 0.05 worse
+    {"second_best_wp": 0.55, "wp_after": 0.66},  # still 0.05 below the best line
 ])
 def test_brilliant_rejects(override):
     assert not _brilliant(**override)
@@ -202,3 +213,34 @@ def test_compute_phases():
     assert out["opening"]["black"] == {"label": None, "mean_drop": None, "moves": 0}
     assert out["middlegame"]["black"] == {"label": "inaccuracy", "mean_drop": 0.06, "moves": 1}
     assert out["endgame"]["white"] == {"label": "blunder", "mean_drop": 0.3, "moves": 1}
+
+
+OPENING = "1. e4 e5 2. Nf3 Nc6 *\n"
+ONE_MOVE_THEN_STALEMATE = '[SetUp "1"]\n[FEN "7k/8/6K1/5Q2/8/8/8/8 b - - 0 1"]\n\n1... Kg8 2. Qf6 1/2-1/2\n'
+
+
+def _analyze(pgn, engine):
+    with patch_popen(lambda path: engine):
+        return A.GameAnalyzer("scripted", depth=15, threads=1).analyze_pgn(pgn)
+
+
+def test_analyze_searches_each_position_once():
+    engine = ScriptedEngine()
+    _analyze(OPENING, engine)
+    assert len(engine.calls) == 5
+    assert all(multipv == 2 for _, multipv in engine.calls)
+    assert len({fen for fen, _ in engine.calls}) == 5
+
+
+def test_analyze_reuses_after_eval_as_next_before():
+    scores = itertools.count(10, 10)  # every search answers a new score
+    moves = _analyze(OPENING, ScriptedEngine(lambda board: next(scores)))["moves"]
+    for k in range(len(moves) - 1):
+        # one search of the position between the two moves, seen by its two sides
+        assert moves[k]["eval_after_cp"] == -moves[k + 1]["eval_before_cp"]
+
+
+def test_analyze_handles_mate_and_single_move():
+    assert len(_analyze("1. f3 e5 2. g4 Qh4# 0-1\n", ScriptedEngine())["moves"]) == 4
+    moves = _analyze(ONE_MOVE_THEN_STALEMATE, ScriptedEngine())["moves"]  # Kg8 is the only legal move
+    assert len(moves) == 2 and moves[0]["color"] == "black"

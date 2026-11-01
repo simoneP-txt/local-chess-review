@@ -101,5 +101,5 @@ def test_record_then_replay_gives_same_analysis():
     calls = []
     with patch_popen(lambda path: RecordingEngine(StubEngine(), calls)):
         live = GameAnalyzer("stub", depth=15, threads=1).analyze_pgn(pgn)
-    assert len(calls) == 8  # 4 plies x (BEFORE multipv=2 + AFTER)
+    assert len(calls) == 5  # one multipv=2 search per position, P0 ... P4
     assert analyze_replayed(pgn, {"meta": {"depth": 15}, "calls": calls}) == json.loads(json.dumps(live))
