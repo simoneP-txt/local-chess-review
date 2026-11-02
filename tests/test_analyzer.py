@@ -10,7 +10,6 @@ from tests.conftest import FakeEngine
 from tests.engine_replay import ScriptedEngine, patch_popen
 
 W, B = chess.WHITE, chess.BLACK
-PHASE1 = "Phase 1 bug, see docs/phase-0/notes.md"
 
 
 @pytest.mark.parametrize("cp, wp", [
@@ -58,16 +57,27 @@ SEE_OK = [
     ("4k3/8/3p4/8/4P3/8/8/4K3 w - - 0 1", "e4e5", -1),    # pawn hangs to a pawn
     ("4k3/8/2p5/3r4/8/8/3Q4/4K3 w - - 0 1", "d2d5", -4),  # QxR, pawn recaptures
     ("4k3/8/4n3/8/3p4/8/1B6/4RK2 w - - 0 1", "b2d4", 1),  # only defender is pinned
-    ("3R4/2P5/7k/8/8/8/3r4/6K1 b - - 0 1", "d2d8", 0),    # promotion ignored, notes.md
+    ("3R4/2P5/7k/8/8/8/3r4/6K1 b - - 0 1", "d2d8", -8),   # cxd8=Q recaptures and promotes
+    ("4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1", "e5d6", 1),     # free en passant
+    ("4k3/2p5/8/3pP3/8/8/8/4K3 w - d6 0 1", "e5d6", 0),   # en passant, c7 retakes
+    ("3rk3/8/4p3/3n4/5N2/8/8/4RK2 w - - 0 1", "f4d5", 0),  # e6 is pinned, the d8 rook retakes
+    ("8/4P3/8/8/8/8/k7/4K3 w - - 0 1", "e7e8q", 8),       # free promotion
+    ("8/4P3/8/8/8/8/k7/4K3 w - - 0 1", "e7e8n", 2),       # free underpromotion
+    ("8/8/3p1k2/4p3/8/5N2/1B6/4R1K1 w - - 0 1", "f3e5", -1),  # dxe5 Bxe5, Kxe5 never legal
+    ("7k/1P1K4/8/8/8/8/2r5/8 b - - 0 1", "c2c8", -13),    # bxc8=Q, the king captures last
+    ("3rk3/8/8/3p4/8/8/3R4/3RK3 w - - 0 1", "d2d5", 1),   # Rd1 recaptures through d2
 ]
-SEE_BUGS = [  # pruning drops a recapture that limits the loss: code gives 3 and -3
+SEE_LOSS_LIMITING = [  # the recapture loses less than stopping: 2 and -2, not 3 and -3
     ("4k3/8/4p3/3n4/4P3/8/8/4K3 w - - 0 1", "e4d5", 2),
     ("4k3/8/3p4/8/3P4/5N2/8/4K3 w - - 0 1", "f3e5", -2),
 ]
 
 
 def _see(fen, uci):
-    return A.static_exchange_evaluation(chess.Board(fen), chess.Move.from_uci(uci))
+    board = chess.Board(fen)
+    see = A.static_exchange_evaluation(board, chess.Move.from_uci(uci))
+    assert board == chess.Board(fen)  # the caller's board is left alone
+    return see
 
 
 @pytest.mark.parametrize("fen, uci, expected", SEE_OK)
@@ -75,8 +85,7 @@ def test_see(fen, uci, expected):
     assert _see(fen, uci) == expected
 
 
-@pytest.mark.xfail(strict=True, reason=PHASE1)
-@pytest.mark.parametrize("fen, uci, expected", SEE_BUGS)
+@pytest.mark.parametrize("fen, uci, expected", SEE_LOSS_LIMITING)
 def test_see_keeps_loss_limiting_recapture(fen, uci, expected):
     assert _see(fen, uci) == expected
 
@@ -262,6 +271,7 @@ def test_analyze_scores_a_given_mate_as_a_win(pgn, white_cp, white_wp):
     last = _analyze(pgn, ScriptedEngine())["moves"][-1]  # answers Mate(0) for the mated side
     assert (last["eval_after_cp"], last["wp_after"], last["cp_loss"]) == (10000, 1.0, 0)
     assert (last["eval_white_cp"], last["wp_white_after"]) == (white_cp, white_wp)
+    assert (last["classification"], last["wp_drop"]) == ("best", 0.0)
 
 
 def test_analyze_move_number_from_fen():

@@ -229,68 +229,37 @@ def is_book_move(ply: int, eval_before_cp: int, eval_after_cp: int, base_class: 
 def static_exchange_evaluation(board: chess.Board, move: chess.Move) -> int:
     """
     Simulates the optimal capture sequence on the destination square (each side
-    alternates using the lowest-valued attacker) and returns the net material
-    change for the side making the initial move.
+    alternates using its lowest-valued piece with a legal capture, the king
+    last) and returns the net material change for the side making the initial
+    move. En passant takes a pawn. A promotion gains the new piece minus the
+    pawn: the initial move counts the piece it promotes to, recaptures promote
+    to a queen.
 
     SEE > 0  -> winning capture (gains material)
     SEE == 0 -> even trade
     SEE < 0  -> net loss (real sacrifice; the more negative, the riskier)
 
-    The pruning step `max(-gain[d-1], gain[d])` reflects each side's option to
-    NOT continue the capture sequence if the running balance is unfavourable.
+    gain[d] is what the side capturing at step d has won if the sequence stops
+    there; the negamax at the end lets each side stop when going on loses more.
+    The caller's board is not modified.
     """
     target = move.to_square
-    captured = board.piece_at(target)
-    initial_gain = PIECE_VALUE[captured.piece_type] if captured else 0
-
-    moving_piece = board.piece_at(move.from_square)
-    if moving_piece is None:
-        return 0
-
     b = board.copy(stack=False)
-    try:
+    gain: list[int] = []
+    while move is not None:
+        captured = chess.PAWN if b.is_en_passant(move) else b.piece_type_at(target)
+        won = PIECE_VALUE.get(captured, 0)
+        if move.promotion:
+            won += PIECE_VALUE[move.promotion] - PIECE_VALUE[chess.PAWN]
+        gain.append(won - (gain[-1] if gain else 0))
         b.push(move)
-    except Exception:  # pragma: no cover
-        return initial_gain
-
-    gain = [initial_gain]
-    on_square = PIECE_VALUE[moving_piece.piece_type]
-    side = b.turn  # opponent of the original mover
-
-    while True:
-        attackers = b.attackers(side, target)
-        if not attackers:
-            break
-        atk_sq = min(attackers, key=lambda sq: PIECE_VALUE[b.piece_at(sq).piece_type])
-        atk_piece = b.piece_at(atk_sq)
-        atk_value = PIECE_VALUE[atk_piece.piece_type]
-
-        gain.append(on_square - gain[-1])
-        # Pruning: if the previous side wouldn't continue, stop.
-        if max(-gain[-2], gain[-1]) < 0:
-            gain.pop()
-            break
-
-        on_square = atk_value
-
-        recap = chess.Move(atk_sq, target)
-        if recap not in b.legal_moves:
-            # The smallest attacker can't legally capture (pinned, or king moving
-            # into an attacked square). Roll back the speculative gain we just
-            # appended so this would-be recapture doesn't count.
-            if atk_piece.piece_type == chess.PAWN and chess.square_rank(target) in (0, 7):
-                recap = chess.Move(atk_sq, target, promotion=chess.QUEEN)
-                if recap not in b.legal_moves:
-                    gain.pop()
-                    break
-            else:
-                gain.pop()
-                break
-        try:
-            b.push(recap)
-        except Exception:  # pragma: no cover
-            break
-        side = not side
+        # Piece types run pawn=1 to king=6: min() takes the cheapest legal capturer, the king last.
+        move = min(
+            (m for m in b.generate_legal_moves(to_mask=chess.BB_SQUARES[target])
+             if m.promotion in (None, chess.QUEEN)),
+            key=lambda m: b.piece_type_at(m.from_square),
+            default=None,
+        )
 
     # Negamax over the gain array.
     while len(gain) > 1:
