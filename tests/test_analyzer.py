@@ -110,16 +110,21 @@ def test_is_book_move(ply, before, after, base, expected):
     assert A.is_book_move(ply, before, after, base) is expected
 
 
-@pytest.mark.parametrize("is_best, before, after, second, expected", [
-    (False, 0.39, 0.51, None, True), (False, 0.40, 0.51, None, False),
-    (False, 0.39, 0.50, None, False), (True, 0.6, 0.6, 0.39, True),
-    (True, 0.6, 0.6, 0.41, False), (False, 0.6, 0.6, 0.30, False),
-    (True, 0.6, 0.6, None, False),
-    (True, 0.5, 0.75, 0.4, False),  # 2nd line 0.10 below the best line; wp_after plays no part
-    (True, 0.65, 0.6, 0.44, True),  # 2nd line 0.21 below the best line
+@pytest.mark.parametrize("is_best, base, before, after, second, before_opponent, expected", [
+    # (a): before_opponent is the mover's WP before the opponent's last move
+    (False, "best", 0.6, 0.6, None, 0.35, True), (False, "excellent", 0.61, 0.6, None, 0.35, True),
+    (False, "best", 0.6, 0.6, None, 0.45, False), (False, "best", 0.6, 0.6, None, 0.40, False),
+    (False, "best", 0.5, 0.5, None, 0.35, False), (False, "good", 0.63, 0.6, None, 0.35, False),
+    (False, "best", 0.6, 0.6, None, None, False),  # first move of the game
+    (False, "best", 0.39, 0.51, None, 0.41, False),  # 0.39 to 0.51 by this move alone: the opponent did not err
+    # (b): the only saving move
+    (True, "best", 0.6, 0.6, 0.39, None, True), (True, "best", 0.6, 0.6, 0.41, None, False),
+    (False, "best", 0.6, 0.6, 0.30, None, False), (True, "best", 0.6, 0.6, None, None, False),
+    (True, "best", 0.5, 0.75, 0.4, None, False),  # 2nd line 0.10 below the best line; wp_after plays no part
+    (True, "best", 0.65, 0.6, 0.44, None, True),  # 2nd line 0.21 below the best line
 ])
-def test_is_great_move(is_best, before, after, second, expected):
-    assert A.is_great_move(is_best, before, after, second) is expected
+def test_is_great_move(is_best, base, before, after, second, before_opponent, expected):
+    assert A.is_great_move(is_best, base, before, after, second, before_opponent) is expected
 
 
 SAC = ("4k3/8/3p4/8/8/5N2/8/4K3 w - - 0 1", "f3e5")  # knight sacrifice, SEE -3
@@ -235,6 +240,13 @@ def test_analyze_reuses_after_eval_as_next_before():
     for k in range(len(moves) - 1):
         # one search of the position between the two moves, seen by its two sides
         assert moves[k]["eval_after_cp"] == -moves[k + 1]["eval_before_cp"]
+
+
+def test_analyze_great_turnaround_after_the_opponent_blunder():
+    scores = iter([200, -200, 200, 200, -200])  # side to move, P0-P4: White +200 until 2. Nf3?? hands it to Black
+    moves = _analyze(OPENING, ScriptedEngine(lambda board: next(scores)))["moves"]
+    # 1. e4 keeps 0.68 but has no move before it; 1... e5 stays at 0.32; 2... Nc6 goes from 0.32 to 0.68
+    assert [m["classification"] for m in moves] == ["best", "best", "blunder", "great"]
 
 
 def test_analyze_handles_mate_and_single_move():

@@ -75,7 +75,7 @@ BOOK_PLY = 16
 BOOK_CP_RANGE = 80
 
 # "Great move" thresholds.
-GREAT_TURNAROUND_FROM = 0.40   # WP before below this (player was losing)
+GREAT_TURNAROUND_FROM = 0.40   # WP before the opponent's last move below this (player was losing)
 GREAT_TURNAROUND_TO   = 0.50   # WP after above this (now equal or winning)
 GREAT_ONLY_2ND_DROP   = 0.20   # 2nd-best move would drop WP by at least this
 
@@ -403,19 +403,26 @@ def is_brilliant(
 
 def is_great_move(
     is_best: bool,
+    base_class: str,
     wp_before: float,
     wp_after: float,
     second_best_wp: Optional[float],
+    wp_before_opponent_move: Optional[float],
 ) -> bool:
     """
     Great ! - strict rules, evaluated only if the move is NOT brilliant:
-      A) Swing turnaround: wp_before < 0.40 (losing) and wp_after > 0.50
-         (equal/winning). Recognises the move that punishes an opponent's
+      A) Turnaround: before the opponent's last move the mover was losing
+         (wp_before_opponent_move < 0.40; None on the first move of the game),
+         and this move, best or excellent, leaves the game equal or winning
+         (wp_after > 0.50). Recognises the move that punishes an opponent's
          mistake by flipping the game.
       B) Only saving move: the move is the best, and the second-best move
          would drop WP by at least GREAT_ONLY_2ND_DROP relative to the best.
     """
-    if wp_before < GREAT_TURNAROUND_FROM and wp_after > GREAT_TURNAROUND_TO:
+    if (wp_before_opponent_move is not None
+            and wp_before_opponent_move < GREAT_TURNAROUND_FROM
+            and wp_after > GREAT_TURNAROUND_TO
+            and base_class in {"best", "excellent"}):
         return True
 
     # Only-move: played move is best AND every alternative is significantly worse
@@ -634,6 +641,7 @@ class GameAnalyzer:
             # that reached it and the BEFORE of the next move.
             infos = engine.analyse(board, self.limit, multipv=2)
             ply_index = 0
+            wp_before_opponent_move: Optional[float] = None
 
             # Iterate nodes (not just moves) to read the [%clk ...] PGN annotation
             # via node.clock() — returns float seconds remaining, or None if absent.
@@ -711,7 +719,8 @@ class GameAnalyzer:
                     second_best_wp, base_class, is_best,
                 ):
                     final_class = "brilliant"
-                elif is_great_move(is_best, wp_before_best, wp_after, second_best_wp):
+                elif is_great_move(is_best, base_class, wp_before_best, wp_after,
+                                   second_best_wp, wp_before_opponent_move):
                     final_class = "great"
                 elif is_book_move(ply_index, eval_before_cp, eval_after_cp, base_class):
                     final_class = "book"
@@ -723,6 +732,8 @@ class GameAnalyzer:
                             and moves_out[-1]["classification"] == "blunder"
                             and moves_out[-1]["wp_drop"] >= MISS_PREV_BLUNDER_DROP):
                         final_class = "miss"
+                # The next mover's WP in this BEFORE position, unrounded, for its Great (a).
+                wp_before_opponent_move = 1.0 - wp_before_best
 
                 comment = _make_comment(
                     final_class, board_before_snap, played, see_played, pv_after_uci,

@@ -26,18 +26,19 @@ LILA_CASES = {
 
 @pytest.mark.parametrize("white_starts, cps, white, black", LILA_CASES.values(), ids=list(LILA_CASES))
 def test_game_accuracy_passes_lila_tests(white_starts, cps, white, black):
-    acc = A.game_accuracy_lichess(white_starts, [15] + cps)
+    acc = A._game_accuracy(white_starts, [15] + cps)  # unrounded, as lila's isCloseTo sees it
     assert acc["white"] == pytest.approx(white[0], abs=white[1])
     assert acc["black"] == pytest.approx(black[0], abs=black[1])
 
 
 @pytest.mark.parametrize("white_starts, cps, expected", [
-    (True, [15], {"white": 0.0, "black": 0.0}),  # lila gives no accuracy for these three
+    (True, [15], {"white": 0.0, "black": 0.0}),  # lila gives no accuracy for these four
     (True, [15, 15], {"white": 100.0, "black": 0.0}),
+    (False, [15], {"white": 0.0, "black": 0.0}),
     (False, [15, 15], {"white": 0.0, "black": 100.0}),
 ])
 def test_game_accuracy_of_a_colour_without_moves(white_starts, cps, expected):
-    assert A.game_accuracy_lichess(white_starts, cps) == expected
+    assert A._game_accuracy(white_starts, cps) == expected
 
 
 def test_lichess_win_pct():
