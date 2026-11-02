@@ -159,31 +159,10 @@ def test_brilliant_needs_a_piece_sacrifice():
     assert not _brilliant("4k3/8/8/8/8/5N2/8/4K3 w - - 0 1", "f3e5")    # knight, SEE 0
 
 
-@pytest.mark.parametrize("before, after, acc", [
-    (0.5, 0.5, 100.0), (0.6, 0.7, 100.0), (0.6, 0.5, 64.582619),
-    (0.55, 0.5, 80.817040), (1.0, 0.0, 0.0),
-])
-def test_move_accuracy(before, after, acc):
-    assert A.move_accuracy_lichess(before, after) == pytest.approx(acc, abs=1e-6)
-
-
 def test_harmonic_mean():
     assert A._harmonic_mean([50, 100]) == pytest.approx(66.666667, abs=1e-6)
     assert A._harmonic_mean([0, 100]) == pytest.approx(1.980198, abs=1e-6)  # 0 floored to 1
     assert A._harmonic_mean([]) == 0.0
-
-
-def test_volatility_weighted_mean():
-    flat, swing = [50, 50, 50], [50, 50, 80]  # weights 0.5,0.5,0.5 and 0.5,12,12
-    assert A._volatility_weighted_mean([100, 50, 100], flat) == pytest.approx(83.333333, abs=1e-6)
-    assert A._volatility_weighted_mean([100, 50, 100], swing) == pytest.approx(75.510204, abs=1e-6)
-    assert A._volatility_weighted_mean([42.0], [50.0]) == 42.0
-    assert A._volatility_weighted_mean([], []) == 0.0
-
-
-def test_game_accuracy():
-    assert A.game_accuracy_lichess([100, 50, 100], [50, 50, 80]) == 75.3  # (75.0 + 75.51) / 2
-    assert A.game_accuracy_lichess([], []) == 0.0
 
 
 @pytest.mark.parametrize("acc, elo", [
@@ -277,6 +256,21 @@ def test_analyze_scores_a_given_mate_as_a_win(pgn, white_cp, white_wp):
 def test_analyze_move_number_from_fen():
     moves = _analyze(ONE_MOVE_THEN_STALEMATE, ScriptedEngine())["moves"]
     assert [(m["san"], m["move_number"]) for m in moves] == [("Kg8", 1), ("Qf6", 2)]
+
+
+@pytest.mark.parametrize("pgn, white_starts, cps_white", [
+    (BLACK_MATES, True, [10, -10, 10, -10, -10000]),
+    (WHITE_MATES, True, [10, -10, 10, -10, 10, 10000]),
+    (ONE_MOVE_THEN_STALEMATE, False, [-10, 10, 0]),  # P0 is Black's +10 seen from White
+    ("1. e4 *\n", True, [10, -10]),
+], ids=["black-mates", "white-mates", "black-moves-first", "one-ply"])
+def test_analyze_accuracy_series(pgn, white_starts, cps_white):
+    # ScriptedEngine scores 10 cp for the side to move, Mate(0) for the mated side, 0 for stalemate
+    assert _analyze(pgn, ScriptedEngine())["accuracy"] == A.game_accuracy_lichess(white_starts, cps_white)
+
+
+def test_analyze_accuracy_without_moves():
+    assert _analyze("*\n", ScriptedEngine())["accuracy"] == {"white": 0.0, "black": 0.0}
 
 
 def test_browser_fake_engine_answers_a_mated_position():

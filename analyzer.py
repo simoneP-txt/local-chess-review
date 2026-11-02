@@ -10,8 +10,10 @@ Per-move pipeline (Stockfish searches every position once, with multipv=2):
   4. Drop = WP_best - WP_played; classification via standard thresholds
   5. Special move detection with hierarchy: Brilliant > Great > Book > Miss > base
 
-Accuracy: Lichess-style. Per-move accuracy via the sigmoid formula; game-level
-accuracy is the average between harmonic mean and volatility-weighted mean.
+Accuracy: lila's (Lichess) AccuracyPercent, ported one to one. Win% of every
+position from White's side, with cp capped at ±1000 (accuracy only: the
+classifications keep cp_to_wp); per-move accuracy from the mover's win% drop;
+per colour, the mean of the volatility-weighted and the harmonic mean.
 
 Performance Elo: direct accuracy->Elo curve, with an upper cap based on
 real_elo (real_elo + 1500) so that a 500-Elo player playing flawlessly does
@@ -426,18 +428,21 @@ def is_great_move(
 
 
 # ============================================================
-# Accuracy (Lichess: harmonic + volatility-weighted)
+# Accuracy (lila's AccuracyPercent, ported one to one)
 # ============================================================
 
-def move_accuracy_lichess(wp_before: float, wp_after: float) -> float:
-    """
-    Per-move accuracy, official Lichess formula:
-      acc = 103.1668 * exp(-0.04354 * wp_loss_percent) - 3.1669 + 1
-    Clamped to [0, 100]. The "+1" is documented as the analysis "uncertainty bonus".
-    """
-    wp_loss_pct = max(0.0, (wp_before - wp_after) * 100.0)
-    raw = 103.1668 * math.exp(-0.04354 * wp_loss_pct) - 3.1669 + 1.0
-    return max(0.0, min(100.0, raw))
+def lichess_win_pct(cp: int) -> float:
+    """lila's WinPercent 0-100: the Lichess sigmoid on cp capped at ±1000, so a mate counts 97.54%."""
+    cp = max(-1000, min(1000, cp))
+    return 50 + 50 * (2 / (1 + math.exp(-WP_K * cp)) - 1)
+
+
+def move_accuracy_lichess(before_pct: float, after_pct: float) -> float:
+    """Accuracy 0-100 of a move from the mover's win% before and after it."""
+    if after_pct >= before_pct:
+        return 100.0
+    raw = 103.1668100711649 * math.exp(-0.04354415386753951 * (before_pct - after_pct)) - 3.166924740191411
+    return max(0.0, min(100.0, raw + 1))  # lila's +1 "uncertainty bonus" for the imperfect analysis
 
 
 def _harmonic_mean(values: list[float]) -> float:
@@ -448,50 +453,34 @@ def _harmonic_mean(values: list[float]) -> float:
     return len(safe) / sum(1.0 / v for v in safe)
 
 
-def _volatility_weighted_mean(
-    accuracies: list[float],
-    win_pcts: list[float],
-) -> float:
+def _game_accuracy(white_starts: bool, cps_white: list[int]) -> dict[str, float]:
     """
-    Lichess-style volatility-weighted mean: volatile moments weigh more.
-
-      windowSize = clamp(N/10, 2, 8)
-      weights[i] = std_dev(win_pcts[i..i+W]) clamped to [0.5, 12]
-
-    Returns the weighted mean of per-move accuracies.
+    lila's gameAccuracy, unrounded. cps_white holds P0 ... Pn from White's side.
+    Per colour: mean of the volatility-weighted and the harmonic mean of its
+    move accuracies; 0.0 for a colour without moves.
     """
-    n = len(accuracies)
-    if n == 0:
-        return 0.0
-    if n == 1:
-        return accuracies[0]
-
-    window = max(2, min(8, n // 10))
-    weights = []
-    for i in range(n):
-        end = min(n, i + window)
-        chunk = win_pcts[i:end]
-        if len(chunk) < 2:
-            chunk = win_pcts[max(0, n - window):]
-        try:
-            w = statistics.pstdev(chunk)
-        except statistics.StatisticsError:
-            w = 0.5
-        weights.append(max(0.5, min(12.0, w)))
-
-    total_w = sum(weights)
-    if total_w <= 0:
-        return sum(accuracies) / n
-    return sum(a * w for a, w in zip(accuracies, weights)) / total_w
+    pcts = [lichess_win_pct(cp) for cp in cps_white]
+    window = max(2, min(8, (len(pcts) - 1) // 10))
+    # Move i weighs by the window that ends on P(i+1); the first moves reuse the first window.
+    # lila's guards for a series shorter than the window are left out: such a series has no moves.
+    windows = [pcts[:window]] * (window - 2) + [pcts[i:i + window] for i in range(len(pcts) - window + 1)]
+    by_color: dict[str, list[tuple[float, float]]] = {"white": [], "black": []}
+    for i, (prev, nxt, win) in enumerate(zip(pcts, pcts[1:], windows)):
+        white = (i % 2 == 0) == white_starts
+        # lila swaps the pair for Black: the same drop as Black's own 100 - pct
+        acc = move_accuracy_lichess(prev, nxt) if white else move_accuracy_lichess(nxt, prev)
+        by_color["white" if white else "black"].append((acc, max(0.5, min(12.0, statistics.pstdev(win)))))
+    out = {"white": 0.0, "black": 0.0}
+    for color, pairs in by_color.items():
+        if pairs:
+            weighted = sum(a * w for a, w in pairs) / sum(w for _, w in pairs)
+            out[color] = (weighted + _harmonic_mean([a for a, _ in pairs])) / 2
+    return out
 
 
-def game_accuracy_lichess(per_move: list[float], win_pcts: list[float]) -> float:
-    """Game accuracy = (harmonic_mean + volatility_weighted_mean) / 2."""
-    if not per_move:
-        return 0.0
-    h = _harmonic_mean(per_move)
-    v = _volatility_weighted_mean(per_move, win_pcts)
-    return round(max(0.0, min(100.0, (h + v) / 2.0)), 1)
+def game_accuracy_lichess(white_starts: bool, cps_white: list[int]) -> dict[str, float]:
+    """Game accuracy per colour, one decimal (see _game_accuracy)."""
+    return {color: round(acc, 1) for color, acc in _game_accuracy(white_starts, cps_white).items()}
 
 
 # ============================================================
@@ -819,20 +808,12 @@ class GameAnalyzer:
 
     @staticmethod
     def _compute_accuracy(moves: list[dict[str, Any]]) -> dict[str, float]:
-        """
-        Per-player game accuracy (Lichess style):
-        average between harmonic mean and volatility-weighted mean of per-move accuracies.
-        """
-        out: dict[str, float] = {}
-        for color in ("white", "black"):
-            mvs = [m for m in moves if m["color"] == color]
-            if not mvs:
-                out[color] = 0.0
-                continue
-            per_move = [move_accuracy_lichess(m["wp_before"], m["wp_after"]) for m in mvs]
-            win_pcts = [m["wp_before"] * 100.0 for m in mvs]
-            out[color] = game_accuracy_lichess(per_move, win_pcts)
-        return out
+        """Per-player game accuracy (lila's) on every position of the game, P0 included, from White's side."""
+        if not moves:
+            return {"white": 0.0, "black": 0.0}
+        white_starts = moves[0]["color"] == "white"
+        p0 = moves[0]["eval_before_cp"] if white_starts else -moves[0]["eval_before_cp"]
+        return game_accuracy_lichess(white_starts, [p0] + [m["eval_white_cp"] for m in moves])
 
 
 if __name__ == "__main__":
