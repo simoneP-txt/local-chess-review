@@ -112,11 +112,14 @@ def test_is_book_move(ply, before, after, base, expected):
 
 @pytest.mark.parametrize("is_best, base, before, after, second, before_opponent, expected", [
     # (a): before_opponent is the mover's WP before the opponent's last move
-    (False, "best", 0.6, 0.6, None, 0.35, True), (False, "excellent", 0.61, 0.6, None, 0.35, True),
-    (False, "best", 0.6, 0.6, None, 0.45, False), (False, "best", 0.6, 0.6, None, 0.40, False),
-    (False, "best", 0.5, 0.5, None, 0.35, False), (False, "good", 0.63, 0.6, None, 0.35, False),
-    (False, "best", 0.6, 0.6, None, None, False),  # first move of the game
-    (False, "best", 0.39, 0.51, None, 0.41, False),  # 0.39 to 0.51 by this move alone: the opponent did not err
+    (False, "best", 0.6, 0.6, 0.55, 0.35, True), (False, "excellent", 0.61, 0.6, 0.55, 0.35, True),
+    (False, "best", 0.6, 0.6, 0.55, 0.45, False), (False, "best", 0.6, 0.6, 0.55, 0.40, False),
+    (False, "best", 0.5, 0.5, 0.45, 0.35, False), (False, "good", 0.63, 0.6, 0.55, 0.35, False),
+    (False, "best", 0.6, 0.6, 0.55, None, False),  # first move of the game
+    (False, "best", 0.39, 0.51, 0.35, 0.39, False),  # the opponent did not err: 0.51 is search noise
+    (False, "best", 0.44, 0.51, 0.40, 0.35, False),  # the opponent gave away 0.09: an inaccuracy, not a mistake
+    (False, "best", 0.45, 0.51, 0.40, 0.35, True),  # the opponent gave away 0.10: a mistake
+    (False, "best", 0.6, 0.6, None, 0.35, False),  # only legal move: no choice to praise
     # (b): the only saving move
     (True, "best", 0.6, 0.6, 0.39, None, True), (True, "best", 0.6, 0.6, 0.41, None, False),
     (False, "best", 0.6, 0.6, 0.30, None, False), (True, "best", 0.6, 0.6, None, None, False),

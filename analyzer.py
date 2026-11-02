@@ -413,14 +413,20 @@ def is_great_move(
     Great ! - strict rules, evaluated only if the move is NOT brilliant:
       A) Turnaround: before the opponent's last move the mover was losing
          (wp_before_opponent_move < 0.40; None on the first move of the game),
-         and this move, best or excellent, leaves the game equal or winning
-         (wp_after > 0.50). Recognises the move that punishes an opponent's
-         mistake by flipping the game.
+         that move was at least a mistake (it gave away wp_before -
+         wp_before_opponent_move >= inaccuracy_max, 0.10), and this move, best
+         or excellent, leaves the game equal or winning (wp_after > 0.50).
+         Recognises the move that punishes an opponent's mistake by flipping
+         the game. Not for an only legal move (no second line): there was no
+         choice to make.
       B) Only saving move: the move is the best, and the second-best move
          would drop WP by at least GREAT_ONLY_2ND_DROP relative to the best.
     """
     if (wp_before_opponent_move is not None
+            and second_best_wp is not None
             and wp_before_opponent_move < GREAT_TURNAROUND_FROM
+            # without an opponent mistake the jump over 0.50 is search noise
+            and wp_before - wp_before_opponent_move >= WP_THRESHOLDS["inaccuracy_max"]
             and wp_after > GREAT_TURNAROUND_TO
             and base_class in {"best", "excellent"}):
         return True
