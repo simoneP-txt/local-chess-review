@@ -66,6 +66,9 @@ SEE_OK = [
     ("8/8/3p1k2/4p3/8/5N2/1B6/4R1K1 w - - 0 1", "f3e5", -1),  # dxe5 Bxe5, Kxe5 never legal
     ("7k/1P1K4/8/8/8/8/2r5/8 b - - 0 1", "c2c8", -13),    # bxc8=Q, the king captures last
     ("3rk3/8/8/3p4/8/8/3R4/3RK3 w - - 0 1", "d2d5", 1),   # Rd1 recaptures through d2
+    ("r7/4P3/8/8/8/8/k7/4K3 w - - 0 1", "e7e8n", -1),     # Rxe8 takes the new knight
+    ("3r3k/8/8/8/8/5Q2/2p4K/1R1n4 w - - 0 1", "b1d1", -10),  # cxd1=Q Qxd1 Rxd1
+    ("4k3/2p5/3p4/8/4N3/8/8/4R1K1 w - - 0 1", "e4d6", 1),  # double check: cxd6 is illegal
 ]
 SEE_LOSS_LIMITING = [  # the recapture loses less than stopping: 2 and -2, not 3 and -3
     ("4k3/8/4p3/3n4/4P3/8/8/4K3 w - - 0 1", "e4d5", 2),
@@ -118,8 +121,9 @@ def test_is_book_move(ply, before, after, base, expected):
     (False, "best", 0.6, 0.6, 0.55, None, False),  # first move of the game
     (False, "best", 0.39, 0.51, 0.35, 0.39, False),  # the opponent did not err: 0.51 is search noise
     (False, "best", 0.44, 0.51, 0.40, 0.35, False),  # the opponent gave away 0.09: an inaccuracy, not a mistake
-    (False, "best", 0.45, 0.51, 0.40, 0.35, True),  # the opponent gave away 0.10: a mistake
-    (False, "best", 0.6, 0.6, None, 0.35, False),  # only legal move: no choice to praise
+    # just above 0.10: 0.45 - 0.35 is 0.10000000000000003, so this row does not tell >= from >
+    (False, "best", 0.45, 0.51, 0.40, 0.35, True),
+    (True, "best", 0.6, 0.6, None, 0.35, False),  # only legal move, always line 1: no choice to praise
     # (b): the only saving move
     (True, "best", 0.6, 0.6, 0.39, None, True), (True, "best", 0.6, 0.6, 0.41, None, False),
     (False, "best", 0.6, 0.6, 0.30, None, False), (True, "best", 0.6, 0.6, None, None, False),
@@ -131,32 +135,61 @@ def test_is_great_move(is_best, base, before, after, second, before_opponent, ex
 
 
 SAC = ("4k3/8/3p4/8/8/5N2/8/4K3 w - - 0 1", "f3e5")  # knight sacrifice, SEE -3
-SOUND = dict(wp_before=0.6, wp_after=0.6, eval_after_cp=100,
-             second_best_wp=0.45, base_class="best", is_best=True)
+QUEEN_EN_PRISE = ("4k3/8/8/2p5/3Q4/8/8/1N2K3 w - - 0 1", "b1c3")  # the queen stays en prise to c5
+ROOK_DEFENDED = ("3rk3/8/8/8/3R4/8/8/1N1RK3 w - - 0 1", "b1c3")  # rook en prise but defended: even trade
+PASSANT_LEAVES_KNIGHT = ("4k3/8/8/2ppP3/3N4/8/8/4K3 w - d6 0 1", "e5d6")  # exd6 takes 1, cxd4 takes 3
+PROMOTION_LEAVES_QUEEN = ("8/k3P3/8/2p5/3Q4/8/8/4K3 w - - 0 1", "e7e8q")  # e8=Q gains 8, cxd4 takes 9
+SOUND = dict(wp_before=0.6, wp_after=0.6, eval_after_cp=100, second_best_wp=0.45, is_best=True)
 
 
 def _brilliant(fen=SAC[0], uci=SAC[1], **override):
     return A.is_brilliant(chess.Board(fen), chess.Move.from_uci(uci), **{**SOUND, **override})
 
 
+@pytest.mark.parametrize("fen, uci, expected", [
+    (*QUEEN_EN_PRISE, -9),
+    (*ROOK_DEFENDED, 0),
+    ("4k3/8/3p4/8/4P3/8/8/4K3 w - - 0 1", "e4e5", 0),      # only a pawn
+    (*SAC, -3),
+    ("4k3/8/8/2p1p3/3Q4/5N2/8/4K3 w - - 0 1", "f3e5", -8),  # Nxe5 takes 1, cxd4 takes 9
+    (*PASSANT_LEAVES_KNIGHT, -2),
+    (*PROMOTION_LEAVES_QUEEN, -1),
+    ("4k3/3N1p2/6Q1/8/8/8/8/R5K1 w - - 0 1", "a1e1", -3),  # check: Kxd7 parries it, fxg6 is illegal
+    ("4k3/8/8/4p3/3Q4/8/8/1N2RK2 w - - 0 1", "b1c3", 0),   # exd4 is illegal: Re1 pins e5
+    ("1n2k3/8/8/3q4/2P5/8/8/4K3 b - - 0 1", "b8c6", -9),   # Black to move: cxd5 takes the queen
+    ("r7/4P3/8/8/8/8/k7/4K3 w - - 0 1", "e7e8q", 0),       # the moved piece is a pawn: Rxe8 does not count
+    ("4k3/8/8/2p5/3P4/8/8/1N2K3 w - - 0 1", "b1c3", 0),    # a pawn en prise does not count
+    ("3qk3/8/8/2p5/3R4/8/8/1N1RK3 w - - 0 1", "b1c3", -5),  # the opponent's best: cxd4 (5), not Qxd4 (1)
+])
+def test_sacrifice_balance(fen, uci, expected):
+    board = chess.Board(fen)
+    move = chess.Move.from_uci(uci)
+    assert board.is_valid() and board.is_legal(move)
+    assert A.sacrifice_balance(board, move) == expected
+    assert board == chess.Board(fen)  # the caller's board is left alone
+
+
 def test_brilliant_accepts_sound_sacrifice():
     assert _brilliant()
-    assert _brilliant(second_best_wp=None)
 
 
-@pytest.mark.parametrize("base_class", ["best", "excellent"])
-def test_brilliant_requires_the_best_move(base_class):
-    assert not _brilliant(is_best=False, base_class=base_class)
+def test_brilliant_accepts_sacrifice_of_another_piece():
+    assert _brilliant(*QUEEN_EN_PRISE)
+    assert not _brilliant(*ROOK_DEFENDED)
+
+
+def test_brilliant_requires_the_best_move():
+    assert not _brilliant(is_best=False)
 
 
 @pytest.mark.parametrize("override", [
-    {"base_class": "good"},
     {"wp_after": 0.57},                     # WP drops 0.03 > 0.02
     {"wp_before": 0.55, "wp_after": 0.54},  # after below 0.55
     {"wp_before": 0.86, "wp_after": 0.86},  # before above 0.85
     {"eval_after_cp": 9500},                # forced mate after the move
     {"second_best_wp": 0.55},               # second best only 0.05 worse
     {"second_best_wp": 0.55, "wp_after": 0.66},  # still 0.05 below the best line
+    {"second_best_wp": None},               # only legal move: no choice to praise
 ])
 def test_brilliant_rejects(override):
     assert not _brilliant(**override)
@@ -165,6 +198,8 @@ def test_brilliant_rejects(override):
 def test_brilliant_needs_a_piece_sacrifice():
     assert not _brilliant("4k3/8/3p4/8/4P3/8/8/4K3 w - - 0 1", "e4e5")  # pawn, SEE -1
     assert not _brilliant("4k3/8/8/8/8/5N2/8/4K3 w - - 0 1", "f3e5")    # knight, SEE 0
+    assert _brilliant(*PASSANT_LEAVES_KNIGHT)        # balance -2, the limit
+    assert not _brilliant(*PROMOTION_LEAVES_QUEEN)   # balance -1
 
 
 def test_harmonic_mean():

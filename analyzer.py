@@ -93,7 +93,7 @@ ACPL_CP_LOSS_CAP = 1000
 BRILLIANT_WP_FLOOR = 0.55      # after the move the position is still playable/winning
 BRILLIANT_WP_CEILING = 0.85    # before the move the position was NOT already crushing
 BRILLIANT_TOLERANCE = 0.02     # WP must not drop by more than this
-BRILLIANT_SEE_MAX = -2         # SEE must be <= -2 (real sacrifice, not a trade)
+BRILLIANT_SEE_MAX = -2         # sacrifice_balance must be <= -2 (real sacrifice, not a trade)
 BRILLIANT_2ND_GAP = 0.10       # min WP gap between best and 2nd best (unique idea)
 
 # Game phase thresholds.
@@ -228,6 +228,13 @@ def is_book_move(ply: int, eval_before_cp: int, eval_after_cp: int, base_class: 
 # SEE (Static Exchange Evaluation)
 # ============================================================
 
+def _material_taken(board: chess.Board, move: chess.Move) -> int:
+    """What a move wins at once: the captured piece, a pawn en passant, plus the promoted piece minus the pawn."""
+    captured = chess.PAWN if board.is_en_passant(move) else board.piece_type_at(move.to_square)
+    promoted = PIECE_VALUE[move.promotion] - PIECE_VALUE[chess.PAWN] if move.promotion else 0
+    return PIECE_VALUE.get(captured, 0) + promoted
+
+
 def static_exchange_evaluation(board: chess.Board, move: chess.Move) -> int:
     """
     Simulates the optimal capture sequence on the destination square (each side
@@ -249,11 +256,7 @@ def static_exchange_evaluation(board: chess.Board, move: chess.Move) -> int:
     b = board.copy(stack=False)
     gain: list[int] = []
     while move is not None:
-        captured = chess.PAWN if b.is_en_passant(move) else b.piece_type_at(target)
-        won = PIECE_VALUE.get(captured, 0)
-        if move.promotion:
-            won += PIECE_VALUE[move.promotion] - PIECE_VALUE[chess.PAWN]
-        gain.append(won - (gain[-1] if gain else 0))
+        gain.append(_material_taken(b, move) - (gain[-1] if gain else 0))
         b.push(move)
         # Piece types run pawn=1 to king=6: min() takes the cheapest legal capturer, the king last.
         move = min(
@@ -268,6 +271,31 @@ def static_exchange_evaluation(board: chess.Board, move: chess.Move) -> int:
         gain[-2] = -max(-gain[-2], gain[-1])
         gain.pop()
     return gain[0]
+
+
+def sacrifice_balance(board_before: chess.Board, played: chess.Move) -> int:
+    """
+    The mover's worst material balance after the move, over its pieces worth at
+    least 3. On the arrival square: the SEE of the move, if the moved piece is
+    worth at least 3 (a promoted pawn is not). On any other square the opponent
+    can capture legally: the material the move took minus the opponent's best
+    SEE there. 0 if neither case exists. The caller's board is not modified.
+
+    shortcut: static, so intermediate checks and counter-threats do not count; add a search if calibration asks for it.
+    """
+    balances = []
+    if PIECE_VALUE.get(board_before.piece_type_at(played.from_square), 0) >= 3:
+        balances.append(static_exchange_evaluation(board_before, played))
+    taken = _material_taken(board_before, played)
+    after = board_before.copy(stack=False)
+    after.push(played)
+    for square, piece in after.piece_map(mask=after.occupied_co[board_before.turn]).items():
+        if square != played.to_square and PIECE_VALUE[piece.piece_type] >= 3:
+            captures = after.generate_legal_moves(to_mask=chess.BB_SQUARES[square])
+            sees = [static_exchange_evaluation(after, capture) for capture in captures]
+            if sees:
+                balances.append(taken - max(sees))
+    return min(balances, default=0)
 
 
 # ============================================================
@@ -348,13 +376,12 @@ def is_brilliant(
     wp_after: float,
     eval_after_cp: int,
     second_best_wp: Optional[float],
-    base_class: str,
     is_best: bool,
 ) -> bool:
     """
     Brilliant !! - VERY STRICT rules. A move is brilliant when:
 
-      1. base = best or excellent (move is strong per Stockfish)
+      1. The move is Stockfish's best (so its base class is best)
       2. WP doesn't drop more than BRILLIANT_TOLERANCE (advantage maintained)
       3. AFTER the move position is still playable/winning (WP >= BRILLIANT_WP_FLOOR)
       4. BEFORE the move position was not already completely won
@@ -362,15 +389,16 @@ def is_brilliant(
          a piece isn't "brilliant", just luxurious
       5. NO forced mate after the move (a sacrifice that leads to mate-in-3
          isn't "positional brilliance": the engine just sees it)
-      6. The move is a REAL sacrifice: SEE <= BRILLIANT_SEE_MAX (-2 default).
-         SEE >= 0 = favourable trade or "free" capture, not a sacrifice.
-         SEE = -1 = exchange sacrifice (minor), too trivial for brilliant.
-      7. Sacrificed piece must be of value >= 3 (no pawns)
-      8. The move is Stockfish's best and the 2nd line of the same search is
-         substantially worse: the brilliant idea is unique, not one of many
-         good options (best line WP - 2nd line WP >= BRILLIANT_2ND_GAP)
+      6. The 2nd line of the same search exists and is substantially worse:
+         the brilliant idea is unique, not one of many good options (best line
+         WP - 2nd line WP >= BRILLIANT_2ND_GAP). An only legal move has no 2nd
+         line: there was no choice to praise.
+      7. The move is a REAL sacrifice of a piece worth at least 3, the moved one
+         or another: sacrifice_balance <= BRILLIANT_SEE_MAX (-2 default).
+         Balance >= 0 = favourable trade or "free" capture, not a sacrifice.
+         Balance = -1 = too trivial for brilliant.
     """
-    if base_class not in {"best", "excellent"}:
+    if not is_best:
         return False
     if wp_after < wp_before - BRILLIANT_TOLERANCE:
         return False
@@ -381,24 +409,11 @@ def is_brilliant(
     # No forced mate after: |eval_after_cp| above ~9000 indicates a mate score.
     if abs(eval_after_cp) >= 9000:
         return False
-
-    moved_piece = board_before.piece_at(played.from_square)
-    moved_value = PIECE_VALUE.get(moved_piece.piece_type, 0) if moved_piece else 0
-    if moved_value < 3:
-        return False
-
-    see = static_exchange_evaluation(board_before, played)
-    if see > BRILLIANT_SEE_MAX:
-        return False
-
     # 2nd-best must be visibly worse (unique brilliant move, not one of many).
-    # A move other than the best has a better move, so it is never unique.
-    if not is_best:
-        return False
-    if second_best_wp is not None and (wp_before - second_best_wp) < BRILLIANT_2ND_GAP:
+    if second_best_wp is None or (wp_before - second_best_wp) < BRILLIANT_2ND_GAP:
         return False
 
-    return True
+    return sacrifice_balance(board_before, played) <= BRILLIANT_SEE_MAX
 
 
 def is_great_move(
@@ -712,7 +727,7 @@ class GameAnalyzer:
                 final_class = base_class
 
                 # ===== ASSIGNMENT HIERARCHY =====
-                # 1) Brilliant (requires sacrifice + strong base + WP doesn't crash)
+                # 1) Brilliant (requires sacrifice + best move + WP doesn't crash)
                 # 2) Great   (turnaround or only saving move) - only if NOT brilliant
                 # 3) Book    (heuristic on first plies) - only replaces "good" classes
                 # 4) Miss    (opponent blundered and we didn't punish) - only replaces
@@ -722,7 +737,7 @@ class GameAnalyzer:
                 if is_brilliant(
                     board_before_snap, played,
                     wp_before_best, wp_after, eval_after_cp,
-                    second_best_wp, base_class, is_best,
+                    second_best_wp, is_best,
                 ):
                     final_class = "brilliant"
                 elif is_great_move(is_best, base_class, wp_before_best, wp_after,
