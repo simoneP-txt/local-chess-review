@@ -70,6 +70,19 @@ def test_diff_fixtures(monkeypatch, tmp_path, capsys):
     assert capsys.readouterr().out.splitlines()[-1] == "total: 1 class changes in 1 games, 1 accuracy changes"
 
 
+def test_diff_without_ids_skips_games_missing_from_dir(monkeypatch, tmp_path, capsys):
+    current, other = tmp_path / "current", tmp_path / "other"
+    _write_analyses(other, {"1": (("best",), 60.0)})
+    _write_analyses(current, {"1": (("best",), 65.0), "2": (("good",), 70.0)})
+    for gid in ("1", "2"):
+        (current / f"{gid}.pgn").write_text("", encoding="utf-8")
+    monkeypatch.setattr(baseline, "FIXTURES_DIR", current)
+    baseline.main(["diff", str(other)])
+    out = capsys.readouterr().out.splitlines()
+    assert [line.split(":")[0] for line in out] == ["1", "total"]
+    assert out[-1] == "total: 0 class changes in 0 games, 1 accuracy changes"
+
+
 def test_analyzer_commit_marks_uncommitted_edits(monkeypatch):
     def git(status):
         return lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout=status if "status" in cmd else "abc\n")

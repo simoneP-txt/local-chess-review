@@ -159,7 +159,9 @@ def diff_fixtures(current: Path, other: Path, ids: list[str]) -> list[dict]:
 
 
 def cmd_diff(other: Path, ids: list[str]) -> None:
-    rows = diff_fixtures(FIXTURES_DIR, other, ids or fixture_ids())
+    # without ids, only the games both folders have: a game added later has no older copy
+    ids = ids or [g for g in fixture_ids() if (other / f"{g}.analysis.json").exists()]
+    rows = diff_fixtures(FIXTURES_DIR, other, ids)
     for r in rows:
         print(f"{r['id']}: {len(r['class_changes'])} class changes {r['class_changes']}, "
               f"accuracy {r['accuracy_old']} -> {r['accuracy_new']}")
