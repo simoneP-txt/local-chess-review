@@ -79,9 +79,6 @@ GREAT_TURNAROUND_FROM = 0.40   # WP before the opponent's last move below this (
 GREAT_TURNAROUND_TO   = 0.50   # WP after above this (now equal or winning)
 GREAT_ONLY_2ND_DROP   = 0.20   # 2nd-best move would drop WP by at least this
 
-# "Miss" threshold.
-MISS_PREV_BLUNDER_DROP = 0.15  # opponent lost at least this much WP
-
 # How many plies of Principal Variation we save for the UI "continuation".
 PV_PLIES_TO_KEEP = 6
 
@@ -427,10 +424,11 @@ def is_great_move(
     """
     Great ! - strict rules, evaluated only if the move is NOT brilliant:
       A) Turnaround: before the opponent's last move the mover was losing
-         (wp_before_opponent_move < 0.40; None on the first move of the game),
-         that move was at least a mistake (it gave away wp_before -
-         wp_before_opponent_move >= inaccuracy_max, 0.10), and this move, best
-         or excellent, leaves the game equal or winning (wp_after > 0.50).
+         (wp_before_opponent_move < 0.40; None on the first move of the game
+         and after a line-1 move), that move was at least a mistake (it gave
+         away wp_before - wp_before_opponent_move >= inaccuracy_max, 0.10), and
+         this move, best or excellent, leaves the game equal or winning
+         (wp_after > 0.50).
          Recognises the move that punishes an opponent's mistake by flipping
          the game. Not for an only legal move (no second line): there was no
          choice to make.
@@ -750,11 +748,11 @@ class GameAnalyzer:
                     # doesn't take advantage (regression to neutral/worse).
                     if (final_class not in {"best", "excellent"}
                             and len(moves_out) >= 1
-                            and moves_out[-1]["classification"] == "blunder"
-                            and moves_out[-1]["wp_drop"] >= MISS_PREV_BLUNDER_DROP):
+                            and moves_out[-1]["classification"] == "blunder"):
                         final_class = "miss"
                 # The next mover's WP in this BEFORE position, unrounded, for its Great (a).
-                wp_before_opponent_move = 1.0 - wp_before_best
+                # A line-1 move is no error, even if the next search sees it worse (horizon effect).
+                wp_before_opponent_move = None if is_best else 1.0 - wp_before_best
 
                 comment = _make_comment(
                     final_class, board_before_snap, played, see_played, pv_after_uci,

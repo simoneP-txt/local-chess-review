@@ -104,6 +104,13 @@ def test_classify_standard(drop, is_best, expected):
     assert A.classify_standard(drop, is_best) == expected
 
 
+def test_blunder_implies_drop_at_least_mistake_max():
+    # Miss relies on this: it needs no drop check of its own on the opponent's blunder
+    for drop in (i / 1000 for i in range(1001)):
+        if A.classify_standard(drop, False) == "blunder":
+            assert drop >= A.WP_THRESHOLDS["mistake_max"]
+
+
 @pytest.mark.parametrize("ply, before, after, base, expected", [
     (16, 80, -80, "good", True), (1, 0, 0, "excellent", True),
     (17, 0, 0, "best", False), (10, 81, 0, "best", False),
@@ -285,6 +292,18 @@ def test_analyze_great_turnaround_after_the_opponent_blunder():
     moves = _analyze(OPENING, ScriptedEngine(lambda board: next(scores)))["moves"]
     # 1. e4 keeps 0.68 but has no move before it; 1... e5 stays at 0.32; 2... Nc6 goes from 0.32 to 0.68
     assert [m["classification"] for m in moves] == ["best", "best", "blunder", "great"]
+
+
+def test_analyze_no_great_turnaround_after_an_opponent_line_one():
+    def classes(pgn):
+        scores = iter([168, -33, -54])  # side to move, P0-P2: Black goes 0.35, 0.47, then 0.55 after its reply
+        return [m["classification"] for m in _analyze(pgn, ScriptedEngine(lambda board: next(scores)))["moves"]]
+
+    # Nh3 is the first legal move, so line 1: only the next search gives Black the 0.12 (horizon effect)
+    played, reply = classes("1. Nh3 Nh6 *\n")
+    assert played == "best" and reply != "great"
+    # same scores, but Nf3 is not line 1: a real mistake, and the reply punishes it
+    assert classes("1. Nf3 Nh6 *\n") == ["mistake", "great"]
 
 
 def test_analyze_handles_mate_and_single_move():
