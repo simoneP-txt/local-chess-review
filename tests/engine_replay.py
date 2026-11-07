@@ -112,3 +112,8 @@ def analyze_replayed(pgn, engine_json):
     with patch_popen(lambda path: ReplayEngine(engine_json["calls"])):
         result = GameAnalyzer("replay", depth=engine_json["meta"]["depth"], threads=1).analyze_pgn(pgn)
     return json.loads(json.dumps(result))
+
+
+def _analyze(pgn, engine):
+    with patch_popen(lambda path: engine):
+        return GameAnalyzer("scripted", depth=15, threads=1).analyze_pgn(pgn)

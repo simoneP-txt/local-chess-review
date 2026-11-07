@@ -36,6 +36,8 @@ import chess
 import chess.engine
 import chess.pgn
 
+import openings
+
 # -------- Classification thresholds (Win Probability drop, range 0..1) --------
 # Aligned with the well-known "Expected Points Model" thresholds.
 WP_THRESHOLDS = {
@@ -69,10 +71,6 @@ PIECE_KEY = {
 
 # Lichess sigmoid coefficient cp -> WP.
 WP_K = 0.00368208
-
-# Book/theory heuristic.
-BOOK_PLY = 16
-BOOK_CP_RANGE = 80
 
 # "Great move" thresholds.
 GREAT_TURNAROUND_FROM = 0.40   # WP before the opponent's last move below this (player was losing)
@@ -211,14 +209,6 @@ def classify_standard(wp_drop: float, is_best: bool) -> str:
     if wp_drop < WP_THRESHOLDS["mistake_max"]:
         return "mistake"
     return "blunder"
-
-
-def is_book_move(ply: int, eval_before_cp: int, eval_after_cp: int, base_class: str) -> bool:
-    if ply > BOOK_PLY:
-        return False
-    if base_class not in {"best", "excellent", "good"}:
-        return False
-    return abs(eval_before_cp) <= BOOK_CP_RANGE and abs(eval_after_cp) <= BOOK_CP_RANGE
 
 
 # ============================================================
@@ -650,6 +640,8 @@ class GameAnalyzer:
             except ValueError: black_elo = None
 
         moves_out: list[dict[str, Any]] = []
+        positions, named = openings.book()
+        opening: Optional[dict[str, str]] = None
 
         engine = chess.engine.SimpleEngine.popen_uci(self.engine_path)
         try:
@@ -661,6 +653,7 @@ class GameAnalyzer:
             infos = engine.analyse(board, self.limit, multipv=2)
             ply_index = 0
             wp_before_opponent_move: Optional[float] = None
+            in_book = board.epd() in positions
 
             # Iterate nodes (not just moves) to read the [%clk ...] PGN annotation
             # via node.clock() — returns float seconds remaining, or None if absent.
@@ -703,6 +696,12 @@ class GameAnalyzer:
 
                 board.push(played)
                 fen_after = board.fen()
+                epd = board.epd()
+                # Once out of theory, stays out: a transposition back into a theory position is no Book.
+                in_book = in_book and epd in positions
+                if in_book and epd in named:
+                    eco, name = named[epd]
+                    opening = {"eco": eco, "name": name}
 
                 # 2) AFTER: search the new position -> residual WP + "punishment" PV
                 #    (the line the opponent uses to exploit the just-played move)
@@ -727,7 +726,8 @@ class GameAnalyzer:
                 # ===== ASSIGNMENT HIERARCHY =====
                 # 1) Brilliant (requires sacrifice + best move + WP doesn't crash)
                 # 2) Great   (turnaround or only saving move) - only if NOT brilliant
-                # 3) Book    (heuristic on first plies) - only replaces "good" classes
+                # 3) Book    (every position so far is in the openings database), except a base
+                #            mistake or blunder: the database holds trap lines
                 # 4) Miss    (opponent blundered and we didn't punish) - only replaces
                 #            classes below "best/excellent"
                 # 5) Standard (already set in base_class)
@@ -741,7 +741,7 @@ class GameAnalyzer:
                 elif is_great_move(is_best, base_class, wp_before_best, wp_after,
                                    second_best_wp, wp_before_opponent_move):
                     final_class = "great"
-                elif is_book_move(ply_index, eval_before_cp, eval_after_cp, base_class):
+                elif in_book and base_class not in {"mistake", "blunder"}:
                     final_class = "book"
                 else:
                     # MISS: the opponent's previous move was a blunder and ours
@@ -814,6 +814,7 @@ class GameAnalyzer:
             "phases": phases,
             "real_elo": {"white": white_elo, "black": black_elo},
             "time_control": headers.get("TimeControl", ""),
+            "opening": opening,
         }
 
     @staticmethod

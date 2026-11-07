@@ -7,7 +7,7 @@ from chess.engine import Cp, Mate, PovScore
 
 import analyzer as A
 from tests.conftest import FakeEngine
-from tests.engine_replay import ScriptedEngine, patch_popen
+from tests.engine_replay import ScriptedEngine, _analyze
 
 W, B = chess.WHITE, chess.BLACK
 
@@ -109,15 +109,6 @@ def test_blunder_implies_drop_at_least_mistake_max():
     for drop in (i / 1000 for i in range(1001)):
         if A.classify_standard(drop, False) == "blunder":
             assert drop >= A.WP_THRESHOLDS["mistake_max"]
-
-
-@pytest.mark.parametrize("ply, before, after, base, expected", [
-    (16, 80, -80, "good", True), (1, 0, 0, "excellent", True),
-    (17, 0, 0, "best", False), (10, 81, 0, "best", False),
-    (10, 0, -81, "best", False), (10, 0, 0, "inaccuracy", False),
-])
-def test_is_book_move(ply, before, after, base, expected):
-    assert A.is_book_move(ply, before, after, base) is expected
 
 
 @pytest.mark.parametrize("is_best, base, before, after, second, before_opponent, expected", [
@@ -257,11 +248,7 @@ OPENING = "1. e4 e5 2. Nf3 Nc6 *\n"
 BLACK_MATES = "1. f3 e5 2. g4 Qh4# 0-1\n"
 WHITE_MATES = "1. e4 f6 2. d4 g5 3. Qh5# 1-0\n"
 ONE_MOVE_THEN_STALEMATE = '[SetUp "1"]\n[FEN "7k/8/6K1/5Q2/8/8/8/8 b - - 0 1"]\n\n1... Kg8 2. Qf6 1/2-1/2\n'
-
-
-def _analyze(pgn, engine):
-    with patch_popen(lambda path: engine):
-        return A.GameAnalyzer("scripted", depth=15, threads=1).analyze_pgn(pgn)
+OFF_THEORY = '[SetUp "1"]\n[FEN "7k/2P5/8/8/8/6q1/8/7K w - - 0 1"]\n\n'  # the king cannot move: line 1 is c8=Q, line 2 c8=R
 
 
 def _first_legal(fen):
@@ -288,22 +275,28 @@ def test_analyze_reuses_after_eval_as_next_before():
 
 
 def test_analyze_great_turnaround_after_the_opponent_blunder():
-    scores = iter([200, -200, 200, 200, -200])  # side to move, P0-P4: White +200 until 2. Nf3?? hands it to Black
-    moves = _analyze(OPENING, ScriptedEngine(lambda board: next(scores)))["moves"]
-    # 1. e4 keeps 0.68 but has no move before it; 1... e5 stays at 0.32; 2... Nc6 goes from 0.32 to 0.68
+    scores = iter([200, -200, 200, 200, -200])  # side to move, P0-P4: White +200 until 2. Nd6?? hands it to Black
+    moves = _analyze(OFF_THEORY + "1. c8=N Qg4 2. Nd6 Kg8 *\n", ScriptedEngine(lambda board: next(scores)))["moves"]
+    # 1. c8=N keeps 0.68 but has no move before it; 1... Qg4 stays at 0.32; 2... Kg8 goes from 0.32 to 0.68
     assert [m["classification"] for m in moves] == ["best", "best", "blunder", "great"]
 
 
 def test_analyze_no_great_turnaround_after_an_opponent_line_one():
-    def classes(pgn):
+    def classes(movetext):
         scores = iter([168, -33, -54])  # side to move, P0-P2: Black goes 0.35, 0.47, then 0.55 after its reply
-        return [m["classification"] for m in _analyze(pgn, ScriptedEngine(lambda board: next(scores)))["moves"]]
+        moves = _analyze(OFF_THEORY + movetext, ScriptedEngine(lambda board: next(scores)))["moves"]
+        return [m["classification"] for m in moves]
 
-    # Nh3 is the first legal move, so line 1: only the next search gives Black the 0.12 (horizon effect)
-    played, reply = classes("1. Nh3 Nh6 *\n")
-    assert played == "best" and reply != "great"
-    # same scores, but Nf3 is not line 1: a real mistake, and the reply punishes it
-    assert classes("1. Nf3 Nh6 *\n") == ["mistake", "great"]
+    # c8=Q is the first legal move, so line 1: only the next search gives Black the 0.12 (horizon effect)
+    assert classes("1. c8=Q+ Kh7 *\n") == ["best", "best"]
+    # same scores, but c8=N is not line 1: a real mistake, and the reply punishes it
+    assert classes("1. c8=N Kg8 *\n") == ["mistake", "great"]
+
+
+def test_analyze_miss_after_the_opponent_blunder():
+    scores = iter([0, 900, 0])  # side to move, P0-P2: 1. c8=N?? hands Black 0.96, 1... Kh7 gives it back
+    moves = _analyze(OFF_THEORY + "1. c8=N Kh7 *\n", ScriptedEngine(lambda board: next(scores)))["moves"]
+    assert [m["classification"] for m in moves] == ["blunder", "miss"]  # Kh7 is not line 1: Kg8 is
 
 
 def test_analyze_handles_mate_and_single_move():
@@ -312,14 +305,15 @@ def test_analyze_handles_mate_and_single_move():
     assert len(moves) == 2 and moves[0]["color"] == "black"
 
 
-@pytest.mark.parametrize("pgn, white_cp, white_wp", [
-    (BLACK_MATES, -10000, 0.0), (WHITE_MATES, 10000, 1.0),
+@pytest.mark.parametrize("pgn, white_cp, white_wp, classification", [
+    (BLACK_MATES, -10000, 0.0, "book"),  # 1. f3 e5 2. g4 Qh4# is a row of the openings database
+    (WHITE_MATES, 10000, 1.0, "best"),
 ], ids=["black-mates", "white-mates"])
-def test_analyze_scores_a_given_mate_as_a_win(pgn, white_cp, white_wp):
+def test_analyze_scores_a_given_mate_as_a_win(pgn, white_cp, white_wp, classification):
     last = _analyze(pgn, ScriptedEngine())["moves"][-1]  # answers Mate(0) for the mated side
     assert (last["eval_after_cp"], last["wp_after"], last["cp_loss"]) == (10000, 1.0, 0)
     assert (last["eval_white_cp"], last["wp_white_after"]) == (white_cp, white_wp)
-    assert (last["classification"], last["wp_drop"]) == ("best", 0.0)
+    assert (last["classification"], last["wp_drop"]) == (classification, 0.0)
 
 
 def test_analyze_move_number_from_fen():

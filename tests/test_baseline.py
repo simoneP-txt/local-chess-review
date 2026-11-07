@@ -92,6 +92,16 @@ def test_analyzer_commit_marks_uncommitted_edits(monkeypatch):
     assert baseline._analyzer_commit() == "abc-dirty"
 
 
+def test_analyzer_commit_follows_the_book_too(monkeypatch):
+    def run(cmd, **kw):
+        paths.append(cmd[cmd.index("--") + 1:])
+        return subprocess.CompletedProcess(cmd, 0, stdout="abc\n")
+    paths = []
+    monkeypatch.setattr(subprocess, "run", run)
+    baseline._analyzer_commit()
+    assert paths == [["analyzer.py", "openings.py", "data/chess-openings"]] * 2  # git log and git status
+
+
 def test_replay_prints_class_and_accuracy_changes(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(baseline, "FIXTURES_DIR", tmp_path)
     (tmp_path / "1.pgn").write_text("1. e4 *\n", encoding="utf-8")

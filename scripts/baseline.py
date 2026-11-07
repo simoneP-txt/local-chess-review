@@ -100,8 +100,9 @@ def analyze_recorded(pgn: str, threads: int, wdl: bool) -> tuple[dict, list[dict
 
 
 def _analyzer_commit() -> str:
-    git = lambda *args: subprocess.run(["git", *args, "--", "analyzer.py"], cwd=PROJECT_ROOT,
-                                       capture_output=True, text=True, check=True).stdout.strip()
+    # the analyses depend on the Book too: its code and its data
+    git = lambda *args: subprocess.run(["git", *args, "--", "analyzer.py", "openings.py", "data/chess-openings"],
+                                       cwd=PROJECT_ROOT, capture_output=True, text=True, check=True).stdout.strip()
     commit = git("log", "-1", "--format=%H")
     return f"{commit}-dirty" if git("status", "--porcelain") else commit
 
@@ -233,7 +234,7 @@ def cmd_timing(power: str, label: str) -> Path:
              f"- Data: {today}", f"- Sistema: {platform.platform()}", f"- CPU: {_cpu_name()}",
              f"- Thread logici: {os.cpu_count()}", f"- Alimentazione: {power}",
              f"- Stockfish: {engine_name}", f"- python-chess: {chess.__version__}",
-             f"- Commit di analyzer.py: {_analyzer_commit()}",
+             f"- Commit di analyzer.py e del Book: {_analyzer_commit()}",
              f"- Configurazione: Threads=2, Hash={HASH_MB}, depth {DEPTH}, due giri completi", "",
              "| Partita | Semimosse | Giro 1 (s) | Giro 2 (s) | s/semimossa | Quota Stockfish "
              "| Classi diverse giro 1 vs 2 | Classi diverse vs fixture (giro 1, giro 2) "

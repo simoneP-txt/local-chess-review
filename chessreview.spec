@@ -12,6 +12,7 @@ datas = [
     ('templates', 'templates'),
     ('static', 'static'),
     ('engine/README.txt', 'engine'),
+    ('data/chess-openings', 'data/chess-openings'),
 ]
 
 # Stockfish is only bundled if present at build time; otherwise the user

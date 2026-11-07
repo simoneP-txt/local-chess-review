@@ -379,7 +379,6 @@ local-chess-review/
 - **Classification thresholds**: `WP_THRESHOLDS` in `analyzer.py` (in WP).
 - **Brilliant more / less restrictive**: `BRILLIANT_SEE_MAX`,
   `BRILLIANT_WP_FLOOR`, `BRILLIANT_WP_CEILING`, `BRILLIANT_2ND_GAP`.
-- **Longer book detection**: raise `BOOK_PLY` (default 16 plies).
 - **Add a third UI language**: add another sub-dictionary in
   `static/js/i18n.js` and a matching `<option>` in the language selector
   in `templates/index.html`.
