@@ -29,6 +29,7 @@ Works from Windows PowerShell. Estimated time: 5-15 min depending on connection.
 from __future__ import annotations
 
 import argparse
+import codecs
 import csv
 import io
 import sqlite3
@@ -76,6 +77,8 @@ def stream_csv(keep_csv: bool):
         # consume them directly.
         out_file = open(CSV_PATH, "wb") if keep_csv else None
         text_buffer = io.StringIO()
+        # Incremental: a multi-byte character can straddle two chunks.
+        decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
 
         bytes_in = 0
         last_print = time.monotonic()
@@ -88,7 +91,7 @@ def stream_csv(keep_csv: bool):
                 if out_file:
                     out_file.write(chunk)
 
-                text = chunk.decode("utf-8", errors="replace")
+                text = decoder.decode(chunk)
                 # Accumulate then split by line; keep the last partial.
                 text_buffer.write(text)
                 buf = text_buffer.getvalue()
@@ -104,6 +107,7 @@ def stream_csv(keep_csv: bool):
                     last_print = now
 
         # Possibly the trailing line.
+        text_buffer.write(decoder.decode(b"", final=True))
         residue = text_buffer.getvalue().strip()
         if residue:
             yield residue

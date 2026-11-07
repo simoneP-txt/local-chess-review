@@ -2,10 +2,11 @@
 Reduces the local puzzle DB (engine/puzzles.db) to a uniformly distributed
 subset by rating band.
 
-Logic: for each 100-point rating band (400-499, 500-599, ..., 2700-2800)
-we keep at most MAX_PER_RATING_BAND puzzles, randomly chosen among the
-existing ones. This guarantees variety across all difficulties without
-having to re-download the Lichess CSV.
+Logic: for each 100-point rating band (400-499, 500-599, ..., 2700-2799, and
+2800 on its own, the top rating the download keeps) we keep at most
+MAX_PER_RATING_BAND puzzles, randomly chosen among the existing ones. This
+guarantees variety across all difficulties without having to re-download the
+Lichess CSV.
 
 Usage:
   python scripts/trim_puzzles.py                       # default: 5000 per band
@@ -48,7 +49,7 @@ def trim(db_path: Path, per_band: int) -> None:
     # To avoid huge queries, we work band by band into the temp table.
     cur.execute("CREATE TEMPORARY TABLE keep_ids (id TEXT PRIMARY KEY)")
 
-    bands = list(range(MIN_RATING_BAND, MAX_RATING_BAND, BAND_SIZE))
+    bands = list(range(MIN_RATING_BAND, MAX_RATING_BAND + 1, BAND_SIZE))
     for low in bands:
         high = low + BAND_SIZE - 1
         cur.execute(

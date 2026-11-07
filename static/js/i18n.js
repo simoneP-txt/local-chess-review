@@ -61,10 +61,12 @@ const TRANSLATIONS = {
 
     // ----- puzzle card -----
     "puzzle.title":              "🧩 Allenati con un puzzle mentre aspetti",
-    "puzzle.diff_easy":          "Facile (600-1200)",
-    "puzzle.diff_medium":        "Medio (1200-1700)",
-    "puzzle.diff_hard":          "Difficile (1700-2200)",
-    "puzzle.diff_expert":        "Esperto (2200-2800)",
+    "puzzle.diff_beginner":      "Principiante (400-800)",
+    "puzzle.diff_easy":          "Facile (800-1200)",
+    "puzzle.diff_intermediate":  "Intermedio (1200-1600)",
+    "puzzle.diff_advanced":      "Avanzato (1600-2000)",
+    "puzzle.diff_expert":        "Esperto (2000-2400)",
+    "puzzle.diff_master":        "Maestro (2400-2800)",
     "puzzle.btn_new":            "⟳ Nuovo",
     "puzzle.btn_hint":           "💡 Suggerimento",
     "puzzle.loading":            "Caricamento puzzle...",
@@ -207,10 +209,12 @@ const TRANSLATIONS = {
 
     // ----- puzzle card -----
     "puzzle.title":              "🧩 Train with a puzzle while you wait",
-    "puzzle.diff_easy":          "Easy (600-1200)",
-    "puzzle.diff_medium":        "Medium (1200-1700)",
-    "puzzle.diff_hard":          "Hard (1700-2200)",
-    "puzzle.diff_expert":        "Expert (2200-2800)",
+    "puzzle.diff_beginner":      "Beginner (400-800)",
+    "puzzle.diff_easy":          "Easy (800-1200)",
+    "puzzle.diff_intermediate":  "Intermediate (1200-1600)",
+    "puzzle.diff_advanced":      "Advanced (1600-2000)",
+    "puzzle.diff_expert":        "Expert (2000-2400)",
+    "puzzle.diff_master":        "Master (2400-2800)",
     "puzzle.btn_new":            "⟳ New",
     "puzzle.btn_hint":           "💡 Hint",
     "puzzle.loading":            "Loading puzzle...",

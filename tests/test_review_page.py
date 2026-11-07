@@ -187,3 +187,27 @@ def test_review_keeps_the_time_per_ply_of_each_setting(page, base_url, release, 
     assert set(times) == {"15x1", "12x2"}
     assert times["15x1"] == 5000  # another setting keeps its last time
     assert 0 < times["12x2"] < 5000  # this review: elapsed ms / 4 plies, in the same map
+
+
+@pytest.mark.parametrize("lang, labels", [
+    ("it", ["Principiante (400-800)", "Facile (800-1200)", "Intermedio (1200-1600)",
+            "Avanzato (1600-2000)", "Esperto (2000-2400)", "Maestro (2400-2800)"]),
+    ("en", ["Beginner (400-800)", "Easy (800-1200)", "Intermediate (1200-1600)",
+            "Advanced (1600-2000)", "Expert (2000-2400)", "Master (2400-2800)"]),
+], ids=["it", "en"])
+def test_puzzle_difficulty_selector(page, base_url, lang, labels):
+    seed_local_storage(page, {"chessreview.lang": lang})
+    with page.expect_request("**/api/puzzle*") as first:
+        page.goto(f"{base_url}/review")
+    assert first.value.url.endswith("?difficulty=intermediate")
+    page.wait_for_function("puzzleStep === 1")
+    assert page.input_value("#puzzle-difficulty") == "intermediate"
+
+    options = page.locator("#puzzle-difficulty option")
+    expect(options).to_have_text(labels)
+    assert options.evaluate_all("els => els.map(el => el.value)") == [
+        "beginner", "easy", "intermediate", "advanced", "expert", "master"]
+
+    with page.expect_request("**/api/puzzle*") as chosen:
+        page.select_option("#puzzle-difficulty", "master")
+    assert chosen.value.url.endswith("?difficulty=master")

@@ -1,5 +1,7 @@
 """Flask API tests with the test client: no Stockfish, no browser."""
 import os
+import sqlite3
+from contextlib import closing
 
 import pytest
 
@@ -132,3 +134,31 @@ def test_eval_after_white_mates(client, monkeypatch):
     assert resp.status_code == 200
     data = resp.get_json()
     assert (data["eval_white_cp"], data["wp_white"], data["eval_cp"]) == (10000, 1.0, -10000)
+
+
+@pytest.mark.parametrize("difficulty, ratings", [
+    ("beginner", {400, 799}),
+    ("easy", {800}),
+    ("intermediate", {1599}),
+    ("advanced", {1600}),
+    ("expert", {2399}),
+    ("master", {2400, 2800}),
+    # A missing or unknown difficulty stays on easy.
+    (None, {800}),
+    ("medium", {800}),
+    ("hard", {800}),
+    ("xyz", {800}),
+])
+def test_puzzle_bands(client, monkeypatch, tmp_path, difficulty, ratings):
+    db = tmp_path / "puzzles.db"
+    with closing(sqlite3.connect(db)) as conn:
+        conn.execute("CREATE TABLE puzzles (id TEXT PRIMARY KEY, fen TEXT, moves TEXT, rating INTEGER, themes TEXT)")
+        # Highest first: a SELECT wider than its COUNT would then return a rating outside the band.
+        conn.executemany("INSERT INTO puzzles VALUES (?, 'fen', 'e2e4 e7e5', ?, 'mate')",
+                         [(str(rating), rating) for rating in (2800, 2400, 2399, 1600, 1599, 800, 799, 400)])
+        conn.commit()
+    monkeypatch.setattr(app, "PUZZLE_DB_PATH", db)
+    query = {} if difficulty is None else {"difficulty": difficulty}
+
+    # 20 requests miss one of two puzzles with probability 2^-19.
+    assert {client.get("/api/puzzle", query_string=query).get_json()["rating"] for _ in range(20)} == ratings

@@ -258,11 +258,14 @@ def api_eval():
 # ============================================================
 # /api/puzzle - serves a random puzzle from the local Lichess DB
 # ============================================================
+# Low bound included, high bound excluded: 2801 keeps the top rating, 2800, in master.
 DIFFICULTY_BANDS = {
-    "easy":   (600, 1200),
-    "medium": (1200, 1700),
-    "hard":   (1700, 2200),
-    "expert": (2200, 2800),
+    "beginner":     (400, 800),
+    "easy":         (800, 1200),
+    "intermediate": (1200, 1600),
+    "advanced":     (1600, 2000),
+    "expert":       (2000, 2400),
+    "master":       (2400, 2801),
 }
 
 
@@ -270,7 +273,7 @@ DIFFICULTY_BANDS = {
 def api_puzzle():
     """Returns a random Lichess puzzle in the requested rating band.
 
-    Query: ?difficulty=easy|medium|hard|expert (default easy)
+    Query: ?difficulty=beginner|easy|intermediate|advanced|expert|master (anything else: easy)
     Responds 503 if the DB has not been downloaded.
     """
     if not PUZZLE_DB_PATH.exists():
@@ -287,7 +290,7 @@ def api_puzzle():
         conn.row_factory = sqlite3.Row
         # Count puzzles in the band so we can pick a uniformly random OFFSET.
         cur = conn.execute(
-            "SELECT COUNT(*) AS n FROM puzzles WHERE rating BETWEEN ? AND ?",
+            "SELECT COUNT(*) AS n FROM puzzles WHERE rating >= ? AND rating < ?",
             band,
         )
         n = cur.fetchone()["n"]
@@ -296,7 +299,7 @@ def api_puzzle():
         offset = random.randint(0, n - 1)
         cur = conn.execute(
             "SELECT id, fen, moves, rating, themes "
-            "FROM puzzles WHERE rating BETWEEN ? AND ? "
+            "FROM puzzles WHERE rating >= ? AND rating < ? "
             "LIMIT 1 OFFSET ?",
             (*band, offset),
         )
