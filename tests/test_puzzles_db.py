@@ -15,10 +15,11 @@ from scripts import download_puzzles, trim_puzzles
 
 @pytest.mark.skipif(not trim_puzzles.DB_PATH.exists(), reason="engine/puzzles.db is missing")
 def test_puzzles_db_has_the_columns_lengths_ratings_and_legal_solutions():
-    uri = f"file:{trim_puzzles.DB_PATH.as_posix()}?mode=ro"
+    uri = f"{trim_puzzles.DB_PATH.as_uri()}?mode=ro"
     with closing(sqlite3.connect(uri, uri=True)) as conn:
         columns = [row[1] for row in conn.execute("PRAGMA table_info(puzzles)")]
         assert columns == ["id", "fen", "moves", "rating", "themes"]
+        assert conn.execute("SELECT COUNT(*) FROM puzzles").fetchone()[0] > 0
         for puzzle_id, fen, moves, rating in conn.execute("SELECT id, fen, moves, rating FROM puzzles"):
             plies = moves.split()
             assert len(plies) in (2, 4), puzzle_id
@@ -47,7 +48,7 @@ def test_trim_keeps_top_band(tmp_path):
 @pytest.mark.parametrize("chunks, lines", [
     ([b"PuzzleId\nabc\xc3", b"\xa9\n"], ["PuzzleId", "abcé"]),
     ([b"PuzzleId\nabc\xc3", b"\xa9"], ["PuzzleId", "abcé"]),
-    ([b"PuzzleId\nabc\xc3"], ["PuzzleId", "abc�"]),
+    ([b"PuzzleId\nabc\xc3"], ["PuzzleId", "abc\ufffd"]),
 ], ids=["split-row", "split-last-row-without-newline", "stream-ends-inside-the-character"])
 def test_stream_csv_keeps_split_utf8(monkeypatch, chunks, lines):
     decompressor = MagicMock()

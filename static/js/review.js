@@ -208,6 +208,7 @@ function setupPuzzleBoard() {
       clearClickSelection("puzzle-board");
     },
     onDrop: handlePuzzleDrop,
+    onSnapEnd: () => puzzleBoard.position(puzzleChess.fen(), false),
   });
   installClickToMove("puzzle", "puzzle-board", () => puzzleChess, () => puzzleBoard, handlePuzzleDrop);
 
@@ -230,19 +231,19 @@ function setupPuzzleBoard() {
 
 function handlePuzzleDrop(source, target) {
   if (!puzzleData || puzzleSolved) return "snapback";
+  // Even steps belong to the other side (setup, reply): its moves, mates included, never count.
+  if (puzzleStep % 2 === 0) return "snapback";
   if (source === target) return "snapback";
 
-  const move = puzzleChess.move({ from: source, to: target, promotion: "q" });
+  const expected = puzzleData.moves[puzzleStep];
+  const isExpected = source === expected.slice(0, 2) && target === expected.slice(2, 4);
+  // shortcut: no piece picker; revisit in the Phase 5 redesign
+  const promotion = (isExpected && expected[4]) || "q";
+  const move = puzzleChess.move({ from: source, to: target, promotion });
   if (move === null) return "snapback";
 
-  const expected = puzzleData.moves[puzzleStep];
-  const expectedFrom = expected.slice(0, 2), expectedTo = expected.slice(2, 4);
-  const userUci = source + target + (move.promotion || "");
-
-  const isCorrect = (userUci === expected) ||
-                    (source === expectedFrom && target === expectedTo);
-
-  if (!isCorrect) {
+  const isMate = puzzleChess.in_checkmate();
+  if (!isExpected && !isMate) {
     puzzleChess.undo();
     setPuzzleStatus(t("puzzle.wrong"), "error");
     return "snapback";
@@ -251,8 +252,8 @@ function handlePuzzleDrop(source, target) {
   puzzleStep++;
   setPuzzleStatus(t("puzzle.correct"), "ok");
 
-  // If there are more moves in the sequence, the opponent replies automatically.
-  if (puzzleStep < puzzleData.moves.length) {
+  // Unless it is mate, the opponent replies automatically if there are more moves in the sequence.
+  if (!isMate && puzzleStep < puzzleData.moves.length) {
     setTimeout(() => {
       const reply = puzzleData.moves[puzzleStep];
       puzzleChess.move({
