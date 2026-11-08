@@ -3,6 +3,8 @@ import os
 import sqlite3
 from contextlib import closing
 
+import chess
+import chess.engine
 import pytest
 
 import app
@@ -136,6 +138,64 @@ def test_eval_after_white_mates(client, monkeypatch):
     assert (data["eval_white_cp"], data["wp_white"], data["eval_cp"]) == (10000, 1.0, -10000)
 
 
+@pytest.mark.parametrize("depth", [9, 23, "12", 12.5, True, None])
+def test_eval_rejects_a_depth_that_is_not_an_integer_in_range(client, monkeypatch, depth):
+    monkeypatch.setattr(app, "_get_engine", lambda: ScriptedEngine())  # the real Stockfish must not start
+    resp = client.post("/api/eval", json={"fen": chess.STARTING_FEN, "depth": depth})
+    assert resp.status_code == 400
+    assert resp.get_json() == {"error": "depth must be an integer between 10 and 22"}
+
+
+@pytest.mark.parametrize("depth", [10, 22])
+def test_eval_accepts_a_depth_at_the_ends_of_the_range(client, monkeypatch, depth):
+    monkeypatch.setattr(app, "_get_engine", lambda: ScriptedEngine())
+    resp = client.post("/api/eval", json={"fen": chess.STARTING_FEN, "depth": depth})
+    assert resp.status_code == 200
+    assert resp.get_json()["depth"] == depth
+
+
+def test_eval_does_not_check_its_default_depth(client, monkeypatch):
+    monkeypatch.setattr(app, "_get_engine", lambda: ScriptedEngine())
+    monkeypatch.setattr(app, "EVAL_DEPTH", 8)  # set from the environment, outside 10-22
+    resp = client.post("/api/eval", json={"fen": chess.STARTING_FEN})
+    assert resp.status_code == 200
+    assert resp.get_json()["depth"] == 8
+
+
+def test_eval_rejects_an_impossible_position(client, monkeypatch):
+    monkeypatch.setattr(app, "_get_engine", lambda: ScriptedEngine())
+    resp = client.post("/api/eval", json={"fen": "8/8/8/8/8/8/8/8 w - - 0 1"})  # parses, but has no kings
+    assert resp.status_code == 400
+    assert resp.get_json() == {"error": "invalid FEN: NO_WHITE_KING|NO_BLACK_KING|EMPTY"}
+
+
+def test_eval_opens_a_new_engine_after_an_engine_error(client, monkeypatch):
+    calls = []
+
+    class DeadEngine(ScriptedEngine):
+        """Stockfish after its process died: analyse and quit raise."""
+
+        def analyse(self, board, limit, multipv=None):
+            raise chess.engine.EngineTerminatedError("engine event loop dead")
+
+        def quit(self):
+            calls.append("quit")
+            raise chess.engine.EngineTerminatedError("engine event loop dead")
+
+    engines = iter([DeadEngine(), ScriptedEngine()])
+
+    def popen_uci(path):
+        calls.append(path)
+        return next(engines)
+
+    monkeypatch.setattr(app, "ENGINE_PATH", "fake-engine")
+    monkeypatch.setattr(app, "_engine", None)
+    monkeypatch.setattr(chess.engine.SimpleEngine, "popen_uci", popen_uci)
+    assert client.post("/api/eval", json={"fen": chess.STARTING_FEN}).status_code == 500
+    assert client.post("/api/eval", json={"fen": chess.STARTING_FEN}).status_code == 200
+    assert calls == ["fake-engine", "quit", "fake-engine"]
+
+
 @pytest.mark.parametrize("difficulty, ratings", [
     ("beginner", {400, 799}),
     ("easy", {800}),
@@ -162,3 +222,14 @@ def test_puzzle_bands(client, monkeypatch, tmp_path, difficulty, ratings):
 
     # 20 requests miss one of two puzzles with probability 2^-19.
     assert {client.get("/api/puzzle", query_string=query).get_json()["rating"] for _ in range(20)} == ratings
+
+
+def test_puzzle_answer_does_not_echo_the_difficulty(client, monkeypatch, tmp_path):
+    db = tmp_path / "puzzles.db"
+    with closing(sqlite3.connect(db)) as conn:
+        conn.execute("CREATE TABLE puzzles (id TEXT PRIMARY KEY, fen TEXT, moves TEXT, rating INTEGER, themes TEXT)")
+        conn.execute("INSERT INTO puzzles VALUES ('a', 'fen', 'e2e4 e7e5', 800, 'mate')")
+        conn.commit()
+    monkeypatch.setattr(app, "PUZZLE_DB_PATH", db)
+    data = client.get("/api/puzzle", query_string={"difficulty": "xyz"}).get_json()
+    assert set(data) == {"id", "fen", "moves", "rating", "themes"}

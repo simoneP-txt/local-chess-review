@@ -14,6 +14,8 @@ Endpoints:
   POST /api/eval                   -> {fen, depth?} -> {eval_cp, eval_white_cp,
                                         wp_white, best_move_uci, best_move_san}
                                         Used by the frontend "variation explorer".
+                                        400 if depth is not an integer between 10 and 22
+                                        or the FEN is not a valid position
   GET  /api/puzzle?difficulty=...  -> single random Lichess puzzle by rating band
   GET  /review                     -> page with chessboard + review sidebar
 
@@ -22,7 +24,8 @@ every "Analyze" click.
 
 Engine: Stockfish is kept alive as a GLOBAL SINGLETON (popen once) to avoid
 startup on every /api/eval. Access is serialized via a Lock because
-chess.engine.SimpleEngine is not thread-safe.
+chess.engine.SimpleEngine is not thread-safe. After an engine error /api/eval
+drops it, and the next request opens a new one.
 """
 
 from __future__ import annotations
@@ -60,7 +63,8 @@ ENGINE_CANDIDATES = [
 ]
 ENGINE_PATH = next((str(p) for p in ENGINE_CANDIDATES if p.exists()), None)
 
-# Range of the review depth the user may choose (enforced by /api/analyze).
+# Range of the review depth the user may choose: /api/analyze checks it, and /api/eval
+# checks a depth the request sends.
 DEPTH_MIN, DEPTH_MAX = 10, 22
 
 # Depth for "fast" evaluations of the variation explorer: lower to keep UI
@@ -218,23 +222,35 @@ def api_eval():
     The variation explorer calls this every time the user makes an
     "off-game" move on the chessboard.
     """
+    global _engine
     payload = request.get_json(silent=True) or {}
     fen = payload.get("fen")
     if not fen:
         return jsonify({"error": "missing 'fen' field"}), 400
-    depth = int(payload.get("depth", EVAL_DEPTH))
+    depth = payload.get("depth", EVAL_DEPTH)
+    # Only a depth the request sends: EVAL_DEPTH comes from the environment and may lie outside the range.
+    if "depth" in payload and (type(depth) is not int or not DEPTH_MIN <= depth <= DEPTH_MAX):
+        return jsonify({"error": f"depth must be an integer between {DEPTH_MIN} and {DEPTH_MAX}"}), 400
 
     try:
         board = chess.Board(fen)
     except ValueError as exc:
         return jsonify({"error": f"invalid FEN: {exc}"}), 400
+    if not board.is_valid():
+        return jsonify({"error": f"invalid FEN: {board.status().name}"}), 400
 
-    try:
-        with _engine_lock:
-            eng = _get_engine()
-            info = eng.analyse(board, chess.engine.Limit(depth=depth))
-    except Exception as exc:  # noqa: BLE001
-        return jsonify({"error": f"engine error: {exc}"}), 500
+    with _engine_lock:
+        try:
+            info = _get_engine().analyse(board, chess.engine.Limit(depth=depth))
+        except Exception as exc:  # noqa: BLE001
+            # A broken engine stays broken: drop it, so the next request opens a new one.
+            if _engine is not None:
+                try:
+                    _engine.quit()
+                except Exception:  # noqa: BLE001
+                    pass
+            _engine = None
+            return jsonify({"error": f"engine error: {exc}"}), 500
 
     score = info.get("score")
     pv = info.get("pv") or []
@@ -314,7 +330,6 @@ def api_puzzle():
         "moves": row["moves"].split(),  # array of UCI strings
         "rating": row["rating"],
         "themes": (row["themes"] or "").split(),
-        "difficulty": difficulty,
     })
 
 

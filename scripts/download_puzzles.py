@@ -32,6 +32,7 @@ import argparse
 import codecs
 import csv
 import io
+import os
 import sqlite3
 import sys
 import time
@@ -45,6 +46,8 @@ LICHESS_URL = "https://database.lichess.org/lichess_db_puzzle.csv.zst"
 # This script lives in scripts/, so the project root is one level up.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DB_PATH = PROJECT_ROOT / "engine" / "puzzles.db"
+# main() builds the new DB here and moves it over DB_PATH only at the end: a failed download keeps the old one.
+TMP_DB_PATH = DB_PATH.with_name("puzzles.tmp.db")
 CSV_PATH = PROJECT_ROOT / "engine" / "lichess_puzzles.csv"
 
 # Quality filters: we want "good" puzzles (played many times and validated).
@@ -117,9 +120,8 @@ def stream_csv(keep_csv: bool):
 
 def init_db() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    if DB_PATH.exists():
-        DB_PATH.unlink()
-    conn = sqlite3.connect(DB_PATH)
+    TMP_DB_PATH.unlink(missing_ok=True)
+    conn = sqlite3.connect(TMP_DB_PATH)
     conn.execute("""
         CREATE TABLE puzzles (
             id     TEXT PRIMARY KEY,
@@ -214,9 +216,14 @@ def main():
             last_commit = now
 
     conn.commit()
+    if inserted == 0:
+        conn.close()
+        print(f"ERROR: no puzzle passed the filters; {DB_PATH} is unchanged.", file=sys.stderr)
+        sys.exit(1)
     print("[3/3] Compacting database (VACUUM) ...", flush=True)
     conn.execute("VACUUM")
     conn.close()
+    os.replace(TMP_DB_PATH, DB_PATH)
 
     size_mb = DB_PATH.stat().st_size / 2**20
     print(f"\nDone. {inserted} puzzles saved in {DB_PATH} ({size_mb:.1f} MiB).")

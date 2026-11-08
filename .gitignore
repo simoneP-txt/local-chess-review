@@ -32,6 +32,8 @@ engine/stockfish
 engine/stockfish.exe
 engine/stockfish-*
 engine/puzzles.db
+engine/puzzles.tmp.db*
+engine/lichess_puzzles.csv
 
 # --- Local Flask / runtime artefacts ---
 instance/

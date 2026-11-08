@@ -8,7 +8,7 @@ post-game Elo of both players, ISO country code (for flags).
 from __future__ import annotations
 
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import chess.pgn
@@ -35,7 +35,7 @@ def get_archives(username: str) -> list[str]:
 
 
 def get_current_month_archive_url(username: str) -> str | None:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     target = f"/{now.year}/{now.month:02d}"
     for url in get_archives(username):
         if url.endswith(target):
