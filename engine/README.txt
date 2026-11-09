@@ -1,8 +1,9 @@
 Posiziona qui l'eseguibile di Stockfish.
 
-Windows: scarica "Stockfish 16.x" da https://stockfishchess.org/download/
-         (sezione "Windows", scegli la build avx2 o popcnt a seconda della CPU).
-         Estrai lo .zip e copia "stockfish-windows-x86-64-avx2.exe" in questa cartella
+Windows: scarica l'ultima versione da https://stockfishchess.org/download/
+         (sezione "Windows", link "Download (x86-64)": il binario "universal"
+         sceglie da solo le istruzioni adatte alla CPU).
+         Estrai lo .zip e copia l'eseguibile .exe che contiene in questa cartella
          rinominandolo in:   stockfish.exe
 
 Risultato finale atteso:

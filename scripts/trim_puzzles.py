@@ -4,14 +4,17 @@ subset by rating band.
 
 Logic: for each 100-point rating band (400-499, 500-599, ..., 2700-2799, and
 2800 on its own, the top rating the download keeps) we keep at most
-MAX_PER_RATING_BAND puzzles, randomly chosen among the existing ones. This
-guarantees variety across all difficulties without having to re-download the
-Lichess CSV.
+--per-band puzzles (DEFAULT_PER_BAND, 5000), randomly chosen among the existing
+ones. This guarantees variety across all difficulties without having to
+re-download the Lichess CSV.
+
+download_puzzles.py already keeps at most 5000 puzzles per band
+(MAX_PER_RATING_BAND), so on its DB (~18 MiB) 5000 or more removes nothing.
 
 Usage:
   python scripts/trim_puzzles.py                       # default: 5000 per band
-  python scripts/trim_puzzles.py --per-band 3000       # more aggressive (~14 MiB)
-  python scripts/trim_puzzles.py --per-band 10000      # richer (~40 MiB)
+  python scripts/trim_puzzles.py --per-band 3000       # more aggressive (~11 MiB)
+  python scripts/trim_puzzles.py --per-band 10000      # richer: ~36 MiB from a bigger DB
 
 The script works "in place" on the existing DB. If you want to keep the
 original, make a copy before running.

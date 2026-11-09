@@ -39,12 +39,13 @@ if ($Clean) {
 # Stage e trim del puzzles.db (se esiste).
 # Il puzzles.db dell'utente puo' essere arbitrariamente grande (la versione
 # non-trimmata e' >400 MiB): per il bundle ne mettiamo una copia trimmata
-# in build-staging\puzzles.db (~40 MiB con --per-band 10000). Non tocchiamo
-# mai la copia originale di lavoro.
+# in build-staging\puzzles.db (~36 MiB con --per-band 10000; il
+# database di download_puzzles.py ne tiene fino a 5000 per fascia, ~18 MiB).
+# Non tocchiamo mai la copia originale di lavoro.
 $stagingDir = Join-Path $PSScriptRoot "build-staging"
 $srcDb      = Join-Path $PSScriptRoot "engine\puzzles.db"
 $stagedDb   = Join-Path $stagingDir "puzzles.db"
-$perBand    = 10000  # ~40 MiB target
+$perBand    = 10000  # ~36 MiB
 
 if (Test-Path $srcDb) {
     $srcMtime = (Get-Item $srcDb).LastWriteTime

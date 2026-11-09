@@ -62,7 +62,7 @@ ALLOWED_PLY_LENGTHS = {2, 4}
 
 # Per-rating-band cap: prevents the DB from growing to hundreds of MiB. With
 # 100-point bands between 400 and 2800 (24 bands) and 5000 puzzles per band,
-# the final DB is ~120k puzzles, ~20 MiB, with even distribution across
+# the final DB is ~120k puzzles, ~18 MiB, with even distribution across
 # difficulties. A player on "Expert" still finds plenty of puzzles like one
 # on "Easy". Set to None to disable any limit.
 BAND_SIZE = 100

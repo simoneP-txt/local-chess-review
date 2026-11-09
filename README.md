@@ -34,6 +34,10 @@ dashboard.
 > - The puzzles (optional, shown during loading) come from the
 >   [Lichess Puzzle Database](https://database.lichess.org/), released
 >   under the CC0 license.
+> - The opening data in `data/chess-openings/` (Book moves and opening
+>   names) comes from
+>   [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings),
+>   released under CC0 1.0.
 
 ---
 
@@ -115,7 +119,7 @@ while the PC does the analysis:
 
 ### Want more puzzles?
 
-The zip ships with a curated subset (~40 MiB, ~240k positions across all
+The zip ships with a curated subset (~18 MiB, ~120k puzzles across all
 difficulty bands) — more than enough to never see a repeat during normal
 use. If you want to refresh or replace this DB, drop your own
 `puzzles.db` into the `engine\` folder next to `ChessReview.exe`: it
@@ -128,7 +132,8 @@ takes precedence over the bundled one.
 1. **Dashboard** (`/`): pick the language, type a username from your
    chess platform (the app uses its public read-only games API), press
    *Search*. Games for the current month appear sorted from most recent
-   first.
+   first. Variant games (Chess960, Crazyhouse and the others) stay out of
+   the list: the review handles standard chess only.
 2. Optional: press **Engine** in the top bar to choose the review depth
    (10 to 22) and how many Threads Stockfish may use. Threads go from 1 up
    to the logical cores of the PC that runs the server, even when you open
@@ -152,6 +157,48 @@ takes precedence over the bundled one.
 
 ---
 
+## How the analysis works
+
+Stockfish searches every position of the game once, at the chosen depth,
+with two lines (`multipv=2`): the search of a position judges the move
+that reached it and the move played from it.
+
+- **Win Probability (WP)**: centipawns go through the Lichess sigmoid,
+  `WP = 1 / (1 + exp(-0.00368208 * cp))`, from the mover's side. A mate
+  counts as 1 or 0, and the side that has just given mate gets 1.
+- **Base class**, from the drop between the WP of Stockfish's best line and
+  the WP after the move: *Best* for Stockfish's move or no drop, then
+  *Excellent* below 0.02, *Good* below 0.05, *Inaccuracy* below 0.10,
+  *Mistake* below 0.20, *Blunder* from 0.20.
+- **Special classes**, checked in this order:
+  - *Brilliant*: Stockfish's best move gives up a piece worth at least 3
+    (the moved one or another left en prise) for a net loss of 2 or more by
+    static exchange evaluation; the second line is at least 0.10 worse; WP
+    is at most 0.85 before, at least 0.55 after and drops 0.02 at most; no
+    forced mate follows.
+  - *Great*: after an opponent's mistake or blunder that was not
+    Stockfish's first line, a best or excellent move, not the only legal
+    one, takes the mover from under 0.40 before that error to over 0.50.
+    Or: Stockfish's best move, with a second line at least 0.20 worse.
+  - *Book*: every position from the start up to the move is in the Lichess
+    openings database (`data/chess-openings/`). A theory move the engine
+    rates a mistake or a blunder keeps that class.
+  - *Miss*: after an opponent's blunder, a move that is neither best nor
+    excellent.
+- **Accuracy**: Lichess's game accuracy (lila's `AccuracyPercent`), ported
+  one to one, on the win% of every position.
+- **Performance Elo**: accuracy through a piecewise linear curve (50% gives
+  350, 75% gives 1400, 100% gives 2900), capped at the player's rating plus
+  1500.
+- **Opening**: the analysis returns the ECO code and name of the last named
+  position the game reached in theory; the page does not show them yet.
+
+The loading-screen puzzles come in six 400-point bands from 400 to 2800.
+In the variation explorer the page sends each position you reach off the
+game to `/api/eval` for its evaluation and best move (depth 12 by default).
+
+---
+
 ## Development setup
 
 This section is **only** for hacking on the code. End users should follow
@@ -168,8 +215,8 @@ pip install -r requirements.txt
 ### 2. Stockfish
 
 1. Download the latest build from
-   <https://stockfishchess.org/download/> (Windows → `avx2` build; if your
-   CPU does not support it, use `popcnt`).
+   <https://stockfishchess.org/download/> (Windows: *Download (x86-64)*,
+   a universal binary that picks the best instructions for your CPU).
 2. Extract the zip.
 3. Copy the executable into `engine/`, renaming it to **`stockfish.exe`**:
 
@@ -182,8 +229,8 @@ The app looks for the executable at `engine/stockfish.exe` (Windows) or
 
 ### 3. (Optional) Lichess puzzle database
 
-Generates `engine/puzzles.db` (~20 MiB), used by the mini-puzzles in the
-loading screen:
+Generates `engine/puzzles.db` (~18 MiB, at most 5000 puzzles per 100-point
+rating band), used by the mini-puzzles in the loading screen:
 
 ```powershell
 python scripts\download_puzzles.py
@@ -192,10 +239,11 @@ python scripts\download_puzzles.py
 Downloads ~250 MB compressed from `database.lichess.org`, filters in
 streaming. Without the DB the rest of the app still works.
 
-To shrink an existing DB without re-downloading:
+To shrink an existing DB without re-downloading (`--per-band 3000` gives
+~11 MiB; 5000 or more removes nothing from a downloaded DB):
 
 ```powershell
-python scripts\trim_puzzles.py --per-band 5000
+python scripts\trim_puzzles.py --per-band 3000
 ```
 
 ### 4. Run the dev server
@@ -238,8 +286,9 @@ Build inputs picked up automatically:
 - `engine\stockfish.exe` — bundled if present. Remove it to ship a
   "bring-your-own-engine" zip.
 - `engine\puzzles.db` — if present, `build.ps1` makes a trimmed copy in
-  `build-staging\puzzles.db` (~40 MiB, `--per-band 10000`) and bundles
-  that. Your working copy of `engine\puzzles.db` is never modified.
+  `build-staging\puzzles.db` (`--per-band 10000`: ~18 MiB from a downloaded
+  DB, ~36 MiB from a bigger one) and bundles that. Your working
+  copy of `engine\puzzles.db` is never modified.
 
 ---
 
@@ -288,22 +337,38 @@ which is not tracked.
 
 - `engine_replay.py` — records Stockfish answers and replays them in place of
   the engine, so tests need no `stockfish.exe`.
-- `test_analyzer.py`, `test_engine_replay.py`, `test_baseline.py` — unit tests,
-  always run.
-- `test_app.py` — Flask test client: engine limits and the `/api/analyze`
-  checks. Needs no engine; always runs.
+- `test_analyzer.py`, `test_accuracy.py`, `test_engine_replay.py`,
+  `test_baseline.py` — unit tests, always run. `test_accuracy.py` holds
+  lila's own accuracy test cases and two series computed by hand.
+- `test_openings.py` — `openings.book()` on the real TSVs, and the Book and
+  `result["opening"]` through `analyze_pgn` with a scripted engine. Needs no
+  engine; always runs.
+- `test_puzzles_db.py` — `engine/puzzles.db`, opened read only: columns, at
+  least one row, 2 or 4 plies, ratings in 400-2800, legal solutions (the
+  slowest test; skipped without the file). `trim_puzzles.trim` on a
+  temporary DB, and `download_puzzles.stream_csv` and `main` on a fake
+  download (a failed one keeps the old DB), always run.
+- `test_app.py` — Flask test client: engine limits and `REVIEW_DEPTH`,
+  `/api/engine`, the `/api/analyze` checks, the `/api/eval` checks and
+  engine recovery with fake engines, and the `/api/puzzle` bands on a
+  temporary DB. Needs no engine; always runs.
+- `test_chess_api.py` — `get_current_month_games` on a stubbed archive, with
+  no network request: it skips the variant games. Always runs.
 - `test_fixtures.py` — checks the stored fixtures; skipped when `tests/fixtures/`
   is missing.
-- `conftest.py`, `test_review_page.py`, `test_dashboard_page.py` (Playwright):
-  open the review page and the dashboard in Chromium against a live server
-  and a fake engine. Skipped without Playwright.
+- `conftest.py`, `test_review_page.py`, `test_puzzle_page.py`,
+  `test_dashboard_page.py` (Playwright): open the review page and the
+  dashboard in Chromium against a live server and a fake engine;
+  `test_puzzle_page.py` plays the mini-puzzle by click and by drag. Skipped
+  without Playwright.
 - `fixtures/` — local only (git-ignored). Per game: `<id>.pgn` (public API),
   `<id>.engine.json` (every recorded Stockfish answer), `<id>.analysis.json`
   (analyzer output).
 
 On a fresh clone the folder is missing, so the test above is skipped.
 You can rebuild the fixtures with `fetch` and `fixtures`, but they match the
-stored baseline only with the `analyzer.py` it was recorded with.
+stored baseline only with the `analyzer.py`, `openings.py` and TSVs
+(`data/chess-openings/`) it was recorded with.
 
 ### `docs/measurements/`
 
@@ -333,6 +398,7 @@ local-chess-review/
 ├── app.py                  # Flask server + API endpoints
 ├── chess_api.py            # public API wrapper (game download)
 ├── analyzer.py             # engine + move classification algorithm
+├── openings.py             # Book: the Lichess openings database, loaded on first use
 ├── requirements.txt        # runtime dependencies
 ├── requirements-dev.txt    # extra deps: pyinstaller (build the .exe), pytest, playwright
 ├── chessreview.spec        # PyInstaller build config
@@ -346,13 +412,20 @@ local-chess-review/
 │   ├── engine_replay.py    # record/replay layer for Stockfish answers
 │   ├── conftest.py         # browser tests: live server, fake engine, Chromium
 │   ├── test_analyzer.py
-│   ├── test_app.py         # Flask API tests: engine limits, /api/analyze checks
+│   ├── test_accuracy.py    # game accuracy: lila's test cases, series computed by hand
+│   ├── test_openings.py    # Book and result["opening"]: the real TSVs, a scripted engine
+│   ├── test_puzzles_db.py  # engine/puzzles.db (that check skipped without it), trim, download
+│   ├── test_app.py         # Flask API tests: engine limits, /api/analyze and /api/eval checks, /api/puzzle bands
+│   ├── test_chess_api.py   # get_current_month_games on a stubbed archive: the variant filter
 │   ├── test_engine_replay.py
 │   ├── test_baseline.py
 │   ├── test_fixtures.py    # skipped without fixtures/
 │   ├── test_dashboard_page.py # browser test of the engine panel; skipped without Playwright
 │   ├── test_review_page.py # browser test of the review page; skipped without Playwright
+│   ├── test_puzzle_page.py # browser test of the mini-puzzle rules; skipped without Playwright
 │   └── fixtures/           # LOCAL ONLY: PGNs, recorded engine answers, analyses
+├── data/
+│   └── chess-openings/     # a.tsv ... e.tsv (lichess-org/chess-openings, CC0) + README.md
 ├── engine/
 │   ├── README.txt          # how to download Stockfish
 │   ├── stockfish.exe       # (DOWNLOAD MANUALLY)
@@ -379,6 +452,9 @@ local-chess-review/
 - **Classification thresholds**: `WP_THRESHOLDS` in `analyzer.py` (in WP).
 - **Brilliant more / less restrictive**: `BRILLIANT_SEE_MAX`,
   `BRILLIANT_WP_FLOOR`, `BRILLIANT_WP_CEILING`, `BRILLIANT_2ND_GAP`.
+- **Newer opening data**: download `a.tsv` ... `e.tsv` from a later commit
+  of `lichess-org/chess-openings` into `data/chess-openings/` and write that
+  commit in the folder's `README.md`.
 - **Add a third UI language**: add another sub-dictionary in
   `static/js/i18n.js` and a matching `<option>` in the language selector
   in `templates/index.html`.
@@ -389,7 +465,8 @@ local-chess-review/
 
 - **`Stockfish not found`** → check that `engine/stockfish.exe` exists.
 - **403 / rate limit from the API** → User-Agent too generic or too many
-  requests. Increase the delay or customize the header in `chess_api.py`.
+  requests. Wait before the next search, or customize the `User-Agent` in
+  `HEADERS` (`chess_api.py`).
 - **Phone can't see the PC** → Windows firewall: allow inbound TCP port
   5000 for private networks; PC and phone must be on the same Wi-Fi.
 - **Analysis too slow** → lower the depth in the **Engine** panel (e.g.

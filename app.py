@@ -12,7 +12,7 @@ Endpoints:
                                         analysis; 400 if depth or threads is not an integer
                                         inside the range of /api/engine
   POST /api/eval                   -> {fen, depth?} -> {eval_cp, eval_white_cp,
-                                        wp_white, best_move_uci, best_move_san}
+                                        wp_white, best_move_uci, best_move_san, depth}
                                         Used by the frontend "variation explorer".
                                         400 if depth is not an integer between 10 and 22
                                         or the FEN is not a valid position

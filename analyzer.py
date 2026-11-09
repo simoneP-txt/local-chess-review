@@ -17,7 +17,7 @@ per colour, the mean of the volatility-weighted and the harmonic mean.
 
 Performance Elo: direct accuracy->Elo curve, with an upper cap based on
 real_elo (real_elo + 1500) so that a 500-Elo player playing flawlessly does
-not produce a 3250 game score. No lower floor.
+not produce a 2900 game score. No lower floor.
 
 Tactical comments: returned as STRUCTURED DATA (key + params), not localized
 strings. The frontend renders them through its i18n layer in the chosen
@@ -506,7 +506,7 @@ def game_accuracy_lichess(white_starts: bool, cps_white: list[int]) -> dict[str,
 def _accuracy_to_elo(accuracy: float) -> int:
     """
     Maps accuracy -> Elo. The curve is calibrated so that low accuracy means
-    a low score (50% -> ~330, not 1400). Piecewise linear interpolation:
+    a low score (50% -> 350, not 1400). Piecewise linear interpolation:
 
        0% -> 100
       30% -> 150
@@ -556,8 +556,8 @@ def estimate_performance_elo(accuracy: float, real_elo: Optional[int] = None) ->
       1. Pure curve accuracy -> Elo (see _accuracy_to_elo): the starting point
          is the playing quality reflected by the precision.
       2. If real_elo is known, apply an UPPER CAP = real_elo + 1500.
-         Example: real_elo=500, accuracy=98% -> pure=2700, cap=2000 -> returns 2000.
-         A 500-Elo player cannot "perform" at 3250 in a single game: their true
+         Example: real_elo=500, accuracy=98% -> pure=2780, cap=2000 -> returns 2000.
+         A 500-Elo player cannot "perform" at 2780 in a single game: their true
          playing limit is at most a meaningful jump above their rating, not an
          astronomical value.
       3. No lower floor: a bad game stays a bad game regardless of real rating
