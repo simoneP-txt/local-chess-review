@@ -815,6 +815,7 @@ class GameAnalyzer:
             "real_elo": {"white": white_elo, "black": black_elo},
             "time_control": headers.get("TimeControl", ""),
             "opening": opening,
+            "start_fen": game.board().fen(),
         }
 
     @staticmethod

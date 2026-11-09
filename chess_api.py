@@ -130,6 +130,9 @@ def get_current_month_games(username: str) -> list[dict[str, Any]]:
         pgn = g.get("pgn", "")
         if not pgn:
             continue
+        # shortcut: variant games are hidden; chess.js 0.10.3 has no Chess960 castling, revisit if variants are wanted
+        if g.get("rules", "chess") != "chess":
+            continue
         white = g.get("white", {})
         black = g.get("black", {})
         white_user = white.get("username", "")

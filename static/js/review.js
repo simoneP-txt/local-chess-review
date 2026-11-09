@@ -37,6 +37,7 @@ let puzzleData = null;           // {id, fen, moves: [], rating, themes}
 let puzzleStep = 0;              // index in the moves sequence
 let puzzleSolved = false;
 let puzzleHintShown = false;
+let puzzleTimer = null;          // the pending setup or reply move
 let progressTimer = null;
 let progressStartedAt = 0;
 let progressEstimateMs = 90000;  // initial estimate (refined from move count)
@@ -181,6 +182,8 @@ async function loadPuzzle() {
 }
 
 function setupPuzzleBoard() {
+  // A pending move of the old puzzle would land on the new one.
+  clearTimeout(puzzleTimer);
   if (puzzleBoard) { puzzleBoard.destroy(); puzzleBoard = null; }
   puzzleChess = new Chess(puzzleData.fen);
 
@@ -218,7 +221,7 @@ function setupPuzzleBoard() {
   });
 
   // Auto-play setup move after a short pause.
-  setTimeout(() => {
+  puzzleTimer = setTimeout(() => {
     puzzleChess.move(setupMove);
     puzzleStep = 1;
     puzzleBoard.position(puzzleChess.fen(), true);
@@ -254,7 +257,7 @@ function handlePuzzleDrop(source, target) {
 
   // Unless it is mate, the opponent replies automatically if there are more moves in the sequence.
   if (!isMate && puzzleStep < puzzleData.moves.length) {
-    setTimeout(() => {
+    puzzleTimer = setTimeout(() => {
       const reply = puzzleData.moves[puzzleStep];
       puzzleChess.move({
         from: reply.slice(0, 2),
@@ -289,6 +292,10 @@ function setPuzzleStatus(msg, kind) {
 function bindPuzzleControls() {
   document.getElementById("puzzle-difficulty").addEventListener("change", loadPuzzle);
   document.getElementById("btn-puzzle-new").addEventListener("click", loadPuzzle);
+  window.addEventListener("resize", () => {
+    clickSelection.puzzle = null;  // resize() redraws the squares without the selection highlight
+    if (puzzleBoard) puzzleBoard.resize();
+  });
   document.getElementById("btn-puzzle-hint").addEventListener("click", () => {
     if (!puzzleData || puzzleSolved) return;
     if (puzzleStep >= puzzleData.moves.length) return;
@@ -641,9 +648,9 @@ function updatePlayerClocks() {
 }
 
 function setupBoard() {
-  chess = new Chess();
+  chess = new Chess(analysis.start_fen);
   board = Chessboard("board", {
-    position: "start",
+    position: chess.fen(),
     orientation,
     pieceTheme: "https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png",
     showNotation: true,
@@ -666,6 +673,7 @@ function setupBoard() {
   });
   installClickToMove("board", "board", () => chess, () => board, handleBoardDrop);
   window.addEventListener("resize", () => {
+    clickSelection.board = null;  // resize() redraws the squares without the selection highlight
     board.resize();
     redrawArrowAndOverlay();
   });
@@ -775,7 +783,10 @@ function handleBoardDrop(source, target) {
   if (continuationActive) return "snapback"; // do not interfere with "punishment"
   if (source === target) return "snapback";
 
-  const moveResult = chess.move({ from: source, to: target, promotion: "q" });
+  // shortcut: no piece picker; revisit in the Phase 5 redesign
+  const gameUci = !variationActive && currentPly < analysis.moves.length ? analysis.moves[currentPly].uci : "";
+  const promotion = (gameUci.slice(0, 4) === source + target && gameUci[4]) || "q";
+  const moveResult = chess.move({ from: source, to: target, promotion });
   if (moveResult === null) return "snapback";
 
   const userUci = source + target + (moveResult.promotion || "");
@@ -914,7 +925,7 @@ function goToPly(ply) {
   }
   currentPly = Math.max(0, Math.min(ply, analysis.moves.length));
 
-  chess.reset();
+  chess = new Chess(analysis.start_fen);
   for (let i = 0; i < currentPly; i++) {
     const m = analysis.moves[i];
     chess.move({ from: m.uci.slice(0, 2), to: m.uci.slice(2, 4), promotion: m.uci[4] });
@@ -1018,7 +1029,7 @@ function startContinuation() {
   continuationStep = 0;
 
   // The punishment PV starts AFTER the played move.
-  chess.reset();
+  chess = new Chess(analysis.start_fen);
   for (let i = 0; i < currentPly; i++) {
     const past = analysis.moves[i];
     chess.move({ from: past.uci.slice(0, 2), to: past.uci.slice(2, 4), promotion: past.uci[4] });

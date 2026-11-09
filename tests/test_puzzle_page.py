@@ -123,3 +123,46 @@ def test_the_opponent_cannot_play_its_own_reply(page, base_url):
     assert page.evaluate("puzzleStep") == 2
     page.clock.run_for(700)
     assert page.evaluate("puzzleStep") == 3
+
+
+def test_the_puzzle_board_follows_a_resize(page, base_url):
+    page.set_viewport_size({"width": 844, "height": 390})  # a phone on its side
+    start_puzzle(page, base_url, PUZZLE["fen"], PUZZLE["moves"])
+    page.set_viewport_size({"width": 390, "height": 844})  # turned upright during the analysis
+    page.wait_for_timeout(300)
+    board, wrapper, page_width = page.evaluate("""[
+        document.querySelector('#puzzle-board .board-b72b1').offsetWidth,
+        document.getElementById('puzzle-board').clientWidth,
+        document.documentElement.scrollWidth]""")
+    assert board <= wrapper and page_width <= 390
+
+
+def test_a_resize_drops_the_puzzle_selection(page, base_url):
+    page.set_viewport_size({"width": 844, "height": 390})
+    start_puzzle(page, base_url, PUZZLE["fen"], PUZZLE["moves"])
+    page.click(square("e7"))
+    page.set_viewport_size({"width": 390, "height": 844})  # the redraw removes the highlight
+    page.wait_for_timeout(300)
+    page.click(square("e5"))  # e7-e5 is the solution: a kept selection would play it
+    assert page.evaluate("puzzleStep") == 1
+    expect_piece(page, "e7", "bP")
+
+
+@pytest.mark.parametrize("pending", ["setup", "reply"])
+def test_new_cancels_the_pending_move_of_the_old_puzzle(page, base_url, pending):
+    puzzles = iter([PUZZLE, {**PUZZLE, "id": "t2", "moves": ["d2d4", "d7d5"]}])
+    page.route("**/api/puzzle*", lambda route: route.fulfill(json=next(puzzles)))
+    page.clock.pause_at(page.evaluate("Date.now()") / 1000 + 3600)
+    page.goto(f"{base_url}/review")
+    page.wait_for_function("puzzleBoard !== null && puzzleStep === 0")
+    if pending == "reply":
+        page.clock.run_for(800)
+        play(page, "click", "e7", "e5")
+        assert page.evaluate("puzzleStep") == 2
+    page.click("#btn-puzzle-new")
+    page.wait_for_function("puzzleData.id === 't2' && puzzleStep === 0")
+    page.clock.run_for(650)  # past the old reply timer (600 ms), short of the setup timers (700 ms)
+    assert page.evaluate("puzzleStep") == 0
+    page.clock.run_for(150)
+    assert page.evaluate("puzzleStep") == 1
+    assert page.evaluate("puzzleChess.fen()") == "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1"

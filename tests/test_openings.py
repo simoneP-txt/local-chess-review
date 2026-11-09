@@ -107,6 +107,13 @@ def test_analyze_theory_move_is_book_up_to_an_inaccuracy(black_cp, expected):
     assert result["opening"] == _row("1. e4")  # the opening stays on the positions, whatever the class
 
 
+def test_analyze_line_one_theory_move_is_book_whatever_the_drop():
+    assert list(chess.Board().legal_moves)[0] == chess.Move.from_uci("g1h3")  # Nh3 is ScriptedEngine's line 1
+    scores = iter([168, 55])  # side to move, P0-P1: the drop of 0.2004 of the blunder row above
+    result = _analyze("1. Nh3 *\n", ScriptedEngine(lambda board: next(scores)))
+    assert _classes(result) == ["book"]  # a line-1 move has the base class best, whatever the drop
+
+
 def test_analyze_theory_goes_on_after_a_theory_blunder():
     # side to move, P0-P7: 3. Nxe5 drops 0.25; the inaccuracy 3... Nxe5 stays Book, above Miss; 4. d4 reaches a name
     scores = iter([0, 0, 0, 0, 0, 300, -205, 205])
@@ -115,9 +122,10 @@ def test_analyze_theory_goes_on_after_a_theory_blunder():
     assert result["opening"] == _row("1. e4 e5 2. Nf3 Nc6 3. Nxe5 Nxe5 4. d4")
 
 
-def test_analyze_miss_after_a_theory_blunder():
-    scores = iter([0, 0, 0, 0, 0, 300, 0])  # side to move, P0-P6: 3. Nxe5 drops 0.25, 3... a6 gives it all back
-    result = _analyze("1. e4 e5 2. Nf3 Nc6 3. Nxe5 a6 *\n", ScriptedEngine(lambda board: next(scores)))
+@pytest.mark.parametrize("reply", ["a6", "Nxe5"], ids=["out-of-theory", "theory"])  # 3... Nxe5 lies along a row
+def test_analyze_miss_after_a_theory_blunder(reply):
+    scores = iter([0, 0, 0, 0, 0, 300, 0])  # side to move, P0-P6: 3. Nxe5 drops 0.25, the reply gives it all back
+    result = _analyze(f"1. e4 e5 2. Nf3 Nc6 3. Nxe5 {reply} *\n", ScriptedEngine(lambda board: next(scores)))
     assert _classes(result) == ["book", "book", "book", "book", "blunder", "miss"]
     assert result["opening"] == _row("1. e4 e5 2. Nf3 Nc6 3. Nxe5")
 

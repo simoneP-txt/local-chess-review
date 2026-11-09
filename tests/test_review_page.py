@@ -1,4 +1,4 @@
-"""Browser tests for the review page while the analysis runs.
+"""Browser tests for the review page: the loading screen, then the move-by-move board.
 
 Chromium (Playwright) opens the real page against the live server of conftest.py:
 the real /api/analyze and GameAnalyzer run on a fake Stockfish that waits until the
@@ -21,6 +21,11 @@ ACTIVE = "document.activeElement.tagName + '#' + document.activeElement.id"
 LONG_GAME = {**GAME, "pgn": GAME["pgn"].replace(
     "1. e4 e5 2. Nf3 Nc6",
     " ".join(f"{n}. {'Nf3 Nf6' if n % 2 else 'Ng1 Ng8'}" for n in range(1, 21)))}
+FEN_GAME = {**GAME, "pgn": GAME["pgn"].replace(
+    '[Result "*"]', '[Result "*"]\n[SetUp "1"]\n[FEN "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"]').replace(
+    "1. e4 e5 2. Nf3 Nc6", "1. e4 Kd7 2. e5")}
+UNDERPROMOTION_GAME = {**GAME, "pgn": GAME["pgn"].replace(
+    "1. e4 e5 2. Nf3 Nc6", "1. h4 g5 2. hxg5 Nf6 3. g6 Rg8 4. gxh7 a6 5. hxg8=N")}
 
 
 def box(page, selector):
@@ -36,6 +41,30 @@ def box(page, selector):
 
 def overlaps(a, b):
     return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
+
+
+def start_review(page, base_url, release, monkeypatch, game):
+    """Opens the move-by-move review of this game, its analysis already done."""
+    monkeypatch.setitem(app._games_cache, "tester", [game])
+    release.set()
+    page.goto(f"{base_url}/review")
+    page.click("#btn-open-review")
+    page.click("#btn-start-review")
+
+
+def piece_on(page, square):
+    """data-piece of the piece on this square of the main board, None when the square is empty."""
+    return page.evaluate("sel => document.querySelector(sel)?.dataset.piece ?? null",
+                         f'#board [data-square="{square}"] img')
+
+
+def play(page, how, source, target):
+    source, target = (f'#board [data-square="{name}"]' for name in (source, target))
+    if how == "click":
+        page.click(source)
+        page.click(target)
+    else:
+        page.drag_and_drop(source, target)
 
 
 @pytest.mark.parametrize("page", [PHONE, DESKTOP], indirect=True, ids=["390x844", "1440x900"])
@@ -211,3 +240,70 @@ def test_puzzle_difficulty_selector(page, base_url, lang, labels):
     with page.expect_request("**/api/puzzle*") as chosen:
         page.select_option("#puzzle-difficulty", "master")
     assert chosen.value.url.endswith("?difficulty=master")
+
+
+def test_review_starts_from_the_game_fen(page, base_url, release, monkeypatch):
+    start_review(page, base_url, release, monkeypatch, FEN_GAME)
+    fen_squares, fen_pieces = ("e1", "a1", "e2", "e8"), ["wK", None, "wP", "bK"]
+    assert [piece_on(page, name) for name in fen_squares] == fen_pieces
+    page.click("#btn-next")
+    page.click("#btn-next")
+    assert [piece_on(page, name) for name in ("d7", "e4", "e8")] == ["bK", "wP", None]
+    page.click("#btn-start")
+    assert [piece_on(page, name) for name in fen_squares] == fen_pieces
+    # The continuation plays its first move at once: Kf8, the first legal move, so the fake engine's line.
+    status = page.evaluate(
+        "goToPly(1); startContinuation(); document.getElementById('continuation-status').textContent")
+    assert status == "Mossa 1/1: Kf8"
+    expect(page.locator('#board [data-square="f8"] img[data-piece="bK"]')).to_have_count(1)  # the move is animated
+
+
+@pytest.mark.parametrize("how", ["click", "drag"])
+def test_replaying_an_underpromotion_moves_forward(page, base_url, release, monkeypatch, how):
+    start_review(page, base_url, release, monkeypatch, UNDERPROMOTION_GAME)
+    page.evaluate("goToPly(8)")
+    play(page, how, "h7", "g8")  # 5. hxg8=N, the game move
+    assert page.evaluate("currentPly") == 9
+    expect(page.locator("#variation-banner")).to_be_hidden()
+    assert piece_on(page, "g8") == "wN"
+
+
+def test_a_promotion_on_other_squares_takes_a_queen(page, base_url, release, monkeypatch):
+    page.route("**/api/eval", lambda route: route.abort())  # the eval of the variation plays no part here
+    start_review(page, base_url, release, monkeypatch, UNDERPROMOTION_GAME)
+    page.evaluate("goToPly(8)")
+    play(page, "click", "h7", "h8")
+    expect(page.locator("#variation-banner")).to_be_visible()
+    assert piece_on(page, "h8") == "wQ"
+
+
+def test_a_promotion_inside_a_variation_takes_a_queen(page, base_url, release, monkeypatch):
+    page.route("**/api/eval", lambda route: route.abort())  # the eval of the variation plays no part here
+    start_review(page, base_url, release, monkeypatch, UNDERPROMOTION_GAME)
+    page.evaluate("goToPly(8)")
+    play(page, "click", "a2", "a3")  # out of the game: the variation starts
+    play(page, "click", "a6", "a5")
+    play(page, "click", "h7", "g8")  # the squares of the game move 5. hxg8=N
+    assert piece_on(page, "g8") == "wQ"
+
+
+def test_a_drop_after_the_last_move_starts_a_variation(page, base_url, release, monkeypatch):
+    errors = []
+    page.on("pageerror", lambda err: errors.append(err))
+    page.route("**/api/eval", lambda route: route.abort())  # the eval of the variation plays no part here
+    start_review(page, base_url, release, monkeypatch, UNDERPROMOTION_GAME)
+    page.evaluate("goToPly(9)")
+    play(page, "click", "a6", "a5")
+    expect(page.locator("#variation-banner")).to_be_visible()
+    assert errors == []
+
+
+def test_a_resize_drops_the_board_selection(page, base_url, release, monkeypatch):
+    start_review(page, base_url, release, monkeypatch, GAME)
+    page.click('#board [data-square="e2"]')
+    page.set_viewport_size({"width": 844, "height": 390})  # the redraw removes the highlight
+    page.wait_for_timeout(300)
+    page.click('#board [data-square="e4"]')  # e2-e4 is the game move: a kept selection would play it
+    assert page.evaluate("currentPly") == 0
+    assert [piece_on(page, name) for name in ("e2", "e4")] == ["wP", None]
+    expect(page.locator("#variation-banner")).to_be_hidden()

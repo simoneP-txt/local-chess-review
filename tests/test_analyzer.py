@@ -321,6 +321,14 @@ def test_analyze_move_number_from_fen():
     assert [(m["san"], m["move_number"]) for m in moves] == [("Kg8", 1), ("Qf6", 2)]
 
 
+@pytest.mark.parametrize("pgn, fen", [
+    ("1. e4 e5 *\n", chess.STARTING_FEN),
+    ('[SetUp "1"]\n[FEN "7k/8/6K1/5Q2/8/8/8/8 b - - 0 1"]\n\n1... Kg8 *\n', "7k/8/6K1/5Q2/8/8/8/8 b - - 0 1"),
+], ids=["standard", "from-fen"])
+def test_analyze_reports_the_start_fen(pgn, fen):
+    assert _analyze(pgn, ScriptedEngine())["start_fen"] == fen
+
+
 @pytest.mark.parametrize("pgn, white_starts, cps_white", [
     (BLACK_MATES, True, [10, -10, 10, -10, -10000]),
     (WHITE_MATES, True, [10, -10, 10, -10, 10, 10000]),
