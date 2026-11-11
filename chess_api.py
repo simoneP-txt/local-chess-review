@@ -111,10 +111,11 @@ def get_current_month_games(username: str) -> list[dict[str, Any]]:
     """
     Downloads the current month's games and returns them in a normalized form.
     Output per game:
-      id, date, opponent, result, time_class, end_time,
+      id, date, opponent, result, time_class, time_control, end_time,
       white, black, user_color,
       white_rating, black_rating,
       white_country, black_country,
+      white_avatar, black_avatar,
       pgn
     """
     url = get_current_month_archive_url(username)
@@ -168,7 +169,8 @@ def get_current_month_games(username: str) -> list[dict[str, Any]]:
 if __name__ == "__main__":
     import json
     import sys
-    user = sys.argv[1] if len(sys.argv) > 1 else "hikaru"
-    games = get_current_month_games(user)
+    if len(sys.argv) < 2:
+        sys.exit("usage: python chess_api.py <username>")
+    games = get_current_month_games(sys.argv[1])
     print(json.dumps(games[:2], indent=2, ensure_ascii=False))
     print(f"Total games for current month: {len(games)}")

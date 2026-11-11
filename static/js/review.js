@@ -184,6 +184,7 @@ async function loadPuzzle() {
 function setupPuzzleBoard() {
   // A pending move of the old puzzle would land on the new one.
   clearTimeout(puzzleTimer);
+  clickSelection.puzzle = null;  // the new board draws the squares without the selection highlight
   if (puzzleBoard) { puzzleBoard.destroy(); puzzleBoard = null; }
   puzzleChess = new Chess(puzzleData.fen);
 
@@ -334,7 +335,9 @@ async function init() {
     const { depth, threads } = loadEngineSettings(await fetchEngineLimits());
 
     // Estimate analysis time from the last review with the same settings, else 600 ms per ply.
-    const plyEstimate = (meta.pgn.match(/[0-9]+\./g) || []).length * 2;
+    const counter = new Chess();
+    counter.load_pgn(meta.pgn);  // counts the moves, not the numbers in the headers and [%clk] comments
+    const plyEstimate = counter.history().length;
     const settingsKey = `${depth}x${threads}`;
     const savedMs = loadMsPerPly()[settingsKey];
     startProgressBar(Math.max(20000, plyEstimate * (savedMs > 0 ? savedMs : 600)));
@@ -649,6 +652,7 @@ function updatePlayerClocks() {
 
 function setupBoard() {
   chess = new Chess(analysis.start_fen);
+  clickSelection.board = null;  // the new board draws the squares without the selection highlight
   board = Chessboard("board", {
     position: chess.fen(),
     orientation,
@@ -1166,6 +1170,7 @@ document.getElementById("btn-start").addEventListener("click", () => goToPly(0))
 document.getElementById("btn-end").addEventListener("click", () => goToPly(analysis.moves.length));
 document.getElementById("btn-flip").addEventListener("click", () => {
   orientation = orientation === "white" ? "black" : "white";
+  clickSelection.board = null;  // orientation() redraws the squares without the selection highlight
   board.orientation(orientation);
   renderPlayerCards();
   setTimeout(redrawArrowAndOverlay, 30);

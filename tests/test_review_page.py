@@ -21,9 +21,18 @@ ACTIVE = "document.activeElement.tagName + '#' + document.activeElement.id"
 LONG_GAME = {**GAME, "pgn": GAME["pgn"].replace(
     "1. e4 e5 2. Nf3 Nc6",
     " ".join(f"{n}. {'Nf3 Nf6' if n % 2 else 'Ng1 Ng8'}" for n in range(1, 21)))}
+# The same 40 plies as the public API writes them: dated headers, a clock after each move, "1..." before Black's.
+API_GAME = {**GAME, "pgn": GAME["pgn"].replace(
+    '[Result "*"]', '[Result "*"]\n[Date "2026.01.01"]\n[UTCDate "2026.01.01"]').replace(
+    "1. e4 e5 2. Nf3 Nc6", " ".join(
+        f"{n}. {white} {{[%clk 0:02:58.9]}} {n}... {black} {{[%clk 0:02:58.9]}}"
+        for n, (white, black) in enumerate([("Nf3", "Nf6"), ("Ng1", "Ng8")] * 10, start=1)))}
 FEN_GAME = {**GAME, "pgn": GAME["pgn"].replace(
     '[Result "*"]', '[Result "*"]\n[SetUp "1"]\n[FEN "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"]').replace(
     "1. e4 e5 2. Nf3 Nc6", "1. e4 Kd7 2. e5")}
+BLACK_FEN_GAME = {**GAME, "pgn": GAME["pgn"].replace(
+    '[Result "*"]', '[Result "*"]\n[SetUp "1"]\n[FEN "4k3/4p3/8/8/8/8/8/4K3 b - - 0 1"]').replace(
+    "1. e4 e5 2. Nf3 Nc6", "1... e5 2. Kd2 Kd7")}
 UNDERPROMOTION_GAME = {**GAME, "pgn": GAME["pgn"].replace(
     "1. e4 e5 2. Nf3 Nc6", "1. h4 g5 2. hxg5 Nf6 3. g6 Rg8 4. gxh7 a6 5. hxg8=N")}
 
@@ -205,6 +214,14 @@ def test_progress_estimate_uses_the_last_time_for_the_same_settings(
     page.wait_for_function(f"progressEstimateMs === {estimate_ms}")
 
 
+def test_ply_estimate_counts_the_moves_of_an_api_pgn(page, base_url, monkeypatch):
+    pretend_host(monkeypatch, 4)
+    monkeypatch.setitem(app._games_cache, "tester", [API_GAME])
+    page.goto(f"{base_url}/review")
+    expect(page.locator("#loading-status")).to_have_text("Analizzo ~40 mosse a profondità 15...")
+    assert page.evaluate("progressEstimateMs") == 24_000  # 40 plies x the 600 ms default
+
+
 def test_review_keeps_the_time_per_ply_of_each_setting(page, base_url, release, monkeypatch):
     pretend_host(monkeypatch, 4)
     seed_local_storage(page, {"chessreview.engine_settings": {"depth": 12, "threads": 2},
@@ -258,6 +275,23 @@ def test_review_starts_from_the_game_fen(page, base_url, release, monkeypatch):
     expect(page.locator('#board [data-square="f8"] img[data-piece="bK"]')).to_have_count(1)  # the move is animated
 
 
+def test_review_starts_from_a_fen_with_black_to_move(page, base_url, release, monkeypatch):
+    start_review(page, base_url, release, monkeypatch, BLACK_FEN_GAME)
+    fen_squares, fen_pieces = ("e8", "e7", "e1", "e5", "a1"), ["bK", "bP", "wK", None, None]
+    assert [piece_on(page, name) for name in fen_squares] == fen_pieces
+    assert page.evaluate("chess.fen()") == "4k3/4p3/8/8/8/8/8/4K3 b - - 0 1"
+    expect(page.locator(".move-row").first).to_contain_text("1... e5")
+    page.click("#btn-next")
+    page.click("#btn-next")
+    assert [piece_on(page, name) for name in ("e5", "d2", "e1", "e7")] == ["bP", "wK", None, None]
+    page.click("#btn-start")
+    assert [piece_on(page, name) for name in fen_squares] == fen_pieces
+    # The continuation plays its first move at once: Kf2, the first legal move, so the fake engine's line.
+    status = page.evaluate(
+        "goToPly(1); startContinuation(); document.getElementById('continuation-status').textContent")
+    assert status == "Mossa 1/1: Kf2"
+
+
 @pytest.mark.parametrize("how", ["click", "drag"])
 def test_replaying_an_underpromotion_moves_forward(page, base_url, release, monkeypatch, how):
     start_review(page, base_url, release, monkeypatch, UNDERPROMOTION_GAME)
@@ -307,3 +341,16 @@ def test_a_resize_drops_the_board_selection(page, base_url, release, monkeypatch
     assert page.evaluate("currentPly") == 0
     assert [piece_on(page, name) for name in ("e2", "e4")] == ["wP", None]
     expect(page.locator("#variation-banner")).to_be_hidden()
+
+
+# Flip and a second Start review draw the squares again, without the selection highlight.
+@pytest.mark.parametrize("buttons", [["#btn-flip"], ["#btn-back-summary", "#btn-start-review"]],
+                         ids=["flip", "start-review-again"])
+def test_a_redrawn_board_drops_the_selection(page, base_url, release, monkeypatch, buttons):
+    start_review(page, base_url, release, monkeypatch, GAME)
+    page.click('#board [data-square="e2"]')
+    for button in buttons:
+        page.click(button)
+    page.click('#board [data-square="e4"]')  # e2-e4 is the game move: a kept selection would play it
+    assert page.evaluate("currentPly") == 0
+    assert [piece_on(page, name) for name in ("e2", "e4")] == ["wP", None]

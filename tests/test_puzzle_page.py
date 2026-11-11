@@ -148,6 +148,19 @@ def test_a_resize_drops_the_puzzle_selection(page, base_url):
     expect_piece(page, "e7", "bP")
 
 
+def test_new_drops_the_puzzle_selection(page, base_url):
+    puzzles = iter([PUZZLE, {**PUZZLE, "id": "t2"}])  # same moves: e7-e5 solves the new one too
+    page.route("**/api/puzzle*", lambda route: route.fulfill(json=next(puzzles)))
+    page.goto(f"{base_url}/review")
+    page.wait_for_function("puzzleStep === 1")
+    page.click(square("e7"))
+    page.click("#btn-puzzle-new")  # the new board draws its squares without the selection highlight
+    page.wait_for_function("puzzleData.id === 't2' && puzzleStep === 1")
+    page.click(square("e5"))  # a kept selection would play e7-e5
+    assert page.evaluate("puzzleStep") == 1
+    expect_piece(page, "e7", "bP")
+
+
 @pytest.mark.parametrize("pending", ["setup", "reply"])
 def test_new_cancels_the_pending_move_of_the_old_puzzle(page, base_url, pending):
     puzzles = iter([PUZZLE, {**PUZZLE, "id": "t2", "moves": ["d2d4", "d7d5"]}])
