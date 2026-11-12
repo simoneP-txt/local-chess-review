@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spike bench</title>
+<style>
+  body { font: 16px/1.6 monospace; margin: 16px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<p>crossOriginIsolated: <b id="isolated"></b><br>
+hardwareConcurrency: <b id="cores"></b><br>
+status: <b id="status">starting</b></p>
+<pre id="response"></pre>
+<script>
+"use strict";
+// The protocol of spike/bench/uci.py in a worker: ?variant=bin/<engine>.js&threads=<n>&label=<label>
+const $ = (id) => document.getElementById(id);
+const query = new URLSearchParams(location.search);
+const variant = query.get("variant"), label = query.get("label") ?? "", threads = Number(query.get("threads"));
+$("isolated").textContent = crossOriginIsolated;
+$("cores").textContent = navigator.hardwareConcurrency;
+
+async function run() {
+  if (!variant || !Number.isInteger(threads) || threads < 1) {
+    throw new Error("needs ?variant=bin/<engine>.js&threads=<n>&label=<label>");
+  }
+  if (threads > 1 && !crossOriginIsolated) throw new Error(`threads=${threads} needs a cross-origin isolated page`);
+  // The server checks the label again at the end; checking now saves a whole run.
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(label)) throw new Error(`bad label "${label}"`);
+  if ((await fetch(`/results/${label}.json`, {method: "HEAD"})).ok) throw new Error(`label ${label} already used`);
+  const opera = await (await fetch("/opera/opera.json")).json();
+
+  const worker = new Worker("/vendor/stockfish-js/package/" + variant);
+  let buffer = [], waiter = null;
+  worker.onmessage = (e) => {
+    buffer.push(String(e.data));
+    if (waiter && buffer.at(-1).startsWith(waiter.prefix)) {
+      waiter.resolve(buffer);
+      buffer = [];
+      waiter = null;
+    }
+  };
+  worker.onerror = (e) => waiter?.reject(new Error(e.message || `could not run ${variant}`));
+  // Sends command and collects every line up to the first that starts with prefix, included.
+  const ask = (command, prefix) => new Promise((resolve, reject) => {
+    waiter = {prefix, resolve, reject};
+    worker.postMessage(command);
+  });
+  const since = (t) => Math.round((performance.now() - t) * 10) / 10;
+
+  $("status").textContent = "loading the engine";
+  const id = (await ask("uci", "uciok")).find((line) => line.startsWith("id name "));
+  for (const command of [`setoption name Threads value ${threads}`, `setoption name Hash value ${opera.hash_mb}`,
+                         `setoption name MultiPV value ${opera.multipv}`, "ucinewgame"]) {
+    worker.postMessage(command);
+  }
+  await ask("isready", "readyok");
+  const positions = [], start = performance.now();
+  for (let ply = 0; ply <= opera.moves.length; ply++) {
+    $("status").textContent = `position ${ply} of ${opera.moves.length}`;
+    worker.postMessage(ply ? `position startpos moves ${opera.moves.slice(0, ply).join(" ")}` : "position startpos");
+    const go = performance.now();
+    const lines = await ask(`go depth ${opera.depth}`, "bestmove");
+    positions.push({ply, wall_ms: since(go), lines});
+  }
+  const total_wall_ms = since(start);
+  worker.postMessage("quit");
+
+  const raw = {label, engine_id: id ? id.slice("id name ".length) : null, threads, instances: 1, total_wall_ms,
+               meta: {variant, cross_origin_isolated: crossOriginIsolated,
+                      hardware_concurrency: navigator.hardwareConcurrency},
+               positions};
+  $("status").textContent = "sending";
+  const response = await fetch("/result", {method: "POST", body: JSON.stringify(raw)});
+  $("response").textContent = `${response.status} ${await response.text()}`;
+  $("status").textContent = response.ok ? "done" : "rejected";
+}
+
+run().catch((e) => { $("status").textContent = `error: ${e.message}`; });
+</script>
+</body>
+</html>
