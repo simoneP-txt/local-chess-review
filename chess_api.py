@@ -15,7 +15,7 @@ import chess.pgn
 import requests
 
 HEADERS = {
-    "User-Agent": "ChessReviewLocal/1.0 (contact: simonepaoletti17@gmail.com)"
+    "User-Agent": "ChessReviewLocal/1.0 (contact: https://github.com/simoneP-txt/local-chess-review)"
 }
 
 BASE_URL = "https://api.chess.com/pub/player"

@@ -15,3 +15,7 @@ def test_month_games_skip_variants(monkeypatch):
     monkeypatch.setattr(chess_api, "get_player_country", lambda username: "")
     monkeypatch.setattr(chess_api, "get_player_avatar", lambda username: "")
     assert [game["end_time"] for game in chess_api.get_current_month_games("alpha")] == [3, 1]
+
+
+def test_user_agent_carries_no_email_address():
+    assert "@" not in chess_api.HEADERS["User-Agent"]  # every copy of the app sends this header
