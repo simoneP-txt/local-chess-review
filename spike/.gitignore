@@ -1,1 +1,5 @@
 vendor/
+app/node_modules/
+app/src-tauri/target/
+app/src-tauri/gen/apple/
+app/src-tauri/binaries/

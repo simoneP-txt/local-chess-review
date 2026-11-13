@@ -1,0 +1,6 @@
+{
+  "identifier": "default",
+  "description": "The spike page: core IPC and the SQLite row",
+  "windows": ["main"],
+  "permissions": ["core:default", "sql:default", "sql:allow-execute"]
+}

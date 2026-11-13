@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spike app</title>
+<style>
+  body { font: 16px/1.5 monospace; margin: 16px; overflow-wrap: anywhere; }
+  button, input { font: inherit; padding: 8px 12px; margin: 0 8px 8px 0; }
+  textarea { box-sizing: border-box; width: 100%; height: 40vh; font: 12px/1.3 monospace; }
+</style>
+</head>
+<body>
+<p>cores: <b id="cores"></b>, N: <b id="n"></b>, crossOriginIsolated: <b id="isolated"></b><br>
+<span id="sqlite">SQLite: checking</span><br>
+status: <b id="status">starting</b></p>
+<p><label>label <input id="label" autocapitalize="off" autocomplete="off" spellcheck="false"></label><br>
+<button id="t1">Threads 1</button><button id="tn">Threads N</button><button id="in">N instances</button></p>
+<pre id="response"></pre>
+<textarea id="lines" readonly aria-label="engine lines"></textarea>
+<script>
+"use strict";
+// The Opera Game through run_opera, then the RawRun to spike/bench/server.py (adb reverse tcp:8000 tcp:8000).
+const {invoke, Channel} = window.__TAURI__.core;
+const $ = (id) => document.getElementById(id);
+const buttons = [$("t1"), $("tn"), $("in")];
+let sqliteOk = false;
+$("isolated").textContent = crossOriginIsolated;
+
+// Writes one row and reads it back through the commands of the SQL plugin.
+async function checkSqlite() {
+  const db = "sqlite:spike.db", value = new Date().toISOString();
+  await invoke("plugin:sql|load", {db});
+  await invoke("plugin:sql|execute",
+               {db, query: "CREATE TABLE IF NOT EXISTS spike (id INTEGER PRIMARY KEY, value TEXT)", values: []});
+  await invoke("plugin:sql|execute",
+               {db, query: "INSERT OR REPLACE INTO spike (id, value) VALUES (1, $1)", values: [value]});
+  const rows = await invoke("plugin:sql|select", {db, query: "SELECT value FROM spike WHERE id = 1", values: []});
+  sqliteOk = rows[0]?.value === value;
+  $("sqlite").textContent = sqliteOk ? `SQLite: ok (${rows[0].value})` : `SQLite: read ${JSON.stringify(rows)}`;
+}
+
+async function run(threads, instances, fallback) {
+  const label = $("label").value.trim() || fallback;
+  buttons.forEach((button) => button.disabled = true);
+  $("status").textContent = `running ${label}`;
+  $("response").textContent = "";
+  // The text area keeps 200 lines and changes at most once a frame: otherwise it would make the gaps it measures.
+  const lines = [];
+  let dirty = false, running = true, maxGap = 0, last = performance.now();
+  const channel = new Channel();
+  channel.onmessage = (line) => {
+    lines.push(line);
+    if (lines.length > 200) lines.shift();
+    dirty = true;
+  };
+  const frame = (now) => {
+    maxGap = Math.max(maxGap, now - last);
+    last = now;
+    if (dirty) {
+      $("lines").value = lines.join("\n");
+      dirty = false;
+    }
+    if (running) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+  try {
+    const raw = await invoke("run_opera", {threads, instances, label, onLine: channel});
+    running = false;
+    Object.assign(raw.meta, {max_frame_gap_ms: Math.round(maxGap * 10) / 10,
+                             cross_origin_isolated: crossOriginIsolated, sqlite_ok: sqliteOk});
+    $("status").textContent = "sending";
+    const response = await fetch("http://localhost:8000/result",
+                                 {method: "POST", headers: {"Content-Type": "text/plain"}, body: JSON.stringify(raw)});
+    $("response").textContent = `${response.status} ${await response.text()}`;
+    $("status").textContent = response.ok ? "done" : "rejected";
+  } catch (e) {
+    $("response").textContent = `error: ${e}`;
+    $("status").textContent = "error";
+  } finally {
+    running = false;
+    buttons.forEach((button) => button.disabled = false);
+  }
+}
+
+(async () => {
+  const cores = await invoke("cores"), n = Math.max(1, Math.floor(cores * 4 / 5));
+  $("cores").textContent = cores;
+  $("n").textContent = n;
+  $("tn").textContent = `Threads ${n}`;
+  $("in").textContent = `${n} instances`;
+  $("t1").onclick = () => run(1, 1, "phone-app-t1-1");
+  $("tn").onclick = () => run(n, 1, `phone-app-t${n}-1`);
+  $("in").onclick = () => run(1, n, `phone-app-i${n}-1`);
+  $("status").textContent = "ready";
+})().catch((e) => { $("status").textContent = `error: ${e}`; });
+checkSqlite().catch((e) => { $("sqlite").textContent = `SQLite: error: ${e}`; });
+</script>
+</body>
+</html>

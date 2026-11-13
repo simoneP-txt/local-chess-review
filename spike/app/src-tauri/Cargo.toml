@@ -1,0 +1,20 @@
+[package]
+name = "spike"
+version = "0.1.0"
+description = "Phase 4 stack spike: Stockfish 19 linked into a Tauri app"
+edition = "2021"
+publish = false
+
+[lib]
+name = "spike_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.4", features = [] }
+cc = { version = "1.2", features = ["parallel"] }
+
+[dependencies]
+tauri = { version = "2.12.5", features = [] }
+tauri-plugin-sql = { version = "2.6.0", features = ["sqlite"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,17 @@
+{
+  "productName": "spike",
+  "identifier": "org.localchessreview.spike",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [{ "title": "spike" }],
+    "security": {
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    }
+  }
+}
