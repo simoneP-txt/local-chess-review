@@ -1,0 +1,251 @@
+# Phase 4 stack spike, task S2: the Tauri app of spike/app (Stockfish 19 linked into the Rust
+# core) built for the iOS simulator and run there with 1 thread. The job fails unless the
+# build, the run and compare.py --strict against spike/results/pc-native-t1-1.json all pass.
+# A failure is meant to be readable from the job summary alone.
+name: spike-ios
+
+on:
+  push:
+    branches: [spike/stack]
+    paths:
+      - 'spike/**'
+      - '.github/workflows/spike-ios.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 180 # above the step limits (15 + 40 + 10 + 55 + 40), so a step limit fires first
+    defaults:
+      run:
+        shell: bash # -eo pipefail, unlike the default shell
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Rust iOS targets and log folder
+        run: |
+          echo "LOGS=$RUNNER_TEMP/logs" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/logs"
+          touch "$RUNNER_TEMP/logs/.start" # crash reports newer than this belong to the job
+          rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+          { echo '```text'; sw_vers; xcodebuild -version; rustc --version; node --version; python3 --version; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: npm ci
+        working-directory: spike/app
+        run: npm ci --ignore-scripts 2>&1 | tee "$LOGS/1-npm-ci.log"
+
+      - name: Stockfish sf_19 sources and net
+        run: |
+          exec > >(tee -a "$LOGS/2-stockfish.log") 2>&1
+          git clone --depth 1 --branch sf_19 https://github.com/official-stockfish/Stockfish spike/vendor/Stockfish
+          sha=$(git -C spike/vendor/Stockfish rev-parse HEAD)
+          [ "$sha" = edb0d9db6731067ec50ce619ff372b463bc4dd5d ] || { echo "::error::sf_19 is at $sha, not edb0d9db6731"; exit 1; }
+          net=spike/vendor/Stockfish/src/nn-1a298aa575a0.nnue
+          for url in https://tests.stockfishchess.org/api/nn/nn-1a298aa575a0.nnue https://github.com/official-stockfish/networks/raw/master/nn-1a298aa575a0.nnue; do
+            curl -sSfL --retry 3 --max-time 300 -o "$net" "$url" && echo "1a298aa575a085434d29027978dc36867fe9c5bcea9376654b7a8eba1e52dfc2  $net" | shasum -a 256 -c - && break
+            rm -f "$net"
+          done
+          [ -f "$net" ] || { echo "::error::neither URL gave the net with the expected SHA-256"; exit 1; }
+
+      - name: tauri ios init
+        id: init
+        timeout-minutes: 15
+        working-directory: spike/app
+        run: npx tauri ios init --ci --skip-targets-install 2>&1 | tee "$LOGS/3-ios-init.log"
+
+      # xcodebuild alone cannot build the app: the "Build Rust Code" phase (tauri ios xcode-script)
+      # asks the running tauri ios build for its options. --no-sign archives with
+      # CODE_SIGNING_ALLOWED=NO and, for the simulator, moves the .app out of the archive.
+      - name: Build the simulator app (debug, unsigned)
+        timeout-minutes: 40
+        working-directory: spike/app
+        run: npx tauri ios build --debug --target aarch64-sim --no-sign -vv > "$LOGS/4-build-sim.log" 2>&1
+
+      - name: Create and boot an iPhone simulator on the newest iOS 26.x
+        timeout-minutes: 10
+        run: |
+          exec > >(tee -a "$LOGS/5-simulator.log") 2>&1
+          xcrun simctl list -j > "$LOGS/simctl-list.json"
+          python3 - "$LOGS/simctl-list.json" > "$LOGS/simulator-pick.txt" <<'EOF'
+          import json, sys
+          sims = json.load(open(sys.argv[1], encoding="utf-8"))
+          ios = [r for r in sims["runtimes"] if r["identifier"].startswith("com.apple.CoreSimulator.SimRuntime.iOS-") and r.get("isAvailable")]
+          ios26 = [r for r in ios if r["version"].split(".")[0] == "26"]
+          if not ios26:
+              sys.exit("no available iOS 26.x simulator runtime; available iOS runtimes: " + (", ".join(r["version"] for r in ios) or "none"))
+          runtime = max(ios26, key=lambda r: [int(n) for n in r["version"].split(".")])
+          iphones = [d for d in runtime.get("supportedDeviceTypes", []) if d.get("productFamily") == "iPhone"]
+          if not iphones:
+              sys.exit(f"iOS {runtime['version']} lists no iPhone device type")
+          print(runtime["identifier"], iphones[0]["identifier"])
+          EOF
+          read -r runtime devtype < "$LOGS/simulator-pick.txt"
+          udid=$(xcrun simctl create spike "$devtype" "$runtime")
+          xcrun simctl bootstatus "$udid" -b
+          echo "SIM_UDID=$udid" >> "$GITHUB_ENV"
+          echo "Simulator: $devtype on $runtime" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install the app in the simulator
+        run: xcrun simctl install "$SIM_UDID" spike/app/src-tauri/gen/apple/build/arm64-sim/spike.app 2>&1 | tee "$LOGS/6-install.log"
+
+      # SPIKE_AUTO=1 through simctl launch first. Without a complete SPIKE_RAW line (watchdog,
+      # crash, a console that lost the end, time limit) the same executable runs through simctl
+      # spawn, outside FrontBoard and without a pty. The line found goes to $RUNNER_TEMP.
+      - name: Run the app (SPIKE_AUTO=1), simctl launch then simctl spawn
+        timeout-minutes: 55
+        run: |
+          python3 - <<'EOF'
+          import json, os, plistlib, subprocess, sys, time
+          from pathlib import Path
+
+          LOGS, UDID, APP = Path(os.environ["LOGS"]), os.environ["SIM_UDID"], "org.localchessreview.spike"
+          ENV = dict(os.environ, SIMCTL_CHILD_SPIKE_AUTO="1")  # simctl hands SIMCTL_CHILD_X to the app as X
+          report = []
+
+          def run(name, args, log, minutes):
+              """Runs args with its output in log; returns the RawRun of its single SPIKE_RAW line, or None."""
+              start = time.monotonic()
+              try:
+                  with open(log, "wb") as out:
+                      end = f"exit {subprocess.run(args, stdout=out, stderr=subprocess.STDOUT, env=ENV, timeout=minutes * 60).returncode}"
+              except subprocess.TimeoutExpired:
+                  end = f"killed at the {minutes}-minute limit"
+              data = log.read_bytes()
+              lines = [line.rstrip("\r") for line in data.decode("utf-8", "replace").split("\n")]  # a pty ends lines with \r\n
+              raws = [line[len("SPIKE_RAW "):] for line in lines if line.startswith("SPIKE_RAW ")]
+              errors = "".join(f"; {line[:300]}" for line in lines if line.startswith("SPIKE_ERROR "))
+              raw, verdict = None, f"{len(raws)} SPIKE_RAW lines"
+              if len(raws) == 1:
+                  try:
+                      raw = json.loads(raws[0])
+                      verdict = f"a SPIKE_RAW line of {len(raws[0])} bytes"
+                  except ValueError as e:
+                      verdict = f"a SPIKE_RAW line of {len(raws[0])} bytes that is not JSON ({e}), ending {raws[0][-120:]!r}"
+              newlines = data.count(b"\n")
+              report.append(f"- {name}: {end} after {time.monotonic() - start:.0f} s, {newlines} lines, {len(data)} bytes, {verdict}{errors}")
+              return raw
+
+          raw = run("simctl launch --console-pty", ["xcrun", "simctl", "launch", "--console-pty", UDID, APP], LOGS / "7-launch.log", 30)
+          via = "simctl launch"
+          if raw is None:
+              via = "simctl spawn"
+              found = subprocess.run(["xcrun", "simctl", "get_app_container", UDID, APP, "app"], capture_output=True, text=True)
+              app = Path(found.stdout.strip())
+              try:
+                  with open(app / "Info.plist", "rb") as f:
+                      exe = app / plistlib.load(f)["CFBundleExecutable"]
+              except (OSError, KeyError, plistlib.InvalidFileException) as e:
+                  report.append(f"- simctl spawn: not run, get_app_container exit {found.returncode} {found.stderr.strip()[:300]!r}, no executable: {e!r}")
+              else:
+                  raw = run(f"simctl spawn {app.name}/{exe.name}", ["xcrun", "simctl", "spawn", UDID, str(exe)], LOGS / "8-spawn.log", 20)
+
+          since = (LOGS / ".start").stat().st_mtime
+          for ips in sorted((Path.home() / "Library/Logs/DiagnosticReports").glob("*.ips")):
+              try:
+                  if ips.stat().st_mtime > since:
+                      head, _, body = ips.read_text(encoding="utf-8", errors="replace").partition("\n")
+                      detail = json.dumps({k: v for k, v in json.loads(body).items() if k in ("exception", "termination")})
+                      report.append(f"- crash report {ips.name}: {head[:300]} {detail[:600]}")
+              except Exception as e:  # a bad report must not cost the lines above
+                  report.append(f"- crash report {ips.name}: not read: {e!r}"[:400])
+
+          verdict = f"SPIKE_RAW from {via}." if raw is not None else "**No complete SPIKE_RAW line from simctl launch or simctl spawn.**"
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("### Run\n\n" + "\n".join(report) + f"\n\n{verdict}\n\n")
+          print("\n".join(report) + "\n" + verdict)
+          if raw is None:
+              print("::error::no complete SPIKE_RAW line from simctl launch or simctl spawn")
+              sys.exit(1)
+          (Path(os.environ["RUNNER_TEMP"]) / "spike-raw.json").write_text(json.dumps(raw), encoding="utf-8")
+          EOF
+
+      - name: SPIKE_RAW to ios-sim-app-t1-1.json, compare with the reference
+        run: |
+          python3 - <<'EOF'
+          import json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, "spike/bench")
+          import uci
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          raw = json.loads((temp / "spike-raw.json").read_text(encoding="utf-8"))
+          try:
+              # not spike/results: a later push must not find the label already measured
+              path = uci.result_path("ios-sim-app-t1-1", root=temp / "results")
+              uci.save_result(path, uci.parse_run(raw))
+          except (KeyError, TypeError, ValueError, FileExistsError) as e:
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+                  summary.write(f"**SPIKE_RAW: no result written: {e!r}**\n\n")
+              print(f"::error::no result written: {e!r}")
+              sys.exit(1)
+          print(f"{path.name}: {raw['total_wall_ms'] / 1000:.1f} s")
+          EOF
+          status=0
+          python3 spike/bench/compare.py --ref spike/results/pc-native-t1-1.json --strict "$RUNNER_TEMP/results/ios-sim-app-t1-1.json" > "$LOGS/compare.md" 2>&1 || status=$?
+          cat "$LOGS/compare.md" >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Upload ios-sim-app-t1-1.json
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: ${{ runner.temp }}/results/ios-sim-app-t1-1.json
+          archive: false # the artifact takes the file name
+          if-no-files-found: ignore # the steps above already fail the job without it
+
+      - name: Build the device .ipa (release, unsigned)
+        id: device
+        if: ${{ !cancelled() && steps.init.outcome == 'success' }}
+        timeout-minutes: 40
+        working-directory: spike/app
+        run: |
+          xcrun simctl shutdown "$SIM_UDID" || true # frees memory and CPU for the release build
+          npx tauri ios build --target aarch64 --no-sign -vv > "$LOGS/9-build-device.log" 2>&1
+          cp src-tauri/gen/apple/build/arm64/spike.ipa "$RUNNER_TEMP/spike-ios-unsigned.ipa"
+          echo "spike-ios-unsigned.ipa: $(wc -c < "$RUNNER_TEMP/spike-ios-unsigned.ipa") bytes" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload spike-ios-unsigned.ipa
+        if: ${{ !cancelled() && steps.device.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: ${{ runner.temp }}/spike-ios-unsigned.ipa
+          archive: false
+          if-no-files-found: error
+
+      # A step past its timeout-minutes fails; a job past its own is cancelled.
+      - name: Failure details in the summary
+        if: ${{ failure() || cancelled() }}
+        run: |
+          set +e
+          {
+            echo "## Failure details (job status: ${{ job.status }})"
+            for log in "$LOGS"/*.log; do
+              [ -e "$log" ] || continue
+              echo "### $(basename "$log")"
+              echo '```text'
+              echo "-- error lines (first 25):"
+              grep -n -E '(^|: )(fatal )?[Ee]rror(\[|:| )|FAILED \*\*|Undefined symbol|^ld: |SPIKE_ERROR|panicked' "$log" | head -n 25 | cut -c 1-300
+              echo "-- last 40 lines:"
+              tail -n 40 "$log" | cut -c 1-300
+              echo '```'
+            done
+            echo "### Crash reports"
+            echo '```text'
+            find "$HOME/Library/Logs/DiagnosticReports" -name '*.ips' -newer "$LOGS/.start" 2>/dev/null | while read -r ips; do
+              echo "$(basename "$ips"): $(head -n 1 "$ips" | cut -c 1-300)"
+              tail -n +2 "$ips" | jq -c '{exception, termination}' | cut -c 1-600
+            done
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: spike-ios-logs
+          path: ${{ runner.temp }}/logs

@@ -67,7 +67,19 @@ fn opera(_: u32, _: u32, _: &str, _: &(dyn Fn(&str) + Sync)) -> Result<Value, St
     Err("no engine is linked on this platform: the desktop engine comes in S3".into())
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// main.mm calls this on iOS. tauri::mobile_entry_point would call tauri::log_stdout() first,
+/// which sends stdout to os_log, so the auto mode runs before it.
+#[cfg(target_os = "ios")]
+#[unsafe(no_mangle)]
+pub extern "C" fn start_app() {
+    if std::env::var("SPIKE_AUTO").is_ok_and(|v| v == "1") {
+        run(); // the auto mode ends the process
+    }
+    tauri::log_stdout();
+    run()
+}
+
+#[cfg_attr(target_os = "android", tauri::mobile_entry_point)]
 pub fn run() {
     if std::env::var("SPIKE_AUTO").is_ok_and(|v| v == "1") {
         // S2 on the iOS simulator: no page, one thread, the RawRun on stdout.
