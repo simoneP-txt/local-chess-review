@@ -62,10 +62,27 @@ fn opera(
     protocol::run(engines, threads, label, on_line)
 }
 
+/// The running app, for the sidecar. A static rather than an argument of opera(): the iOS auto
+/// mode calls opera() before any app exists.
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
-fn opera(_: u32, _: u32, _: &str, _: &(dyn Fn(&str) + Sync)) -> Result<Value, String> {
-    Err("no engine is linked on this platform: the desktop engine comes in S3".into())
+static APP: std::sync::OnceLock<tauri::AppHandle> = std::sync::OnceLock::new();
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+fn opera(
+    threads: u32,
+    instances: u32,
+    label: &str,
+    on_line: &(dyn Fn(&str) + Sync),
+) -> Result<Value, String> {
+    let app = APP.get().ok_or("the sidecar needs the running app")?;
+    let engines = (0..instances)
+        .map(|_| engine::SidecarEngine::new(app).map(|e| Box::new(e) as Box<dyn engine::EngineIo>))
+        .collect::<Result<Vec<_>, _>>()?;
+    protocol::run(engines, threads, label, on_line)
 }
+
+#[cfg(all(feature = "frame", feature = "snap-layout"))]
+compile_error!("frame and snap-layout are two builds of the title bar: enable one of them");
 
 /// main.mm calls this on iOS. tauri::mobile_entry_point would call tauri::log_stdout() first,
 /// which sends stdout to os_log, so the auto mode runs before it.
@@ -94,8 +111,29 @@ pub fn run() {
             }
         }
     }
-    tauri::Builder::default()
-        .plugin(tauri_plugin_sql::Builder::default().build())
+    let builder = tauri::Builder::default().plugin(tauri_plugin_sql::Builder::default().build());
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    let builder = builder.plugin(tauri_plugin_shell::init()).setup(|app| {
+        let _ = APP.set(app.handle().clone());
+        // capabilities/ cannot name the permission of a plugin that only one build has.
+        #[cfg(all(windows, feature = "snap-layout"))]
+        tauri::Manager::add_capability(
+            app,
+            tauri::ipc::CapabilityBuilder::new("snap-layout")
+                .window("main")
+                .permission("snap-layout:default"),
+        )?;
+        Ok(())
+    });
+    #[cfg(all(windows, feature = "frame"))]
+    let builder = builder.plugin(
+        tauri_plugin_frame::FramePluginBuilder::new()
+            .auto_titlebar(true)
+            .build(),
+    );
+    #[cfg(all(windows, feature = "snap-layout"))]
+    let builder = builder.plugin(tauri_plugin_snap_layout::init().button_id("max").build());
+    builder
         .invoke_handler(tauri::generate_handler![cores, run_opera])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

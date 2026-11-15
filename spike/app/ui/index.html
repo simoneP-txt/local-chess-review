@@ -5,12 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spike app</title>
 <style>
-  body { font: 16px/1.5 monospace; margin: 16px; overflow-wrap: anywhere; }
+  body { font: 16px/1.5 monospace; margin: 0; overflow-wrap: anywhere; }
+  main { margin: 16px; }
+  /* The window has no frame: this bar drags it, and its buttons stand in for the system ones. */
+  #titlebar { position: sticky; top: 0; display: flex; align-items: center; height: 32px;
+              padding-left: 12px; background: #e8e8e8; }
+  #titlebar button { width: 46px; height: 32px; margin: 0; padding: 0; border: 0; background: none; }
+  #titlebar #min { margin-left: auto; }
+  #titlebar button:hover, #max.is-hovered { background: #ccc; }
+  #titlebar #close:hover { background: #c42b1c; color: #fff; }
+  /* tauri-plugin-frame draws its own buttons over this bar. */
+  [data-tauri-frame-tb] ~ #titlebar button { display: none; }
   button, input { font: inherit; padding: 8px 12px; margin: 0 8px 8px 0; }
   textarea { box-sizing: border-box; width: 100%; height: 40vh; font: 12px/1.3 monospace; }
 </style>
 </head>
 <body>
+<header id="titlebar" data-tauri-drag-region>spike
+<button id="min" aria-label="Minimize">&#x2013;</button><button id="max" aria-label="Maximize">&#x25a1;</button><button id="close" aria-label="Close">&#x2715;</button>
+</header>
+<main>
 <p>cores: <b id="cores"></b>, N: <b id="n"></b>, crossOriginIsolated: <b id="isolated"></b><br>
 <span id="sqlite">SQLite: checking</span><br>
 status: <b id="status">starting</b></p>
@@ -18,6 +32,7 @@ status: <b id="status">starting</b></p>
 <button id="t1">Threads 1</button><button id="tn">Threads N</button><button id="in">N instances</button></p>
 <pre id="response"></pre>
 <textarea id="lines" readonly aria-label="engine lines"></textarea>
+</main>
 <script>
 "use strict";
 // The Opera Game through run_opera, then the RawRun to spike/bench/server.py (adb reverse tcp:8000 tcp:8000).
@@ -26,6 +41,18 @@ const $ = (id) => document.getElementById(id);
 const buttons = [$("t1"), $("tn"), $("in")];
 let sqliteOk = false;
 $("isolated").textContent = crossOriginIsolated;
+
+// The title bar buttons. With tauri-plugin-snap-layout a native overlay on #max takes the mouse
+// and maximizes or restores by itself; the click handler still serves the keyboard.
+const appWindow = window.__TAURI__.window.getCurrentWindow();
+$("min").onclick = () => appWindow.minimize();
+$("max").onclick = () => appWindow.toggleMaximize();
+$("close").onclick = () => appWindow.close();
+appWindow.onResized(async () => {
+  const maximized = await appWindow.isMaximized();
+  $("max").ariaLabel = maximized ? "Restore" : "Maximize";
+  $("max").textContent = maximized ? "\u2750" : "\u25a1";
+});
 
 // Writes one row and reads it back through the commands of the SQL plugin.
 async function checkSqlite() {

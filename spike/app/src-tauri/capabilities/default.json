@@ -1,6 +1,14 @@
 {
   "identifier": "default",
-  "description": "The spike page: core IPC and the SQLite row",
+  "description": "The spike page: core IPC, the SQLite row and the title bar",
   "windows": ["main"],
-  "permissions": ["core:default", "sql:default", "sql:allow-execute"]
+  "permissions": [
+    "core:default",
+    "sql:default",
+    "sql:allow-execute",
+    "core:window:allow-start-dragging",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close"
+  ]
 }

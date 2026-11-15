@@ -1,0 +1,11 @@
+{
+  "app": {
+    "windows": [{ "title": "spike", "decorations": false }]
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "externalBin": ["binaries/stockfish"]
+  }
+}

@@ -9,6 +9,93 @@ pub trait EngineIo: Send {
 #[cfg(any(target_os = "android", target_os = "ios"))]
 pub use linked::LinkedEngine;
 
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+pub use sidecar::SidecarEngine;
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+mod sidecar {
+    use tauri::async_runtime::Receiver;
+    use tauri_plugin_shell::process::{CommandChild, CommandEvent};
+    use tauri_plugin_shell::ShellExt;
+
+    use super::EngineIo;
+
+    /// The official Stockfish next to the app (bundle > externalBin), run by the shell plugin.
+    pub struct SidecarEngine {
+        events: Receiver<CommandEvent>,
+        child: CommandChild,
+        pending: Vec<u8>,
+    }
+
+    impl SidecarEngine {
+        pub fn new(app: &tauri::AppHandle) -> Result<Self, String> {
+            let (events, child) = app
+                .shell()
+                .sidecar("stockfish")
+                .map_err(|e| e.to_string())?
+                // Raw chunks: the line mode also ends a line at a \r whose \n is still in the pipe.
+                .set_raw_out(true)
+                .kill_on_drop(true)
+                .spawn()
+                .map_err(|e| e.to_string())?;
+            Ok(Self {
+                events,
+                child,
+                pending: Vec::new(),
+            })
+        }
+    }
+
+    impl EngineIo for SidecarEngine {
+        fn send(&mut self, line: &str) -> Result<(), String> {
+            self.child
+                .write(format!("{line}\n").as_bytes())
+                .map_err(|e| e.to_string())
+        }
+
+        fn read_line(&mut self) -> Result<String, String> {
+            loop {
+                if let Some(line) = take_line(&mut self.pending) {
+                    return Ok(line);
+                }
+                // Called from spawn_blocking or a plain thread, never on the async runtime.
+                match self.events.blocking_recv() {
+                    Some(CommandEvent::Stdout(bytes)) => self.pending.extend(bytes),
+                    Some(CommandEvent::Stderr(_)) => {}
+                    Some(CommandEvent::Error(e)) => return Err(e),
+                    _ => return Err("the engine exited".into()), // Terminated, or the channel closed
+                }
+            }
+        }
+    }
+
+    /// Takes the first whole line out of `pending`, without its \r\n.
+    fn take_line(pending: &mut Vec<u8>) -> Option<String> {
+        let end = pending.iter().position(|&b| b == b'\n')?;
+        let line: Vec<u8> = pending.drain(..=end).collect();
+        Some(
+            String::from_utf8_lossy(&line)
+                .trim_end_matches(['\r', '\n'])
+                .to_owned(),
+        )
+    }
+
+    #[cfg(test)]
+    mod tests {
+        #[test]
+        fn take_line_waits_for_the_newline() {
+            let mut pending = b"info depth 1\r".to_vec();
+            assert_eq!(super::take_line(&mut pending), None);
+            pending.extend(b"\nbestmove e2e4\r\n\r\nid");
+            assert_eq!(super::take_line(&mut pending).unwrap(), "info depth 1");
+            assert_eq!(super::take_line(&mut pending).unwrap(), "bestmove e2e4");
+            assert_eq!(super::take_line(&mut pending).unwrap(), "");
+            assert_eq!(super::take_line(&mut pending), None);
+            assert_eq!(pending, b"id");
+        }
+    }
+}
+
 #[cfg(any(target_os = "android", target_os = "ios"))]
 mod linked {
     use std::ffi::{c_char, c_int, c_void, CString};
