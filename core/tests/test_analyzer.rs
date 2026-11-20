@@ -1,7 +1,9 @@
+use review_core::accuracy::harmonic_mean;
 use review_core::engine::Score;
 use review_core::scoring::*;
 use review_core::see::*;
 use review_core::special::*;
+use review_core::stats::*;
 use shakmaty::fen::Fen;
 use shakmaty::uci::UciMove;
 use shakmaty::{CastlingMode, Chess, Color, Move};
@@ -336,4 +338,92 @@ fn test_brilliant_needs_a_piece_sacrifice() {
     ));
     assert!(brilliant(PASSANT_LEAVES_KNIGHT, SOUND)); // balance -2, the limit
     assert!(!brilliant(PROMOTION_LEAVES_QUEEN, SOUND)); // balance -1
+}
+
+#[test]
+fn test_harmonic_mean() {
+    assert_approx(harmonic_mean(&[50.0, 100.0]), 66.666667, "50, 100");
+    assert_approx(harmonic_mean(&[0.0, 100.0]), 1.980198, "0 floored to 1");
+    assert_eq!(harmonic_mean(&[]), 0.0);
+}
+
+#[test]
+fn test_accuracy_to_elo() {
+    let cases = [
+        (-5.0, 100),
+        (0.0, 100),
+        (30.0, 150),
+        (50.0, 350),
+        (65.0, 800),
+        (72.5, 1250),
+        (75.0, 1400),
+        (85.0, 2000),
+        (95.0, 2600),
+        (98.0, 2780),
+        (100.0, 2900),
+        (110.0, 2900),
+    ];
+    for (acc, elo) in cases {
+        assert_eq!(accuracy_to_elo(acc), elo, "accuracy {acc}");
+    }
+}
+
+#[test]
+fn test_estimate_performance_elo() {
+    let cases = [
+        (98.0, Some(500), 2000), // capped at real_elo + 1500
+        (50.0, None, 350),
+        (50.0, Some(0), 350),
+        (20.0, Some(2500), 133), // no floor
+    ];
+    for (acc, real, elo) in cases {
+        assert_eq!(
+            estimate_performance_elo(acc, real),
+            elo,
+            "accuracy {acc}, real {real:?}"
+        );
+    }
+}
+
+#[test]
+fn test_compute_phases() {
+    let moves = [
+        ("opening", "white", 0.0),
+        ("opening", "white", 0.04),
+        ("endgame", "white", 0.3),
+        ("middlegame", "black", 0.06),
+    ];
+    let out = compute_phases(&moves);
+    assert_eq!(
+        out.opening.white,
+        PhaseStats {
+            label: Some("good"),
+            mean_drop: Some(0.02),
+            moves: 2
+        }
+    );
+    assert_eq!(
+        out.opening.black,
+        PhaseStats {
+            label: None,
+            mean_drop: None,
+            moves: 0
+        }
+    );
+    assert_eq!(
+        out.middlegame.black,
+        PhaseStats {
+            label: Some("inaccuracy"),
+            mean_drop: Some(0.06),
+            moves: 1
+        }
+    );
+    assert_eq!(
+        out.endgame.white,
+        PhaseStats {
+            label: Some("blunder"),
+            mean_drop: Some(0.3),
+            moves: 1
+        }
+    );
 }

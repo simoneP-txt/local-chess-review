@@ -1,6 +1,8 @@
+use review_core::accuracy::pstdev;
 use review_core::py::{py_round, py_round_int};
 use review_core::see::static_exchange_evaluation;
 use review_core::special::make_comment;
+use review_core::stats::{PhaseStats, compute_phases};
 use serde_json::{Value, json};
 use shakmaty::fen::Fen;
 use shakmaty::uci::UciMove;
@@ -143,6 +145,32 @@ fn test_py_round_rounds_the_binary_value() {
         (py_round_int(2.5), py_round_int(3.5), py_round_int(-2.5)),
         (2, 4, -2)
     );
+}
+
+#[test]
+fn test_sums_run_left_to_right() {
+    // 5.8.3: in Python 3.11 0.1 + 0.2 + 0.3 is 0.6000000000000001
+    let p = compute_phases(&[
+        ("opening", "white", 0.1),
+        ("opening", "white", 0.2),
+        ("opening", "white", 0.3),
+    ]);
+    // a compensated sum gives 0.6, a mean below 0.20 and "mistake"
+    assert_eq!(
+        p.opening.white,
+        PhaseStats {
+            label: Some("blunder"),
+            mean_drop: Some(0.2),
+            moves: 3
+        }
+    );
+}
+
+#[test]
+fn test_pstdev_shortcut() {
+    // 5.8.4: the expected value is Python 3.11 statistics.pstdev on the same list
+    assert_eq!(pstdev(&[50.0, 50.0]), 0.0);
+    assert!((pstdev(&[50.0, 40.89741028083871, 50.0]) - 4.291001944518598).abs() < 1e-12);
 }
 
 #[test]
