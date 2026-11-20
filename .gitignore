@@ -55,6 +55,8 @@ htmlcov/
 
 # --- Recorded test fixtures: local only ---
 tests/fixtures/
+tests/fixtures-rust/
+core/target/
 
 # --- Local planning, state and measurement docs: never published ---
 docs/BRIEF.md

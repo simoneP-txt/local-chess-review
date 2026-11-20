@@ -1,0 +1,15 @@
+[package]
+name = "review-core"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100"
+publish = false
+
+[lib]
+name = "review_core"
+
+[dependencies]
+pgn-reader = "0.29.2"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["preserve_order", "float_roundtrip"] }
+shakmaty = "0.30.3"
