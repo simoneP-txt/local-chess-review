@@ -1,4 +1,136 @@
 use review_core::py::{py_round, py_round_int};
+use review_core::see::static_exchange_evaluation;
+use review_core::special::make_comment;
+use serde_json::{Value, json};
+use shakmaty::fen::Fen;
+use shakmaty::uci::UciMove;
+use shakmaty::{CastlingMode, Chess, Move};
+
+fn pos(fen: &str) -> Chess {
+    fen.parse::<Fen>()
+        .unwrap()
+        .into_position(CastlingMode::Standard)
+        .unwrap()
+}
+
+/// A legal move of `board`.
+fn mv(board: &Chess, uci: &str) -> Move {
+    uci.parse::<UciMove>().unwrap().to_move(board).unwrap()
+}
+
+fn see(fen: &str, uci: &str) -> i32 {
+    let board = pos(fen);
+    static_exchange_evaluation(&board, mv(&board, uci))
+}
+
+#[test]
+fn test_see_tie_break_follows_python_chess() {
+    // 5.8.13: after Bxg6 both queens can retake: python-chess tries h6 first, f6 keeps blocking
+    // the d6 rook and the SEE is 2; with f6 first the rook joins in and it would be 5
+    assert_eq!(see("8/8/3r1QRQ/8/4b3/1k6/8/5K2 b - - 0 1", "e4g6"), 2);
+}
+
+#[test]
+fn test_see_of_castling_is_zero() {
+    // Review Focus 1
+    assert_eq!(see("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1g1"), 0);
+    // with the rook square a1 as the target, a2 would promote on the emptied a1 and give -8
+    assert_eq!(see("4k3/8/8/8/8/8/p7/R3K3 w Q - 0 1", "e1c1"), 0);
+}
+
+/// (classification, (fen, played), pv_after_uci, expected)
+type CommentCase = (
+    &'static str,
+    (&'static str, &'static str),
+    &'static [&'static str],
+    Option<Value>,
+);
+
+#[test]
+fn test_make_comment() {
+    // 5.8.15
+    const SAC: (&str, &str) = ("4k3/8/3p4/8/8/5N2/8/4K3 w - - 0 1", "f3e5");
+    const QUEEN: (&str, &str) = ("4k3/8/8/2p5/3Q4/8/8/1N2K3 w - - 0 1", "b1c3");
+    let cases: [CommentCase; 12] = [
+        ("best", SAC, &[], None),
+        (
+            "miss",
+            SAC,
+            &[],
+            Some(json!({"key": "miss_default", "params": {}})),
+        ),
+        (
+            "blunder",
+            SAC,
+            &[],
+            Some(json!({"key": "hanging_severe", "params": {"piece": "knight"}})),
+        ),
+        (
+            "mistake",
+            ("4k3/8/3p4/8/3P4/5N2/8/4K3 w - - 0 1", "f3e5"),
+            &[],
+            Some(json!({"key": "exchanges_lose_piece", "params": {"piece": "knight"}})),
+        ),
+        (
+            "inaccuracy",
+            ("4k3/8/3p4/8/4P3/8/8/4K3 w - - 0 1", "e4e5"),
+            &[],
+            Some(json!({"key": "exchanges_lose_minor", "params": {}})),
+        ),
+        (
+            "blunder",
+            QUEEN,
+            &["c5d4"],
+            Some(json!({"key": "punishment_capture", "params": {"piece": "queen"}})),
+        ),
+        (
+            "blunder",
+            QUEEN,
+            &["a1d4"], // illegal: only the arrival square counts
+            Some(json!({"key": "punishment_capture", "params": {"piece": "queen"}})),
+        ),
+        (
+            "mistake",
+            QUEEN,
+            &["zz"],
+            Some(json!({"key": "mistake_default", "params": {}})),
+        ),
+        (
+            "blunder",
+            QUEEN,
+            &[],
+            Some(json!({"key": "blunder_default", "params": {}})),
+        ),
+        (
+            "inaccuracy",
+            QUEEN,
+            &["e8e7"],
+            Some(json!({"key": "inaccuracy_default", "params": {}})),
+        ),
+        (
+            "blunder",
+            QUEEN,
+            &["d4c5"], // c5 holds a black pawn: only a piece of the mover counts
+            Some(json!({"key": "blunder_default", "params": {}})),
+        ),
+        (
+            "blunder",
+            ("4k3/8/8/8/8/8/8/R3K3 w - - 0 1", "e1d1"),
+            &["0000"], // python-chess null move: its to_square is a1
+            Some(json!({"key": "punishment_capture", "params": {"piece": "rook"}})),
+        ),
+    ];
+    for (classification, (fen, uci), pv, expected) in cases {
+        let board = pos(fen);
+        let played = mv(&board, uci);
+        let pv: Vec<String> = pv.iter().map(|s| s.to_string()).collect();
+        assert_eq!(
+            make_comment(classification, &board, played, see(fen, uci), &pv),
+            expected,
+            "{classification} {fen} {uci} {pv:?}"
+        );
+    }
+}
 
 #[test]
 fn test_py_round_rounds_the_binary_value() {
