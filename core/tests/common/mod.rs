@@ -15,8 +15,8 @@ pub struct ScriptedEngine<F: FnMut(&Chess) -> i32> {
     pub lines: HashMap<String, Vec<String>>,
     /// FEN -> whole answer; cp_for is not called
     pub answers: HashMap<String, Vec<Line>>,
-    /// (fen, multipv) of every request
-    pub calls: Vec<(String, u32)>,
+    /// (fen, multipv, start_fen, moves) of every request
+    pub calls: Vec<(String, u32, String, Vec<String>)>,
 }
 
 /// 10 cp everywhere.
@@ -50,7 +50,12 @@ impl<F: FnMut(&Chess) -> i32> ScriptedEngine<F> {
 
 impl<F: FnMut(&Chess) -> i32> Engine for ScriptedEngine<F> {
     fn analyse(&mut self, request: &EngineRequest) -> Result<Vec<Line>, String> {
-        self.calls.push((request.fen.to_string(), request.multipv));
+        self.calls.push((
+            request.fen.to_string(),
+            request.multipv,
+            request.start_fen.to_string(),
+            request.moves.to_vec(),
+        ));
         if let Some(lines) = self.answers.get(request.fen) {
             return Ok(lines.clone());
         }

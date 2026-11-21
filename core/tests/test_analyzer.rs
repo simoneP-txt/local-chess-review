@@ -461,8 +461,8 @@ fn test_analyze_searches_each_position_once() {
     let mut engine = scripted();
     let moves = analyze(OPENING, &mut engine).moves;
     assert_eq!(engine.calls.len(), 5);
-    assert!(engine.calls.iter().all(|&(_, multipv)| multipv == 2));
-    let fens: HashSet<&String> = engine.calls.iter().map(|(fen, _)| fen).collect();
+    assert!(engine.calls.iter().all(|&(_, multipv, ..)| multipv == 2));
+    let fens: HashSet<&String> = engine.calls.iter().map(|(fen, ..)| fen).collect();
     assert_eq!(fens.len(), 5);
     for m in &moves {
         // line 1 plays the first legal move: reading line 2 instead fails here

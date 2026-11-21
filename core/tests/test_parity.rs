@@ -1,12 +1,16 @@
 mod common;
 
+use std::fs;
+use std::path::Path;
+
 use common::{analyze, scripted, scripted_with};
 use review_core::accuracy::pstdev;
-use review_core::analysis::{classify, evaluate};
+use review_core::analysis::{Carry, classify, classify_ply, evaluate, summarize};
 use review_core::engine::{Line, Score};
 use review_core::game::{Game, parse_elo, read_game};
 use review_core::openings::{Book, epd};
 use review_core::py::{py_round, py_round_int};
+use review_core::replay::ReplayEngine;
 use review_core::see::static_exchange_evaluation;
 use review_core::special::make_comment;
 use review_core::stats::{PhaseStats, compute_phases, estimate_performance_elo};
@@ -459,6 +463,95 @@ fn test_classify_checks_the_engine_answers() {
         evals[i].clear();
         let error = classify(&game, &evals, no_elo).unwrap_err();
         assert_eq!(error, format!("no lines in the engine answer: {fen}"));
+    }
+}
+
+#[test]
+fn test_engine_requests_carry_start_fen_and_moves() {
+    // spec 6.3, note 2: request i holds the game's first position and the first i moves, so a
+    // real engine sees what python-chess shows Stockfish; the values are python-chess's
+    let from_fen = "[SetUp \"1\"]\n[FEN \"4k3/8/8/8/8/8/4P3/4K3 w KQkq - 0 0\"]\n\n\
+                    1. e4 Kd7 2. Kd2 Ke6 *\n";
+    let cases: [(&str, &str, [&[&str]; 5]); 2] = [
+        (
+            "1. e4 e5 2. Nf3 Nc6 *\n",
+            START_FEN,
+            [
+                &[],
+                &["e2e4"],
+                &["e2e4", "e7e5"],
+                &["e2e4", "e7e5", "g1f3"],
+                &["e2e4", "e7e5", "g1f3", "b8c6"],
+            ],
+        ),
+        (
+            from_fen,
+            "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1",
+            [
+                &[],
+                &["e2e4"],
+                &["e2e4", "e8d7"],
+                &["e2e4", "e8d7", "e1d2"],
+                &["e2e4", "e8d7", "e1d2", "d7e6"],
+            ],
+        ),
+    ];
+    for (pgn, start_fen, moves) in cases {
+        let mut engine = scripted();
+        analyze(pgn, &mut engine);
+        let got: Vec<(&str, Vec<&str>)> = engine
+            .calls
+            .iter()
+            .map(|(_, _, start, ucis)| (start.as_str(), ucis.iter().map(String::as_str).collect()))
+            .collect();
+        let want: Vec<(&str, Vec<&str>)> = moves.iter().map(|m| (start_fen, m.to_vec())).collect();
+        assert_eq!(got, want, "{pgn:?}");
+    }
+}
+
+#[test]
+fn test_classify_ply_matches_classify() {
+    // ply by ply with the returned Carry, then summarize: the mini game has Great, Miss and
+    // blunders, so a Carry that drops the previous move shows here
+    let data = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("data");
+    let game = read(&fs::read_to_string(data.join("mini.pgn")).unwrap());
+    let engine_json = fs::read_to_string(data.join("mini.engine.json")).unwrap();
+    let (mut engine, depth) = ReplayEngine::from_json(&engine_json).unwrap();
+    let evals = evaluate(&game, &mut engine, depth).unwrap();
+    let real_elo = ByColor {
+        white: game.white_elo,
+        black: game.black_elo,
+    };
+    let whole = classify(&game, &evals, real_elo).unwrap();
+
+    let mut moves = Vec::new();
+    let mut carry = Carry::default();
+    for i in 0..game.plies.len() {
+        let (m, next) = classify_ply(&game, i, &evals[i], &evals[i + 1], carry).unwrap();
+        moves.push(m);
+        carry = next;
+    }
+    let by_ply = summarize(&game, moves, real_elo);
+    assert_eq!(
+        serde_json::to_value(by_ply).unwrap(),
+        serde_json::to_value(whole).unwrap()
+    );
+}
+
+#[test]
+fn test_classify_ply_empty_answer_is_an_error() {
+    let after_e4 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1";
+    let game = read("1. e4 *");
+    let evals = evaluate(&game, &mut scripted(), 15).unwrap();
+    let carry = Carry::default();
+    for (before, after, fen) in [
+        (&[][..], &evals[1][..], START_FEN),
+        (&evals[0], &[], after_e4),
+    ] {
+        let error = classify_ply(&game, 0, before, after, carry).err();
+        assert_eq!(error, Some(format!("no lines in the engine answer: {fen}")));
     }
 }
 

@@ -77,25 +77,46 @@ pub struct Analysis {
     pub start_fen: String,
 }
 
+/// What ply i needs from the plies before it (Great (a) and Miss read the previous move).
+#[derive(Clone, Copy, Default)]
+pub struct Carry {
+    pub wp_before_opponent_move: Option<f64>,
+    pub previous_blunder: bool,
+}
+
+/// The UCI moves of the game, the slices the requests borrow.
+pub fn game_ucis(game: &Game) -> Vec<String> {
+    game.plies.iter().map(|p| p.uci.clone()).collect()
+}
+
+/// n + 1 requests in game order, multipv 2: request i has fen of position i, the game's
+/// start_fen and moves = &ucis[..i].
+pub fn requests<'a>(game: &'a Game, ucis: &'a [String], depth: u32) -> Vec<EngineRequest<'a>> {
+    let fens = std::iter::once(&game.start_fen).chain(game.plies.iter().map(|p| &p.fen_after));
+    fens.enumerate()
+        .map(|(i, fen)| EngineRequest {
+            fen,
+            start_fen: &game.start_fen,
+            moves: &ucis[..i],
+            depth,
+            multipv: 2,
+        })
+        .collect()
+}
+
 /// Step 2: one search per position, in game order: the first position, then one after each ply.
 pub fn evaluate(
     game: &Game,
     engine: &mut dyn Engine,
     depth: u32,
 ) -> Result<Vec<Vec<Line>>, String> {
-    let ucis: Vec<String> = game.plies.iter().map(|p| p.uci.clone()).collect();
-    let fens = std::iter::once(&game.start_fen).chain(game.plies.iter().map(|p| &p.fen_after));
-    fens.enumerate()
-        .map(|(i, fen)| {
-            let lines = engine.analyse(&EngineRequest {
-                fen,
-                start_fen: &game.start_fen,
-                moves: &ucis[..i],
-                depth,
-                multipv: 2,
-            })?;
+    let ucis = game_ucis(game);
+    requests(game, &ucis, depth)
+        .iter()
+        .map(|request| {
+            let lines = engine.analyse(request)?;
             if lines.is_empty() {
-                return Err(format!("no lines in the engine answer: {fen}"));
+                return Err(format!("no lines in the engine answer: {}", request.fen));
             }
             Ok(lines)
         })
@@ -123,153 +144,178 @@ pub fn classify(
         return Err(format!("no lines in the engine answer: {fen}"));
     }
 
-    let mut moves_out: Vec<MoveAnalysis> = Vec::new();
-    let mut wp_before_opponent_move: Option<f64> = None;
+    let mut moves = Vec::new();
+    let mut carry = Carry::default();
+    for (i, pair) in evals.windows(2).enumerate() {
+        let (analysis, next) = classify_ply(game, i, &pair[0], &pair[1], carry)?;
+        moves.push(analysis);
+        carry = next;
+    }
+    Ok(summarize(game, moves, real_elo))
+}
 
-    for (i, ply) in game.plies.iter().enumerate() {
-        let color_to_move = ply.before.turn();
+/// Ply i of the game from its BEFORE (evals[i]) and AFTER (evals[i + 1]) answers.
+pub fn classify_ply(
+    game: &Game,
+    i: usize,
+    before: &[Line],
+    after: &[Line],
+    carry: Carry,
+) -> Result<(MoveAnalysis, Carry), String> {
+    let ply = &game.plies[i];
+    let color_to_move = ply.before.turn();
 
-        // 1) BEFORE: the search of the current position (line 1 best, line 2 2nd best)
-        let best_info = &evals[i][0];
-        let second_info = evals[i].get(1);
+    // 1) BEFORE: the search of the current position (line 1 best, line 2 2nd best)
+    let Some(best_info) = before.first() else {
+        return Err(format!("no lines in the engine answer: {}", ply.fen_before));
+    };
+    let second_info = before.get(1);
 
-        let best_pv = &best_info.pv;
-        // shortcut: a 0000 or illegal first move is an error, while python-chess writes "" for 0000
-        // and a SAN for an illegal move from an occupied square (e2e5 is e5); Stockfish sends
-        // neither, upgrade if another source fills the lines.
-        let best_move = best_pv
-            .first()
-            .map(|uci| {
-                uci.parse::<UciMove>()
-                    .ok()
-                    .and_then(|m| m.to_move(&ply.before).ok())
-                    .ok_or_else(|| format!("unreadable best move {uci} in {}", ply.fen_before))
-            })
-            .transpose()?;
-        let pv_uci: Vec<String> = best_pv.iter().take(PV_PLIES_TO_KEEP).cloned().collect();
+    let best_pv = &best_info.pv;
+    // shortcut: a 0000 or illegal first move is an error, while python-chess writes "" for 0000
+    // and a SAN for an illegal move from an occupied square (e2e5 is e5); Stockfish sends
+    // neither, upgrade if another source fills the lines.
+    let best_move = best_pv
+        .first()
+        .map(|uci| {
+            uci.parse::<UciMove>()
+                .ok()
+                .and_then(|m| m.to_move(&ply.before).ok())
+                .ok_or_else(|| format!("unreadable best move {uci} in {}", ply.fen_before))
+        })
+        .transpose()?;
+    let pv_uci: Vec<String> = best_pv.iter().take(PV_PLIES_TO_KEEP).cloned().collect();
 
-        let score_best = best_info.score;
-        let wp_before_best = score_to_wp(score_best, color_to_move, color_to_move);
-        let eval_before_cp = score_to_cp(score_best, color_to_move, color_to_move);
+    let score_best = best_info.score;
+    let wp_before_best = score_to_wp(score_best, color_to_move, color_to_move);
+    let eval_before_cp = score_to_cp(score_best, color_to_move, color_to_move);
 
-        let second_best_wp =
-            second_info.map(|line| score_to_wp(line.score, color_to_move, color_to_move));
+    let second_best_wp =
+        second_info.map(|line| score_to_wp(line.score, color_to_move, color_to_move));
 
-        let best_move_san = best_move.map_or(String::new(), |m| {
-            SanPlus::from_move(ply.before.clone(), m).to_string()
-        });
-        let best_move_uci = best_pv.first().cloned().unwrap_or_default();
+    let best_move_san = best_move.map_or(String::new(), |m| {
+        SanPlus::from_move(ply.before.clone(), m).to_string()
+    });
+    let best_move_uci = best_pv.first().cloned().unwrap_or_default();
 
-        // 2) AFTER: the search of the new position -> residual WP + "punishment" PV
-        //    (the line the opponent uses to exploit the just-played move)
-        let info_after = &evals[i + 1][0];
-        let score_after = info_after.score;
-        let after_turn = !color_to_move;
-        let wp_after = score_to_wp(score_after, after_turn, color_to_move);
-        let eval_after_cp = score_to_cp(score_after, after_turn, color_to_move);
-        let eval_white_cp = score_to_cp(score_after, after_turn, Color::White);
-        let wp_white_after = score_to_wp(score_after, after_turn, Color::White);
-        let pv_after_uci: Vec<String> = info_after
-            .pv
-            .iter()
-            .take(PV_PLIES_TO_KEEP)
-            .cloned()
-            .collect();
+    // 2) AFTER: the search of the new position -> residual WP + "punishment" PV
+    //    (the line the opponent uses to exploit the just-played move)
+    let Some(info_after) = after.first() else {
+        return Err(format!("no lines in the engine answer: {}", ply.fen_after));
+    };
+    let score_after = info_after.score;
+    let after_turn = !color_to_move;
+    let wp_after = score_to_wp(score_after, after_turn, color_to_move);
+    let eval_after_cp = score_to_cp(score_after, after_turn, color_to_move);
+    let eval_white_cp = score_to_cp(score_after, after_turn, Color::White);
+    let wp_white_after = score_to_wp(score_after, after_turn, Color::White);
+    let pv_after_uci: Vec<String> = info_after
+        .pv
+        .iter()
+        .take(PV_PLIES_TO_KEEP)
+        .cloned()
+        .collect();
 
-        let wp_drop = (wp_before_best - wp_after).max(0.0);
-        let cp_loss = ACPL_CP_LOSS_CAP.min((eval_before_cp - eval_after_cp).max(0));
-        // 5.8.14: the played move against the first move of line 1, castling as e1g1
-        let is_best = best_pv.first() == Some(&ply.uci);
-        let see_played = static_exchange_evaluation(&ply.before, ply.played);
+    let wp_drop = (wp_before_best - wp_after).max(0.0);
+    let cp_loss = ACPL_CP_LOSS_CAP.min((eval_before_cp - eval_after_cp).max(0));
+    // 5.8.14: the played move against the first move of line 1, castling as e1g1
+    let is_best = best_pv.first() == Some(&ply.uci);
+    let see_played = static_exchange_evaluation(&ply.before, ply.played);
 
-        let base_class = classify_standard(wp_drop, is_best);
+    let base_class = classify_standard(wp_drop, is_best);
 
-        // ===== ASSIGNMENT HIERARCHY =====
-        // Brilliant > Great > Book (except a base mistake or blunder: the database holds trap
-        // lines) > Miss (the opponent's previous move was a blunder and ours does not take
-        // advantage) > base class
-        let final_class = if is_brilliant(
-            &ply.before,
-            ply.played,
-            wp_before_best,
-            wp_after,
-            eval_after_cp,
-            second_best_wp,
-            is_best,
-        ) {
-            "brilliant"
-        } else if is_great_move(
-            is_best,
-            base_class,
-            wp_before_best,
-            wp_after,
-            second_best_wp,
-            wp_before_opponent_move,
-        ) {
-            "great"
-        } else if ply.in_book && !matches!(base_class, "mistake" | "blunder") {
-            "book"
-        } else if !matches!(base_class, "best" | "excellent")
-            && moves_out
-                .last()
-                .is_some_and(|m| m.classification == "blunder")
-        {
-            "miss"
-        } else {
-            base_class
-        };
+    // ===== ASSIGNMENT HIERARCHY =====
+    // Brilliant > Great > Book (except a base mistake or blunder: the database holds trap
+    // lines) > Miss (the opponent's previous move was a blunder and ours does not take
+    // advantage) > base class
+    let final_class = if is_brilliant(
+        &ply.before,
+        ply.played,
+        wp_before_best,
+        wp_after,
+        eval_after_cp,
+        second_best_wp,
+        is_best,
+    ) {
+        "brilliant"
+    } else if is_great_move(
+        is_best,
+        base_class,
+        wp_before_best,
+        wp_after,
+        second_best_wp,
+        carry.wp_before_opponent_move,
+    ) {
+        "great"
+    } else if ply.in_book && !matches!(base_class, "mistake" | "blunder") {
+        "book"
+    } else if !matches!(base_class, "best" | "excellent") && carry.previous_blunder {
+        "miss"
+    } else {
+        base_class
+    };
+    let carry = Carry {
         // The next mover's WP in this BEFORE position, unrounded, for its Great (a).
         // A line-1 move is no error, even if the next search sees it worse (horizon effect).
-        wp_before_opponent_move = if is_best {
+        wp_before_opponent_move: if is_best {
             None
         } else {
             Some(1.0 - wp_before_best)
-        };
+        },
+        previous_blunder: final_class == "blunder",
+    };
 
-        let comment = make_comment(
-            final_class,
-            &ply.before,
-            ply.played,
-            see_played,
-            &pv_after_uci,
-        );
+    let comment = make_comment(
+        final_class,
+        &ply.before,
+        ply.played,
+        see_played,
+        &pv_after_uci,
+    );
 
-        moves_out.push(MoveAnalysis {
-            ply: i as u32 + 1,
-            move_number: ply.move_number,
-            color: ply.color,
-            san: ply.san.clone(),
-            uci: ply.uci.clone(),
-            fen_before: ply.fen_before.clone(),
-            fen_after: ply.fen_after.clone(),
-            best_move_san,
-            best_move_uci,
-            eval_before_cp,
-            eval_after_cp,
-            eval_white_cp,
-            wp_before: py_round(wp_before_best, 4),
-            wp_after: py_round(wp_after, 4),
-            wp_white_after: py_round(wp_white_after, 4),
-            wp_drop: py_round(wp_drop, 4),
-            cp_loss,
-            classification: final_class,
-            is_best,
-            phase: ply.phase,
-            see_played,
-            comment,
-            pv_uci,
-            pv_after_uci,
-            clock_after: ply.clock.map(|clock| py_round(clock, 2)),
-        });
-    }
+    let analysis = MoveAnalysis {
+        ply: i as u32 + 1,
+        move_number: ply.move_number,
+        color: ply.color,
+        san: ply.san.clone(),
+        uci: ply.uci.clone(),
+        fen_before: ply.fen_before.clone(),
+        fen_after: ply.fen_after.clone(),
+        best_move_san,
+        best_move_uci,
+        eval_before_cp,
+        eval_after_cp,
+        eval_white_cp,
+        wp_before: py_round(wp_before_best, 4),
+        wp_after: py_round(wp_after, 4),
+        wp_white_after: py_round(wp_white_after, 4),
+        wp_drop: py_round(wp_drop, 4),
+        cp_loss,
+        classification: final_class,
+        is_best,
+        phase: ply.phase,
+        see_played,
+        comment,
+        pv_uci,
+        pv_after_uci,
+        clock_after: ply.clock.map(|clock| py_round(clock, 2)),
+    };
+    Ok((analysis, carry))
+}
 
-    let accuracy = compute_accuracy(&moves_out);
-    let acpl = compute_acpl(&moves_out);
+/// Accuracy, ACPL, performance Elo, series, counts, phases and headers from the classified plies.
+pub fn summarize(
+    game: &Game,
+    moves: Vec<MoveAnalysis>,
+    real_elo: ByColor<Option<i64>>,
+) -> Analysis {
+    let accuracy = compute_accuracy(&moves);
+    let acpl = compute_acpl(&moves);
     let performance_elo = ByColor {
         white: estimate_performance_elo(accuracy.white, real_elo.white),
         black: estimate_performance_elo(accuracy.black, real_elo.black),
     };
-    let wp_series = moves_out
+    let wp_series = moves
         .iter()
         .map(|m| WpPoint {
             ply: m.ply,
@@ -278,14 +324,14 @@ pub fn classify(
             color: m.color,
         })
         .collect();
-    let move_counts = count_classifications(&moves_out);
-    let drops: Vec<(&str, &str, f64)> = moves_out
+    let move_counts = count_classifications(&moves);
+    let drops: Vec<(&str, &str, f64)> = moves
         .iter()
         .map(|m| (m.phase, m.color, m.wp_drop))
         .collect();
     let phases = compute_phases(&drops);
 
-    Ok(Analysis {
+    Analysis {
         headers: game.headers.clone(),
         accuracy,
         acpl,
@@ -305,8 +351,8 @@ pub fn classify(
             .clone()
             .map(|(eco, name)| Opening { eco, name }),
         start_fen: game.start_fen.clone(),
-        moves: moves_out,
-    })
+        moves,
+    }
 }
 
 /// The analysis of the PGN's first game: the Elo arguments, or else the header values, cap the
