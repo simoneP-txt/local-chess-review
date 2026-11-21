@@ -378,6 +378,111 @@ with.
 
 ---
 
+## Rust analysis core
+
+`core/` holds `review-core`, a Rust library (`review_core`) that ports
+`analyzer.py` and `openings.py`. Fed the recorded Stockfish answers of a
+fixture game, it returns the same analysis as `analyzer.py`, field by
+field. The app does not use it yet: it still runs on the Python analyzer,
+and the core has no live Stockfish.
+
+An analysis takes three steps:
+
+1. `game::read_game` reads the PGN: headers, start position, and for each
+   ply everything that does not depend on the engine.
+2. `analysis::evaluate` asks the engine for the n + 1 positions (the first,
+   then one after each ply), with multipv 2.
+3. `analysis::classify`, a pure function, runs the loop of `analyze_pgn`.
+
+The engine sits behind the `Engine` trait. Its only implementation today is
+`ReplayEngine`, which answers from a recorded `<id>.engine.json`. The core
+keeps no global state: the caller builds the opening book once with
+`Book::load()`, from the TSVs of `data/chess-openings/` that the compiler
+embeds in the library.
+
+Toolchain: Rust 1.100 (stable, MSVC), edition 2024. Dependencies:
+`shakmaty`, `pgn-reader`, `serde` and `serde_json`, with their versions in
+`core/Cargo.toml`.
+
+### Tests
+
+From the project root:
+
+```powershell
+cargo test --manifest-path core/Cargo.toml
+```
+
+The tests need no engine and no fixtures.
+
+### Replay command
+
+```powershell
+cargo run --release --manifest-path core/Cargo.toml --bin replay -- <fixture dir> <output dir> [id ...]
+```
+
+Without ids it takes every `<id>.engine.json` in the fixture folder. For
+each game it reads `<id>.pgn` and `<id>.engine.json`, analyzes at the
+recorded depth, writes `<output dir>/<id>.analysis.json` and compares it
+with `<fixture dir>/<id>.analysis.json`. Key order does not count, JSON
+types do (`1` differs from `1.0`). It prints one line per game, then the
+total:
+
+- `ok <id>`: the two files are equal.
+- `diff <id> <first difference>`: the path of the first field that differs
+  and the two values, e.g. `moves[12].wp_drop: <python> != <rust>`; or the
+  path followed by `missing`, `unexpected` or `length <python> != <rust>`.
+- `error <id>: <message>`: the command could not read, analyze or write
+  the game.
+- `<equal>/<total> equal`: the last line.
+
+Exit codes:
+
+- `0`: every game is equal.
+- `1`: a game differs or fails, or, without ids, the fixture folder cannot
+  be read or holds no `*.engine.json`.
+- `2`: wrong usage, or the output folder is the fixture folder. In that
+  case the command stops before writing anything, so it never overwrites
+  the Python `analysis.json` files.
+
+### Parity gate
+
+```powershell
+cargo run --release --manifest-path core/Cargo.toml --bin replay -- tests/fixtures tests/fixtures-rust
+.\.venv\Scripts\python.exe scripts\baseline.py diff tests\fixtures-rust
+```
+
+The replay must exit with code 0 and end with `<n>/<n> equal`: `46/46 equal`
+on the current 46 fixture games. The diff must end with
+`total: 0 class changes in 0 games, 0 accuracy changes`.
+
+The gate compares the Rust output with the stored Python analyses in
+`tests/fixtures/`. After a change to `core/` alone, run the gate directly.
+After a change to `analyzer.py`, `openings.py` or the TSVs, first run
+`.\.venv\Scripts\python.exe scripts\baseline.py replay`: it rewrites the
+Python `analysis.json` files from the recorded engine answers. Then run the
+gate.
+
+`tests/fixtures-rust/` and `core/target/` are git-ignored.
+`tests/fixtures-rust/` holds local per-game output, like `tests/fixtures/`.
+A fresh clone has neither of the two fixture folders: build the fixtures
+first with `fetch` and `fixtures` (see
+[Tests and baseline](#tests-and-baseline)).
+
+### Known limits
+
+The core copies python-chess where the fixture games, the ported tests and
+the points where Rust and Python could differ need it. Elsewhere it takes
+shortcuts: Chess960 and set-up positions that `shakmaty` rejects (no king,
+for example) give an error, PGN that python-chess reads another way (null
+moves, long notation, variations) follows `pgn-reader`, and where
+python-chess plays a SAN with a missing or extra `x` (`ed5`) or with junk
+glued on (`exd6e.p.`), the core ends the main line or reads the next move
+for the wrong side. Each shortcut has a `shortcut:` comment in the code
+that says what it leaves out and when to redo it:
+`git grep -n "shortcut:" -- core` lists them.
+
+---
+
 ## Tech stack
 
 - **Backend**: Python 3, [Flask](https://flask.palletsprojects.com/),
@@ -404,6 +509,32 @@ local-chess-review/
 ├── chessreview.spec        # PyInstaller build config
 ├── build.ps1               # builds dist\ChessReview\ChessReview.exe
 ├── start.ps1               # quick launcher for dev mode
+├── core/                   # Rust port of analyzer.py and openings.py (package review-core)
+│   ├── Cargo.toml          # package review-core, library review_core, dependencies
+│   ├── Cargo.lock
+│   ├── src/
+│   │   ├── lib.rs          # modules, ByColor<T>, pub use of analyze_pgn
+│   │   ├── engine.rs       # Score, Line, EngineRequest, trait Engine
+│   │   ├── py.rs           # py_round, py_round_int: Python's round()
+│   │   ├── scoring.rs      # constants, cp and WP, material, phase, base class
+│   │   ├── see.rs          # material_taken, SEE, sacrifice_balance
+│   │   ├── special.rs      # make_comment, is_brilliant, is_great_move
+│   │   ├── accuracy.rs     # win%, move and game accuracy, pstdev
+│   │   ├── stats.rs        # performance Elo, phases
+│   │   ├── openings.rs     # Book from the TSVs embedded at compile time, epd
+│   │   ├── game.rs         # step 1: PGN, headers, start position, plies, clocks
+│   │   ├── analysis.rs     # steps 2 and 3, output structs, analyze_pgn
+│   │   ├── replay.rs       # ReplayEngine: recorded Stockfish answers
+│   │   ├── compare.rs      # first_difference between two analyses
+│   │   └── bin/replay.rs   # the replay command (parity gate)
+│   └── tests/
+│       ├── common/mod.rs   # ScriptedEngine, analyze
+│       ├── test_analyzer.rs # port of tests/test_analyzer.py
+│       ├── test_accuracy.rs # port of tests/test_accuracy.py
+│       ├── test_openings.rs # port of tests/test_openings.py
+│       ├── test_parity.rs  # Rust/Python divergence points without a Python test
+│       ├── test_replay.rs  # ReplayEngine, first_difference, the replay command
+│       └── data/           # mini.pgn + its engine answers and analysis: an invented game
 ├── scripts/
 │   ├── download_puzzles.py # one-shot: downloads + filters Lichess puzzles
 │   ├── trim_puzzles.py     # one-shot: trims an existing puzzles.db
@@ -423,7 +554,8 @@ local-chess-review/
 │   ├── test_dashboard_page.py # browser test of the engine panel; skipped without Playwright
 │   ├── test_review_page.py # browser test of the review page; skipped without Playwright
 │   ├── test_puzzle_page.py # browser test of the mini-puzzle rules; skipped without Playwright
-│   └── fixtures/           # LOCAL ONLY: PGNs, recorded engine answers, analyses
+│   ├── fixtures/           # LOCAL ONLY: PGNs, recorded engine answers, analyses
+│   └── fixtures-rust/      # LOCAL ONLY: analyses written by the Rust replay command
 ├── data/
 │   └── chess-openings/     # a.tsv ... e.tsv (lichess-org/chess-openings, CC0) + README.md
 ├── engine/

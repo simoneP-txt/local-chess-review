@@ -212,7 +212,12 @@ impl Visitor for GameReader<'_> {
         // differently. A line of spaces between moves ends a python-chess game and not this one,
         // and after two or more blank lines below the tags python-chess reads no moves. The result
         // after the moves does not replace a Result tag of *, and malformed tag lines read another
-        // way. Upgrade if a game source writes null moves, long notation or such layouts.
+        // way. shakmaty's San::to_move wants the capture x to match the move and python-chess
+        // ignores it, so 2. ed5 (a capture without x) or Nxf3 onto an empty square ends the main
+        // line here while python-chess plays on. pgn-reader drops a SAN with junk glued on
+        // (exd6e.p.) and reads the next move for the wrong side, where python-chess keeps exd6.
+        // Upgrade if a game source writes null moves, long notation, such layouts, or SAN with a
+        // wrong x or junk glued on.
         let Ok(played) = san_plus.san.to_move(&m.pos) else {
             m.ended = true;
             return ControlFlow::Continue(());
