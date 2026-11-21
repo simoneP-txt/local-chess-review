@@ -1,12 +1,14 @@
 use review_core::accuracy::pstdev;
+use review_core::openings::epd;
 use review_core::py::{py_round, py_round_int};
 use review_core::see::static_exchange_evaluation;
 use review_core::special::make_comment;
 use review_core::stats::{PhaseStats, compute_phases};
 use serde_json::{Value, json};
 use shakmaty::fen::Fen;
+use shakmaty::san::San;
 use shakmaty::uci::UciMove;
-use shakmaty::{CastlingMode, Chess, Move};
+use shakmaty::{CastlingMode, Chess, Move, Position};
 
 fn pos(fen: &str) -> Chess {
     fen.parse::<Fen>()
@@ -23,6 +25,15 @@ fn mv(board: &Chess, uci: &str) -> Move {
 fn see(fen: &str, uci: &str) -> i32 {
     let board = pos(fen);
     static_exchange_evaluation(&board, mv(&board, uci))
+}
+
+fn epd_after(sans: &[&str]) -> String {
+    let mut board = Chess::default();
+    for san in sans {
+        let m = san.parse::<San>().unwrap().to_move(&board).unwrap();
+        board.play_unchecked(m);
+    }
+    epd(&board)
 }
 
 #[test]
@@ -184,6 +195,20 @@ fn test_exp_matches_python() {
             f64::from_bits(x)
         );
     }
+}
+
+#[test]
+fn test_epd_writes_en_passant_only_when_legal() {
+    // 5.8.7
+    // after 1. e4 no black pawn can take en passant; after 1. e4 d5 2. e5 f5, exf6 is legal
+    assert_eq!(
+        epd_after(&["e4"]),
+        "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -"
+    );
+    assert_eq!(
+        epd_after(&["e4", "d5", "e5", "f5"]),
+        "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6"
+    );
 }
 
 // Python 3.11.9 math.exp on Windows, on the arguments cp_to_wp and lichess_win_pct pass for cp

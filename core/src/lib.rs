@@ -1,5 +1,6 @@
 pub mod accuracy;
 pub mod engine;
+pub mod openings;
 pub mod py;
 pub mod scoring;
 pub mod see;
