@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Chess Review, sito</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Noto+Sans+Symbols+2&amp;display=swap">
+<style>
+body{margin:0}
+:focus-visible{outline:3px solid #14262B;outline-offset:2px}
+[data-theme="dark"] :focus-visible,[data-surface="petrol"] :focus-visible{outline-color:#F2EDE0}
+</style>
+</helmet>
+<div ref="{{setRoot}}" data-theme="{{themeAttr}}" style="box-sizing: border-box; width: 100%; min-height: 100vh; overflow-x: clip; display: flex; flex-direction: column; background: {{t.bg}}; color: {{t.text}}; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif">
+
+  <header data-surface="petrol" style="flex: none; background: #0F4C57; color: #FBF8F0; border-bottom: {{t.headerBorder}}">
+    <div style="box-sizing: border-box; max-width: {{L.wrapMax}}; height: {{L.headerH}}; margin: 0 auto; padding: 0 {{L.pad}}; display: flex; align-items: center; gap: {{L.headGap}}">
+      <a href="#inizio" style="flex: none; min-height: 48px; display: flex; align-items: center; gap: 10px; color: #FBF8F0; text-decoration: none">
+        <span aria-hidden="true" style="flex: none; width: {{L.brandIcon}}; height: {{L.brandIcon}}"><svg viewBox="0 0 256 256" style="display: block; width: 100%; height: 100%"><line x1="166.0" y1="166.0" x2="222.0" y2="222.0" style="stroke: #14262B; stroke-width: 44; stroke-linecap: round"></line><line x1="166.0" y1="166.0" x2="222.0" y2="222.0" style="stroke: #E8A33D; stroke-width: 30; stroke-linecap: round"></line><circle cx="104.0" cy="104.0" r="76.0" style="fill: #DCE8E6"></circle><path d="M104 28A76 76 0 0 1 180 104H104Z" style="fill: #4A8590"></path><path d="M104 180A76 76 0 0 1 28 104H104Z" style="fill: #4A8590"></path><g transform="translate(34.3 39.2) scale(3.0986)"><path d="M21.25 3.5h2.5V6h2.5v2.5h-2.5v4h-2.5v-4h-2.5V6h2.5zM21.5 12.5h2v4h-2zM22.5 16.5C25 14 30.5 13.8 32.5 17.5C34.3 21 32.5 26 31 30H14C12.5 26 10.7 21 12.5 17.5C14.5 13.8 20 14 22.5 16.5ZM14 30h17l.8 3H13.2zM11.5 33h22a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-22A1.5 1.5 0 0 1 10 37.5v-3A1.5 1.5 0 0 1 11.5 33z" style="fill: #1B2B30; stroke: #14262B; stroke-width: 1.130; stroke-linejoin: round"></path><path d="M14.8 26.5h15.4M22.5 17.5v8M13.5 36h18" style="fill: none; stroke: #DCE8E6; stroke-width: 0.807; stroke-linecap: round"></path></g><circle cx="104.0" cy="104.0" r="83.0" style="fill: none; stroke: #14262B; stroke-width: 16"></circle><circle cx="104.0" cy="104.0" r="83.0" style="fill: none; stroke: #F5F1E8; stroke-width: 6"></circle></svg></span>
+        <span style="font-family: 'Fraunces', Georgia, serif; font-size: {{L.brandSize}}; font-weight: 600; white-space: nowrap">Chess Review</span>
+      </a>
+      <span style="flex: 1 1 auto"></span>
+      <sc-if value="{{notPhone}}" hint-placeholder-val="{{ true }}">
+        <nav aria-label="Sezioni della pagina" style="display: flex; align-items: center">
+          <a href="#cosa-fa" style="min-height: 48px; padding: 0 12px; display: flex; align-items: center; color: #FBF8F0; font-size: 16px; font-weight: 500; text-decoration: none">Cosa fa</a>
+          <a href="#installa" style="min-height: 48px; padding: 0 12px; display: flex; align-items: center; color: #FBF8F0; font-size: 16px; font-weight: 500; text-decoration: none">Installazione</a>
+          <a href="#verifica" style="min-height: 48px; padding: 0 12px; display: flex; align-items: center; color: #FBF8F0; font-size: 16px; font-weight: 500; text-decoration: none">Verifica</a>
+        </nav>
+      </sc-if>
+      <div role="group" aria-label="Lingua" style="flex: none; display: flex; border: 1.5px solid #FBF8F0; border-radius: 12px; overflow: hidden">
+        <button type="button" aria-pressed="true" style="width: 48px; height: 48px; border: 0; background: #FBF8F0; color: #0F4C57; font: 600 14px/1 'IBM Plex Mono', monospace; cursor: pointer">IT</button>
+        <button type="button" aria-pressed="false" title="Nel mockup i testi restano in italiano" style="width: 48px; height: 48px; border: 0; background: transparent; color: #FBF8F0; font: 600 14px/1 'IBM Plex Mono', monospace; cursor: pointer">EN</button>
+      </div>
+      <button type="button" onClick="{{toggleTheme}}" aria-pressed="{{darkPressed}}" aria-label="Tema scuro" style="flex: none; width: 48px; height: 48px; border: 0; border-radius: 12px; background: transparent; color: #FBF8F0; display: flex; align-items: center; justify-content: center; cursor: pointer">
+        <sc-if value="{{isLight}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg></sc-if>
+        <sc-if value="{{isDark}}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M12 7a5 5 0 1 0 0 10a5 5 0 1 0 0-10zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></sc-if>
+      </button>
+    </div>
+  </header>
+
+  <main style="flex: none">
+    <section id="inizio" aria-labelledby="titolo">
+      <div style="box-sizing: border-box; width: 100%; max-width: {{L.wrapMax}}; margin: 0 auto; padding-left: {{L.pad}}; padding-right: {{L.pad}}; padding-top: {{L.heroTop}}">
+        <div style="display: grid; grid-template-columns: {{L.heroCols}}; gap: {{L.heroGap}}; align-items: end">
+          <div style="min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 20px">
+            <div style="display: flex; align-items: center; gap: 16px">
+              <span aria-hidden="true" style="flex: none; width: {{L.tileIcon}}; height: {{L.tileIcon}}; border-radius: 22.4%; overflow: hidden; box-shadow: 0 0 0 1px rgba(20,38,43,.14)"><svg viewBox="0 0 1024 1024" style="display: block; width: 100%; height: 100%"><rect x="0" y="0" width="1024" height="1024" style="fill: #0F4C57"></rect><line x1="629.0" y1="629.0" x2="792.0" y2="792.0" style="stroke: #14262B; stroke-width: 144.73684210526315; stroke-linecap: round"></line><line x1="629.0" y1="629.0" x2="792.0" y2="792.0" style="stroke: #E8A33D; stroke-width: 98.6842105263158; stroke-linecap: round"></line><circle cx="424.0" cy="424.0" r="250.0" style="fill: #DCE8E6"></circle><path d="M424 174A250 250 0 0 1 674 424H424Z" style="fill: #4A8590"></path><path d="M424 674A250 250 0 0 1 174 424H424Z" style="fill: #4A8590"></path><g transform="translate(194.7 210.8) scale(10.1901)"><path d="M21.25 3.5h2.5V6h2.5v2.5h-2.5v4h-2.5v-4h-2.5V6h2.5zM21.5 12.5h2v4h-2zM22.5 16.5C25 14 30.5 13.8 32.5 17.5C34.3 21 32.5 26 31 30H14C12.5 26 10.7 21 12.5 17.5C14.5 13.8 20 14 22.5 16.5ZM14 30h17l.8 3H13.2zM11.5 33h22a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-22A1.5 1.5 0 0 1 10 37.5v-3A1.5 1.5 0 0 1 11.5 33z" style="fill: #1B2B30; stroke: #14262B; stroke-width: 1.129; stroke-linejoin: round"></path><path d="M14.8 26.5h15.4M22.5 17.5v8M13.5 36h18" style="fill: none; stroke: #DCE8E6; stroke-width: 0.790; stroke-linecap: round"></path></g><circle cx="424.0" cy="424.0" r="273.2" style="fill: none; stroke: #14262B; stroke-width: 52.63157894736842"></circle><circle cx="424.0" cy="424.0" r="273.2" style="fill: none; stroke: #F5F1E8; stroke-width: 19.736842105263158"></circle></svg></span>
+              <span style="min-width: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Gratuita · Windows, Android, iOS e macOS</span>
+            </div>
+            <h1 id="titolo" style="margin: 0; padding-bottom: 14px; border-bottom: 6px solid #E8A33D; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h1}}; font-weight: 500; line-height: 1; letter-spacing: -0.02em; color: {{t.title}}">Chess Review</h1>
+            <p style="margin: 0; max-width: 28ch; font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 400; font-size: {{L.deck}}; line-height: 1.3">Rivedi le tue partite mossa per mossa, con Stockfish che lavora sul tuo dispositivo.</p>
+            <p style="margin: 0; max-width: 60ch; font-size: {{L.body}}; line-height: 1.55; color: {{t.text2}}">Scarica le partite da Chess.com o Lichess e lascia che il motore le analizzi, anche senza connessione. Per ogni mossa trovi una classificazione, per ogni giocatore la precisione.</p>
+          </div>
+
+          <div id="scarica" style="min-width: 0; box-sizing: border-box; padding: {{L.cardPad}}; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}; display: grid; grid-template-columns: {{L.dlCols}}; gap: {{L.dlGap}}">
+            <div style="min-width: 0; display: flex; flex-direction: column; gap: 14px">
+              <sc-if value="{{dl.known}}" hint-placeholder-val="{{ true }}">
+                <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Per il tuo dispositivo</span>
+                <sc-if value="{{dl.available}}" hint-placeholder-val="{{ true }}">
+                  <a href="{{dl.href}}" style="min-height: 56px; box-sizing: border-box; padding: 10px 20px; border-radius: 12px; border: {{t.amberBorder}}; background: #E8A33D; color: #14262B; display: flex; align-items: center; justify-content: center; gap: 10px; font: 700 18px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; text-align: center; text-decoration: none"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg><span>{{dl.cta}}</span></a>
+                  <p style="margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font: 500 15px/1.4 'IBM Plex Mono', monospace">{{dl.meta}}<span style="flex: none; padding: 2px 8px; border: 1.5px dashed {{t.ctrlBorder}}; border-radius: 999px; font: 500 14px/1.3 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text2}}; letter-spacing: 0">esempio</span></p>
+                  <div style="display: flex; flex-wrap: wrap; gap: 0 20px">
+                    <a href="#installa" style="min-height: 48px; display: inline-flex; align-items: center; color: {{t.link}}; font-size: 16px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px">Come si installa</a>
+                    <sc-if value="{{dl.hasFile}}" hint-placeholder-val="{{ true }}"><a href="#verifica" style="min-height: 48px; display: inline-flex; align-items: center; color: {{t.link}}; font-size: 16px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px">Controlla il file</a></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{dl.soon}}" hint-placeholder-val="{{ false }}">
+                  <button type="button" disabled="" style="min-height: 56px; box-sizing: border-box; padding: 10px 20px; border-radius: 12px; border: 1.5px solid {{t.disBorder}}; background: {{t.disFill}}; color: {{t.disText}}; font: 700 18px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; cursor: not-allowed">Presto disponibile per iPhone e iPad</button>
+                  <p style="margin: 0; font-size: 16px; line-height: 1.5; color: {{t.text2}}">La versione per iPhone e iPad è in preparazione e arriverà su [App Store o TestFlight]. Intanto Chess Review c’è già per computer e Android.</p>
+                </sc-if>
+              </sc-if>
+              <sc-if value="{{dl.unknown}}" hint-placeholder-val="{{ false }}">
+                <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Scegli il tuo sistema</span>
+                <p style="margin: 0; font-size: 17px; line-height: 1.5">Non abbiamo riconosciuto questo dispositivo. Scegli il sistema su cui vuoi installare Chess Review.</p>
+              </sc-if>
+            </div>
+            <div style="min-width: 0; box-sizing: border-box; padding-top: {{L.otherPadTop}}; border-top: {{L.otherRule}}; display: flex; flex-direction: column; gap: 10px">
+              <sc-if value="{{dl.known}}" hint-placeholder-val="{{ true }}"><h2 style="margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Altre piattaforme</h2></sc-if>
+              <div style="display: grid; grid-template-columns: {{L.otherCols}}; gap: 10px">
+                <sc-for list="{{others}}" as="o" hint-placeholder-count="3">
+                  <sc-if value="{{o.enabled}}" hint-placeholder-val="{{ true }}">
+                    <a href="{{o.href}}" style="min-width: 0; min-height: 56px; box-sizing: border-box; padding: 8px 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; color: {{t.text}}; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 12px; text-decoration: none">
+                      <span style="font-size: 17px; font-weight: 600">{{o.name}}</span>
+                      <span style="font: 500 14px/1.3 'IBM Plex Mono', monospace; color: {{t.text2}}">{{o.meta}}</span>
+                    </a>
+                  </sc-if>
+                  <sc-if value="{{o.disabled}}" hint-placeholder-val="{{ false }}">
+                    <button type="button" disabled="" style="min-width: 0; min-height: 56px; box-sizing: border-box; padding: 8px 16px; border-radius: 12px; border: 1.5px solid {{t.disBorder}}; background: {{t.disFill}}; color: {{t.disText}}; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 12px; font-family: 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; text-align: left; cursor: not-allowed">
+                      <span style="font-size: 17px; font-weight: 600">{{o.name}}</span>
+                      <span style="font-size: 14px; font-weight: 600">{{o.meta}}</span>
+                    </button>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Schermate dell’app">
+      <div style="box-sizing: border-box; width: 100%; max-width: {{L.wrapMax}}; margin: 0 auto; padding-left: {{L.pad}}; padding-right: {{L.pad}}; padding-top: {{L.shotTop}}">
+        <figure style="margin: 0; display: flex; flex-direction: column">
+          <sc-if value="{{isDesktop}}" hint-placeholder-val="{{ true }}">
+            <div style="position: relative; width: {{S.dw}}; height: {{S.dh}}">
+              <div role="img" aria-label="Revisione della Partita dell’Opera nell’app per computer" style="box-sizing: border-box; width: {{S.dw}}; height: {{S.dh}}; border-radius: 12px; overflow: hidden; border: 1.5px solid {{t.shotEdge}}">
+                <div inert="" aria-hidden="true" style="width: 1440px; height: 900px; transform: scale({{S.ds}}); transform-origin: 0 0; pointer-events: none">
+                  <dc-import name="Main" theme="{{shotTheme}}" hint-size="1440px,900px"></dc-import>
+                </div>
+              </div>
+              <div style="position: absolute; right: -24px; bottom: -64px">
+                <div role="img" aria-label="Revisione della stessa partita nell’app per telefono" style="flex: none; box-sizing: border-box; width: {{S.po.fw}}; padding: 7px; border-radius: {{S.po.r}}; background: #14262B; border: 1.5px solid {{t.bezelEdge}}">
+            <div style="width: {{S.po.iw}}; height: {{S.po.ih}}; border-radius: {{S.po.ir}}; overflow: hidden">
+              <div inert="" aria-hidden="true" style="width: 390px; height: 844px; transform: scale({{S.po.s}}); transform-origin: 0 0; pointer-events: none">
+                <dc-import name="PhoneReview" theme="{{shotTheme}}" hint-size="390px,844px"></dc-import>
+              </div>
+            </div>
+          </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{isTablet}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; justify-content: center; gap: 32px">
+              <div role="img" aria-label="Revisione della Partita dell’Opera nell’app per telefono" style="flex: none; box-sizing: border-box; width: {{S.pt.fw}}; padding: 7px; border-radius: {{S.pt.r}}; background: #14262B; border: 1.5px solid {{t.bezelEdge}}">
+            <div style="width: {{S.pt.iw}}; height: {{S.pt.ih}}; border-radius: {{S.pt.ir}}; overflow: hidden">
+              <div inert="" aria-hidden="true" style="width: 390px; height: 844px; transform: scale({{S.pt.s}}); transform-origin: 0 0; pointer-events: none">
+                <dc-import name="PhoneReview" theme="{{shotTheme}}" hint-size="390px,844px"></dc-import>
+              </div>
+            </div>
+          </div>
+              <div role="img" aria-label="Riepilogo della Partita dell’Opera nell’app per telefono" style="flex: none; box-sizing: border-box; width: {{S.pt.fw}}; padding: 7px; border-radius: {{S.pt.r}}; background: #14262B; border: 1.5px solid {{t.bezelEdge}}">
+            <div style="width: {{S.pt.iw}}; height: {{S.pt.ih}}; border-radius: {{S.pt.ir}}; overflow: hidden">
+              <div inert="" aria-hidden="true" style="width: 390px; height: 844px; transform: scale({{S.pt.s}}); transform-origin: 0 0; pointer-events: none">
+                <dc-import name="PhoneSummary" theme="{{shotTheme}}" hint-size="390px,844px"></dc-import>
+              </div>
+            </div>
+          </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{isPhone}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; justify-content: center">
+              <div role="img" aria-label="Revisione della Partita dell’Opera nell’app per telefono" style="flex: none; box-sizing: border-box; width: {{S.pp.fw}}; padding: 7px; border-radius: {{S.pp.r}}; background: #14262B; border: 1.5px solid {{t.bezelEdge}}">
+            <div style="width: {{S.pp.iw}}; height: {{S.pp.ih}}; border-radius: {{S.pp.ir}}; overflow: hidden">
+              <div inert="" aria-hidden="true" style="width: 390px; height: 844px; transform: scale({{S.pp.s}}); transform-origin: 0 0; pointer-events: none">
+                <dc-import name="PhoneReview" theme="{{shotTheme}}" hint-size="390px,844px"></dc-import>
+              </div>
+            </div>
+          </div>
+            </div>
+          </sc-if>
+          <figcaption style="box-sizing: border-box; max-width: 62ch; padding-top: {{S.capPad}}; font-size: 14px; line-height: 1.5; color: {{t.text2}}">{{S.caption}}</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="cosa-fa" aria-labelledby="cosa-fa-titolo">
+      <div style="box-sizing: border-box; width: 100%; max-width: {{L.wrapMax}}; margin: 0 auto; padding-left: {{L.pad}}; padding-right: {{L.pad}}; padding-top: {{L.secTop}}">
+      <div style="max-width: 760px; display: flex; flex-direction: column; gap: 16px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Cosa fa</span>
+        <h2 id="cosa-fa-titolo" style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h2}}; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; color: {{t.title}}">Scarichi la partita, il motore la legge mossa per mossa</h2>
+        <p style="margin: 0; max-width: 62ch; font-size: {{L.body}}; line-height: 1.55">Chess Review rivede le tue partite con Stockfish, sul tuo dispositivo. Dopo l’analisi trovi questo.</p>
+      </div>
+        <ol style="margin: {{L.listTop}} 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: {{L.featCols}}; gap: {{L.featGap}}">
+        <li style="min-width: 0; padding-top: 20px; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+          <span style="font: 600 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">01</span>
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h3}}; font-weight: 600; line-height: 1.2; color: {{t.title}}">Analisi in locale con Stockfish</h3>
+          <p style="margin: 0; max-width: 56ch; font-size: {{L.body}}; line-height: 1.55">Il motore gira sul tuo computer o sul telefono e valuta ogni posizione della partita.</p>
+          <span style="align-self: flex-start; padding: 8px 12px; border-radius: 8px; background: {{t.s2}}; font: 500 15px/1.3 'IBM Plex Mono', monospace">Stockfish 17.1 · sul dispositivo</span>
+        </li>
+        <li style="min-width: 0; padding-top: 20px; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+          <span style="font: 600 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">02</span>
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h3}}; font-weight: 600; line-height: 1.2; color: {{t.title}}">Una classificazione per ogni mossa</h3>
+          <p style="margin: 0; max-width: 56ch; font-size: {{L.body}}; line-height: 1.55">Ogni mossa ha un’icona e un nome, da brillante a svista: trovi subito i punti in cui la partita è cambiata.</p>
+          <ul aria-label="Esempi di classificazione" style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px"><li style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 4px 14px 4px 5px; border-radius: 999px; border: 1.5px solid {{t.ctrlBorder}}; font-size: 16px; font-weight: 600"><span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #26C6DA; color: #14262B; border: 1.5px solid {{t.ring}}; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif"><span>!!</span></span>Brillante</li><li style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 4px 14px 4px 5px; border-radius: 999px; border: 1.5px solid {{t.ctrlBorder}}; font-size: 16px; font-weight: 600"><span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #5FA83B; color: #14262B; border: 1.5px solid {{t.ring}}; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif"><svg viewBox="0 0 16 16" aria-hidden="true" style="width: 15px; height: 15px; fill: currentColor"><path d="M8 1.8l1.9 3.9 4.2.6-3.05 3 .72 4.2L8 11.5l-3.77 2 .72-4.2-3.05-3 4.2-.6z"></path></svg></span>Migliore</li><li style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 4px 14px 4px 5px; border-radius: 999px; border: 1.5px solid {{t.ctrlBorder}}; font-size: 16px; font-weight: 600"><span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #F4D23C; color: #14262B; border: 1.5px solid {{t.ring}}; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif"><span>?!</span></span>Imprecisione</li><li style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 4px 14px 4px 5px; border-radius: 999px; border: 1.5px solid {{t.ctrlBorder}}; font-size: 16px; font-weight: 600"><span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #E8662A; color: #14262B; border: 1.5px solid {{t.ring}}; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif"><span>?</span></span>Errore</li><li style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; box-sizing: border-box; padding: 4px 14px 4px 5px; border-radius: 999px; border: 1.5px solid {{t.ctrlBorder}}; font-size: 16px; font-weight: 600"><span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: #D23B30; color: #FFFFFF; border: 1.5px solid {{t.ring}}; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif"><span>??</span></span>Svista</li></ul>
+        </li>
+        <li style="min-width: 0; padding-top: 20px; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+          <span style="font: 600 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">03</span>
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h3}}; font-weight: 600; line-height: 1.2; color: {{t.title}}">La precisione di ogni giocatore</h3>
+          <p style="margin: 0; max-width: 56ch; font-size: {{L.body}}; line-height: 1.55">Una percentuale per colore e un Elo di prestazione stimato, calcolati da quanto cala la probabilità di vittoria mossa dopo mossa.</p>
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 32px">
+            <div style="display: flex; flex-direction: column; gap: 4px"><span style="font: 600 40px/1 'IBM Plex Mono', monospace; letter-spacing: -0.02em">98,4</span><span style="font-size: 14px; color: {{t.text2}}">Morphy</span></div>
+            <div style="display: flex; flex-direction: column; gap: 4px"><span style="font: 600 40px/1 'IBM Plex Mono', monospace; letter-spacing: -0.02em">83,8</span><span style="font-size: 14px; color: {{t.text2}}">Duca e Conte</span></div>
+            <span style="font-size: 14px; color: {{t.text2}}">Partita dell’Opera, Parigi 1858</span>
+          </div>
+        </li>
+        <li style="min-width: 0; padding-top: 20px; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+          <span style="font: 600 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">04</span>
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h3}}; font-weight: 600; line-height: 1.2; color: {{t.title}}">Partite da Chess.com e Lichess</h3>
+          <p style="margin: 0; max-width: 56ch; font-size: {{L.body}}; line-height: 1.55">Scrivi il nome utente, scegli il mese e scarica le partite pubbliche. Non serve un account.</p>
+        </li>
+        <li style="min-width: 0; padding-top: 20px; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+          <span style="font: 600 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">05</span>
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h3}}; font-weight: 600; line-height: 1.2; color: {{t.title}}">Funziona offline</h3>
+          <p style="margin: 0; max-width: 56ch; font-size: {{L.body}}; line-height: 1.55">L’analisi non usa internet. La connessione serve per scaricare le partite e, se la attivi, per la cache cloud di Lichess.</p>
+        </li>
+        <li style="min-width: 0; padding-top: 20px; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+          <span style="font: 600 16px/1 'IBM Plex Mono', monospace; color: {{t.text2}}">06</span>
+          <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h3}}; font-weight: 600; line-height: 1.2; color: {{t.title}}">Gratuita e senza scopo di lucro</h3>
+          <p style="margin: 0; max-width: 56ch; font-size: {{L.body}}; line-height: 1.55">È un progetto personale: niente account né abbonamenti, e il codice sorgente è pubblico con licenza GPL-3.0.</p>
+        </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="installa" aria-labelledby="installa-titolo">
+      <div style="box-sizing: border-box; width: 100%; max-width: {{L.wrapMax}}; margin: 0 auto; padding-left: {{L.pad}}; padding-right: {{L.pad}}; padding-top: {{L.secTop}}">
+      <div style="max-width: 760px; display: flex; flex-direction: column; gap: 16px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Installazione</span>
+        <h2 id="installa-titolo" style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h2}}; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; color: {{t.title}}">Come si installa</h2>
+        <p style="margin: 0; max-width: 62ch; font-size: {{L.body}}; line-height: 1.55">Chess Review è gratuita e non ha una firma digitale a pagamento. Per questo Windows, Android e macOS mostrano un avviso la prima volta: qui trovi cosa compare e come proseguire.</p>
+      </div>
+        <div style="margin-top: {{L.listTop}}; display: grid; grid-template-columns: {{L.instCols}}; gap: {{L.instGap}}; align-items: start">
+        <article aria-labelledby="inst-windows-h" style="order: {{inst.windows.order}}; min-width: 0; box-sizing: border-box; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}">
+          <sc-if value="{{isPhone}}" hint-placeholder-val="{{ false }}">
+            <h3 id="inst-windows-h" style="margin: 0">
+              <button type="button" onClick="{{inst.windows.toggle}}" aria-expanded="{{inst.windows.expanded}}" aria-controls="inst-windows" style="width: 100%; min-height: 64px; box-sizing: border-box; padding: 12px 20px; border: 0; border-radius: 16px; background: transparent; color: {{t.text}}; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; font: 600 21px/1.2 'Fraunces', Georgia, serif">
+                <span style="flex: 1 1 auto; min-width: 0">Windows</span><sc-if value="{{inst.windows.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if>
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; transform: rotate({{inst.windows.rot}}); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+            </h3>
+          </sc-if>
+          <sc-if value="{{notPhone}}" hint-placeholder-val="{{ true }}">
+            <h3 id="inst-windows-h" style="margin: 0; padding: 24px 24px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font: 600 24px/1.2 'Fraunces', Georgia, serif; color: {{t.title}}">Windows<sc-if value="{{inst.windows.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if></h3>
+          </sc-if>
+          <sc-if value="{{inst.windows.show}}" hint-placeholder-val="{{ true }}">
+            <div id="inst-windows" style="padding: {{L.instPad}}; display: flex; flex-direction: column; gap: 16px"><ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">1</span>
+                <span style="min-width: 0">Scarica <code style="font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0-setup.exe</code> e aprilo.</span>
+              </li>
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">2</span>
+                <span style="min-width: 0">Se compare <strong style="font-weight: 600">«Windows ha protetto il PC»</strong>, scegli <strong style="font-weight: 600">«Ulteriori informazioni»</strong> e poi <strong style="font-weight: 600">«Esegui comunque»</strong>.</span>
+              </li>
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">3</span>
+                <span style="min-width: 0">Segui l’installazione. Chess Review compare nel menu Start.</span>
+              </li>
+            </ol>
+            <div style="box-sizing: border-box; padding: 14px 16px; border-radius: 12px; background: {{t.s2}}; display: flex; gap: 12px; font-size: 16px; line-height: 1.5">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v6M12 7.5v.5"></path></svg><p style="margin: 0; min-width: 0"><strong style="font-weight: 600">Perché compare l’avviso.</strong> SmartScreen ferma le app senza una firma digitale a pagamento. Prima di proseguire puoi confrontare il checksum SHA-256 del file.</p>
+            </div>
+            </div>
+          </sc-if>
+        </article>
+        <article aria-labelledby="inst-android-h" style="order: {{inst.android.order}}; min-width: 0; box-sizing: border-box; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}">
+          <sc-if value="{{isPhone}}" hint-placeholder-val="{{ false }}">
+            <h3 id="inst-android-h" style="margin: 0">
+              <button type="button" onClick="{{inst.android.toggle}}" aria-expanded="{{inst.android.expanded}}" aria-controls="inst-android" style="width: 100%; min-height: 64px; box-sizing: border-box; padding: 12px 20px; border: 0; border-radius: 16px; background: transparent; color: {{t.text}}; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; font: 600 21px/1.2 'Fraunces', Georgia, serif">
+                <span style="flex: 1 1 auto; min-width: 0">Android</span><sc-if value="{{inst.android.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if>
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; transform: rotate({{inst.android.rot}}); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+            </h3>
+          </sc-if>
+          <sc-if value="{{notPhone}}" hint-placeholder-val="{{ true }}">
+            <h3 id="inst-android-h" style="margin: 0; padding: 24px 24px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font: 600 24px/1.2 'Fraunces', Georgia, serif; color: {{t.title}}">Android<sc-if value="{{inst.android.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if></h3>
+          </sc-if>
+          <sc-if value="{{inst.android.show}}" hint-placeholder-val="{{ true }}">
+            <div id="inst-android" style="padding: {{L.instPad}}; display: flex; flex-direction: column; gap: 16px"><ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">1</span>
+                <span style="min-width: 0">Scarica <code style="font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0.apk</code> e aprilo dalle notifiche o dalla cartella Download.</span>
+              </li>
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">2</span>
+                <span style="min-width: 0">Android chiede il permesso di installare app da questa origine: tocca <strong style="font-weight: 600">«Impostazioni»</strong>, attiva <strong style="font-weight: 600">«Consenti da questa origine»</strong> e torna indietro.</span>
+              </li>
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">3</span>
+                <span style="min-width: 0">Tocca <strong style="font-weight: 600">«Installa»</strong>. Se Play Protect mostra un avviso, aprine i dettagli e scegli di installare comunque.</span>
+              </li>
+            </ol>
+            <div style="box-sizing: border-box; padding: 14px 16px; border-radius: 12px; background: {{t.s2}}; display: flex; gap: 12px; font-size: 16px; line-height: 1.5">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v6M12 7.5v.5"></path></svg><p style="margin: 0; min-width: 0"><strong style="font-weight: 600">Perché compare l’avviso.</strong> L’app non arriva dal Play Store, quindi Android la tratta come un’app di origine sconosciuta. Dopo l’installazione puoi togliere il permesso.</p>
+            </div>
+            </div>
+          </sc-if>
+        </article>
+        <article aria-labelledby="inst-ios-h" style="order: {{inst.ios.order}}; min-width: 0; box-sizing: border-box; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}">
+          <sc-if value="{{isPhone}}" hint-placeholder-val="{{ false }}">
+            <h3 id="inst-ios-h" style="margin: 0">
+              <button type="button" onClick="{{inst.ios.toggle}}" aria-expanded="{{inst.ios.expanded}}" aria-controls="inst-ios" style="width: 100%; min-height: 64px; box-sizing: border-box; padding: 12px 20px; border: 0; border-radius: 16px; background: transparent; color: {{t.text}}; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; font: 600 21px/1.2 'Fraunces', Georgia, serif">
+                <span style="flex: 1 1 auto; min-width: 0">iPhone e iPad</span><sc-if value="{{inst.ios.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if>
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; transform: rotate({{inst.ios.rot}}); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+            </h3>
+          </sc-if>
+          <sc-if value="{{notPhone}}" hint-placeholder-val="{{ true }}">
+            <h3 id="inst-ios-h" style="margin: 0; padding: 24px 24px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font: 600 24px/1.2 'Fraunces', Georgia, serif; color: {{t.title}}">iPhone e iPad<sc-if value="{{inst.ios.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if></h3>
+          </sc-if>
+          <sc-if value="{{inst.ios.show}}" hint-placeholder-val="{{ true }}">
+            <div id="inst-ios" style="padding: {{L.instPad}}; display: flex; flex-direction: column; gap: 16px"><sc-if value="{{iosStore}}" hint-placeholder-val="{{ true }}">
+              <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">1</span>
+                <span style="min-width: 0">Tocca il pulsante per iPhone e iPad: si apre [App Store o TestFlight].</span>
+              </li>
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">2</span>
+                <span style="min-width: 0">Installa Chess Review come qualsiasi altra app.</span>
+              </li>
+            </ol>
+              <div style="box-sizing: border-box; padding: 14px 16px; border-radius: 12px; background: {{t.s2}}; display: flex; gap: 12px; font-size: 16px; line-height: 1.5">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v6M12 7.5v.5"></path></svg><p style="margin: 0; min-width: 0"><strong style="font-weight: 600">Nessun avviso.</strong> Su iPhone e iPad l’installazione passa da Apple: non ci sono file da scaricare né permessi da concedere.</p>
+            </div>
+            </sc-if>
+            <sc-if value="{{iosSoon}}" hint-placeholder-val="{{ false }}">
+              <p style="margin: 0; font-size: 17px; line-height: 1.5"><strong style="font-weight: 600">Presto disponibile.</strong> La versione per iPhone e iPad arriverà su [App Store o TestFlight]. L’installazione passerà da Apple, senza file da scaricare.</p>
+            </sc-if>
+            </div>
+          </sc-if>
+        </article>
+        <article aria-labelledby="inst-mac-h" style="order: {{inst.mac.order}}; min-width: 0; box-sizing: border-box; border-radius: 16px; background: {{t.card}}; border: 1.5px solid {{t.cardBorder}}; box-shadow: {{t.shadow}}">
+          <sc-if value="{{isPhone}}" hint-placeholder-val="{{ false }}">
+            <h3 id="inst-mac-h" style="margin: 0">
+              <button type="button" onClick="{{inst.mac.toggle}}" aria-expanded="{{inst.mac.expanded}}" aria-controls="inst-mac" style="width: 100%; min-height: 64px; box-sizing: border-box; padding: 12px 20px; border: 0; border-radius: 16px; background: transparent; color: {{t.text}}; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; font: 600 21px/1.2 'Fraunces', Georgia, serif">
+                <span style="flex: 1 1 auto; min-width: 0">macOS</span><sc-if value="{{inst.mac.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if>
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; transform: rotate({{inst.mac.rot}}); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+              </button>
+            </h3>
+          </sc-if>
+          <sc-if value="{{notPhone}}" hint-placeholder-val="{{ true }}">
+            <h3 id="inst-mac-h" style="margin: 0; padding: 24px 24px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font: 600 24px/1.2 'Fraunces', Georgia, serif; color: {{t.title}}">macOS<sc-if value="{{inst.mac.mine}}" hint-placeholder-val="{{ false }}"><span style="flex: none; padding: 4px 10px; border-radius: 999px; background: {{t.sel}}; border: 1.5px solid {{t.selBorder}}; font: 600 14px/1.2 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text}}">Il tuo sistema</span></sc-if></h3>
+          </sc-if>
+          <sc-if value="{{inst.mac.show}}" hint-placeholder-val="{{ true }}">
+            <div id="inst-mac" style="padding: {{L.instPad}}; display: flex; flex-direction: column; gap: 16px"><ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px">
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">1</span>
+                <span style="min-width: 0">Scarica <code style="font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0.dmg</code>, aprilo e trascina Chess Review nella cartella Applicazioni.</span>
+              </li>
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">2</span>
+                <span style="min-width: 0">Apri l’app. Al primo avvio macOS la blocca perché non può verificare lo sviluppatore.</span>
+              </li>
+              <li style="display: flex; gap: 12px; font-size: 17px; line-height: 1.5">
+                <span aria-hidden="true" style="flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid {{t.ctrlBorder}}; display: flex; align-items: center; justify-content: center; font: 600 14px/1 'IBM Plex Mono', monospace">3</span>
+                <span style="min-width: 0">Vai in <strong style="font-weight: 600">Impostazioni di Sistema › Privacy e sicurezza</strong>, scorri fino al messaggio su Chess Review, scegli <strong style="font-weight: 600">«Apri comunque»</strong> e conferma.</span>
+              </li>
+            </ol>
+            <div style="box-sizing: border-box; padding: 14px 16px; border-radius: 12px; background: {{t.s2}}; display: flex; gap: 12px; font-size: 16px; line-height: 1.5">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v6M12 7.5v.5"></path></svg><p style="margin: 0; min-width: 0"><strong style="font-weight: 600">Perché compare l’avviso.</strong> L’app non ha la firma e la notarizzazione di Apple. macOS lo chiede solo al primo avvio.</p>
+            </div>
+            </div>
+          </sc-if>
+        </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="verifica" aria-labelledby="verifica-titolo">
+      <div style="box-sizing: border-box; width: 100%; max-width: {{L.wrapMax}}; margin: 0 auto; padding-left: {{L.pad}}; padding-right: {{L.pad}}; padding-top: {{L.secTop}}; padding-bottom: {{L.secBottom}}">
+      <div style="max-width: 760px; display: flex; flex-direction: column; gap: 16px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.text2}}">Verifica</span>
+        <h2 id="verifica-titolo" style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: {{L.h2}}; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; color: {{t.title}}">Controlla i file scaricati</h2>
+        <p style="margin: 0; max-width: 62ch; font-size: {{L.body}}; line-height: 1.55">Il checksum SHA-256 è l’impronta del file. Se quella calcolata dal tuo computer coincide con quella scritta qui, il file è identico a quello pubblicato.</p>
+        <p style="margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 16px; color: {{t.text2}}"><span style="flex: none; padding: 2px 8px; border: 1.5px dashed {{t.ctrlBorder}}; border-radius: 999px; font: 500 14px/1.3 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text2}}; letter-spacing: 0">esempio</span>Versione, date, dimensioni e checksum di questa pagina sono esempi.</p>
+      </div>
+        <div style="margin-top: 32px; display: grid; grid-template-columns: {{L.cmdCols}}; gap: 12px">
+          <div style="min-width: 0; box-sizing: border-box; padding: 16px; border-radius: 12px; background: {{t.s2}}; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 14px; font-weight: 600; color: {{t.text2}}">Windows · PowerShell</span>
+            <code style="font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">Get-FileHash .\ChessReview-0.1.0-setup.exe -Algorithm SHA256</code>
+          </div>
+          <div style="min-width: 0; box-sizing: border-box; padding: 16px; border-radius: 12px; background: {{t.s2}}; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 14px; font-weight: 600; color: {{t.text2}}">macOS · Terminale</span>
+            <code style="font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">shasum -a 256 ChessReview-0.1.0.dmg</code>
+          </div>
+          <div style="min-width: 0; box-sizing: border-box; padding: 16px; border-radius: 12px; background: {{t.s2}}; display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 14px; font-weight: 600; color: {{t.text2}}">Linux · terminale, anche per l’APK</span>
+            <code style="font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">sha256sum ChessReview-0.1.0.apk</code>
+          </div>
+        </div>
+        <sc-if value="{{isDesktop}}" hint-placeholder-val="{{ true }}">
+          <table style="width: 100%; margin-top: 40px; border-collapse: collapse; table-layout: fixed">
+            <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">File da scaricare, con versione, data, dimensione e checksum</caption>
+            
+            <thead>
+              <tr>
+                <th scope="col" style="padding: 0 12px 12px 0; text-align: left; font-size: 14px; font-weight: 600; color: {{t.text2}}">Sistema</th>
+                <th scope="col" style="padding: 0 12px 12px; text-align: left; font-size: 14px; font-weight: 600; color: {{t.text2}}">File</th>
+                <th scope="col" style="padding: 0 12px 12px; text-align: left; font-size: 14px; font-weight: 600; color: {{t.text2}}">Versione</th>
+                <th scope="col" style="padding: 0 12px 12px; text-align: left; font-size: 14px; font-weight: 600; color: {{t.text2}}">Data</th>
+                <th scope="col" style="padding: 0 12px 12px; text-align: left; font-size: 14px; font-weight: 600; color: {{t.text2}}">Dimensione</th>
+                <th scope="col" style="padding: 0 12px 12px; text-align: left; font-size: 14px; font-weight: 600; color: {{t.text2}}">SHA-256</th>
+                <th scope="col" style="padding: 0 0 12px 12px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Azioni</span></th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr style="border-top: 1.5px solid {{t.rule}}">
+              <th scope="row" style="padding: 16px 12px 16px 0; text-align: left; vertical-align: top; font-size: 17px; font-weight: 600">Windows</th>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0-setup.exe</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">0.1.0</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">21 nov 2026</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">48,2 MB</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 14px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">{{sha.windows}}</td>
+              <td style="padding: 12px 0 12px 12px; vertical-align: top; text-align: right"><button type="button" onClick="{{copy.windows}}" aria-label="Copia il checksum SHA-256 del file per Windows" style="min-height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 9h10v11H9zM5 15V4h10"></path></svg><span aria-live="polite">{{copied.windows}}</span></button></td>
+            </tr>
+            <tr style="border-top: 1.5px solid {{t.rule}}">
+              <th scope="row" style="padding: 16px 12px 16px 0; text-align: left; vertical-align: top; font-size: 17px; font-weight: 600">Android</th>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0.apk</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">0.1.0</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">21 nov 2026</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">31,7 MB</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 14px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">{{sha.android}}</td>
+              <td style="padding: 12px 0 12px 12px; vertical-align: top; text-align: right"><button type="button" onClick="{{copy.android}}" aria-label="Copia il checksum SHA-256 del file per Android" style="min-height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 9h10v11H9zM5 15V4h10"></path></svg><span aria-live="polite">{{copied.android}}</span></button></td>
+            </tr>
+            <tr style="border-top: 1.5px solid {{t.rule}}">
+              <th scope="row" style="padding: 16px 12px 16px 0; text-align: left; vertical-align: top; font-size: 17px; font-weight: 600">macOS</th>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0.dmg</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">0.1.0</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">21 nov 2026</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 15px/1.5 'IBM Plex Mono', monospace">52,9 MB</td>
+              <td style="padding: 16px 12px; vertical-align: top; font: 500 14px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">{{sha.mac}}</td>
+              <td style="padding: 12px 0 12px 12px; vertical-align: top; text-align: right"><button type="button" onClick="{{copy.mac}}" aria-label="Copia il checksum SHA-256 del file per macOS" style="min-height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 9h10v11H9zM5 15V4h10"></path></svg><span aria-live="polite">{{copied.mac}}</span></button></td>
+            </tr>
+            </tbody>
+          </table>
+        </sc-if>
+        <sc-if value="{{notDesktop}}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 32px">
+          <div style="padding: 20px 0; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+            <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 21px; font-weight: 600; color: {{t.title}}">Windows</h3>
+            <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px">
+              <div><dt style="font-size: 14px; color: {{t.text2}}">File</dt><dd style="margin: 2px 0 0; font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0-setup.exe</dd></div>
+              <div><dt style="font-size: 14px; color: {{t.text2}}">Versione · data · dimensione</dt><dd style="margin: 2px 0 0; font: 500 15px/1.5 'IBM Plex Mono', monospace">0.1.0 · 21 nov 2026 · 48,2 MB</dd></div>
+              <div><dt style="font-size: 14px; color: {{t.text2}}">SHA-256</dt><dd style="margin: 2px 0 0; font: 500 14px/1.6 'IBM Plex Mono', monospace; overflow-wrap: anywhere">{{sha.windows}}</dd></div>
+            </dl>
+            <div><button type="button" onClick="{{copy.windows}}" aria-label="Copia il checksum SHA-256 del file per Windows" style="width: {{L.copyW}}; min-height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 9h10v11H9zM5 15V4h10"></path></svg><span aria-live="polite">{{copied.windows}}</span></button></div>
+          </div>
+          <div style="padding: 20px 0; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+            <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 21px; font-weight: 600; color: {{t.title}}">Android</h3>
+            <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px">
+              <div><dt style="font-size: 14px; color: {{t.text2}}">File</dt><dd style="margin: 2px 0 0; font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0.apk</dd></div>
+              <div><dt style="font-size: 14px; color: {{t.text2}}">Versione · data · dimensione</dt><dd style="margin: 2px 0 0; font: 500 15px/1.5 'IBM Plex Mono', monospace">0.1.0 · 21 nov 2026 · 31,7 MB</dd></div>
+              <div><dt style="font-size: 14px; color: {{t.text2}}">SHA-256</dt><dd style="margin: 2px 0 0; font: 500 14px/1.6 'IBM Plex Mono', monospace; overflow-wrap: anywhere">{{sha.android}}</dd></div>
+            </dl>
+            <div><button type="button" onClick="{{copy.android}}" aria-label="Copia il checksum SHA-256 del file per Android" style="width: {{L.copyW}}; min-height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 9h10v11H9zM5 15V4h10"></path></svg><span aria-live="polite">{{copied.android}}</span></button></div>
+          </div>
+          <div style="padding: 20px 0; border-top: 1.5px solid {{t.rule}}; display: flex; flex-direction: column; gap: 12px">
+            <h3 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 21px; font-weight: 600; color: {{t.title}}">macOS</h3>
+            <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px">
+              <div><dt style="font-size: 14px; color: {{t.text2}}">File</dt><dd style="margin: 2px 0 0; font: 500 15px/1.5 'IBM Plex Mono', monospace; overflow-wrap: anywhere">ChessReview-0.1.0.dmg</dd></div>
+              <div><dt style="font-size: 14px; color: {{t.text2}}">Versione · data · dimensione</dt><dd style="margin: 2px 0 0; font: 500 15px/1.5 'IBM Plex Mono', monospace">0.1.0 · 21 nov 2026 · 52,9 MB</dd></div>
+              <div><dt style="font-size: 14px; color: {{t.text2}}">SHA-256</dt><dd style="margin: 2px 0 0; font: 500 14px/1.6 'IBM Plex Mono', monospace; overflow-wrap: anywhere">{{sha.mac}}</dd></div>
+            </dl>
+            <div><button type="button" onClick="{{copy.mac}}" aria-label="Copia il checksum SHA-256 del file per macOS" style="width: {{L.copyW}}; min-height: 48px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1.5px solid {{t.ctrlBorder}}; background: transparent; color: {{t.text}}; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px/1 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round"><path d="M9 9h10v11H9zM5 15V4h10"></path></svg><span aria-live="polite">{{copied.mac}}</span></button></div>
+          </div>
+          </div>
+        </sc-if>
+        <p style="margin: 0; padding-top: 20px; border-top: 1.5px solid {{t.rule}}; font-size: 16px; line-height: 1.5; color: {{t.text2}}">iPhone e iPad: l’app arriva tramite Apple, quindi non c’è un file da controllare.</p>
+      </div>
+    </section>
+
+    <sc-if value="{{showCounter}}" hint-placeholder-val="{{ false }}">
+      <section aria-label="Download totali">
+        <div style="box-sizing: border-box; width: 100%; max-width: {{L.wrapMax}}; margin: 0 auto; padding-left: {{L.pad}}; padding-right: {{L.pad}}; padding-bottom: {{L.counterBottom}}">
+          <p style="margin: 0; padding-top: 28px; border-top: 1.5px solid {{t.rule}}; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 6px 14px; text-align: center">
+            <span style="font: 500 {{L.counterSize}}/1.1 'IBM Plex Mono', monospace; letter-spacing: -0.01em">12.345 download</span>
+            <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: {{t.text2}}">dal 21 nov 2026 <span style="flex: none; padding: 2px 8px; border: 1.5px dashed {{t.ctrlBorder}}; border-radius: 999px; font: 500 14px/1.3 'Instrument Sans', 'Noto Sans Symbols 2', system-ui, sans-serif; color: {{t.text2}}; letter-spacing: 0">esempio</span></span>
+          </p>
+        </div>
+      </section>
+    </sc-if>
+  </main>
+
+  <footer data-surface="petrol" style="flex: 1 0 auto; background: #0F4C57; color: #FBF8F0; border-top: {{t.headerBorder}}">
+    <div style="box-sizing: border-box; max-width: {{L.wrapMax}}; margin: 0 auto; padding: {{L.footPad}} {{L.pad}}; display: grid; grid-template-columns: {{L.footCols}}; gap: {{L.footGap}}">
+      <div style="min-width: 0; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span aria-hidden="true" style="flex: none; width: 40px; height: 40px"><svg viewBox="0 0 256 256" style="display: block; width: 100%; height: 100%"><line x1="166.0" y1="166.0" x2="222.0" y2="222.0" style="stroke: #14262B; stroke-width: 44; stroke-linecap: round"></line><line x1="166.0" y1="166.0" x2="222.0" y2="222.0" style="stroke: #E8A33D; stroke-width: 30; stroke-linecap: round"></line><circle cx="104.0" cy="104.0" r="76.0" style="fill: #DCE8E6"></circle><path d="M104 28A76 76 0 0 1 180 104H104Z" style="fill: #4A8590"></path><path d="M104 180A76 76 0 0 1 28 104H104Z" style="fill: #4A8590"></path><g transform="translate(34.3 39.2) scale(3.0986)"><path d="M21.25 3.5h2.5V6h2.5v2.5h-2.5v4h-2.5v-4h-2.5V6h2.5zM21.5 12.5h2v4h-2zM22.5 16.5C25 14 30.5 13.8 32.5 17.5C34.3 21 32.5 26 31 30H14C12.5 26 10.7 21 12.5 17.5C14.5 13.8 20 14 22.5 16.5ZM14 30h17l.8 3H13.2zM11.5 33h22a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-22A1.5 1.5 0 0 1 10 37.5v-3A1.5 1.5 0 0 1 11.5 33z" style="fill: #1B2B30; stroke: #14262B; stroke-width: 1.130; stroke-linejoin: round"></path><path d="M14.8 26.5h15.4M22.5 17.5v8M13.5 36h18" style="fill: none; stroke: #DCE8E6; stroke-width: 0.807; stroke-linecap: round"></path></g><circle cx="104.0" cy="104.0" r="83.0" style="fill: none; stroke: #14262B; stroke-width: 16"></circle><circle cx="104.0" cy="104.0" r="83.0" style="fill: none; stroke: #F5F1E8; stroke-width: 6"></circle></svg></span>
+          <span style="font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600">Chess Review</span>
+        </div>
+        <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #B9CFCF">Un progetto personale senza scopo di lucro.</p>
+      </div>
+      <div style="min-width: 0">
+        <h2 style="margin: 0 0 4px; font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #B9CFCF">Codice</h2>
+        <ul style="margin: 0; padding: 0; list-style: none">
+          <li><a href="https://github.com/simoneP-txt/local-chess-review" style="min-height: 48px; display: inline-flex; align-items: center; color: #FBF8F0; font-size: 16px; text-decoration: underline; text-underline-offset: 3px">Codice sorgente su GitHub</a></li>
+          <li><a href="https://www.gnu.org/licenses/gpl-3.0.html" style="min-height: 48px; display: inline-flex; align-items: center; color: #FBF8F0; font-size: 16px; text-decoration: underline; text-underline-offset: 3px">Licenza GPL-3.0</a></li>
+        </ul>
+        <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #B9CFCF">La licenza è la stessa di Stockfish.</p>
+      </div>
+      <div style="min-width: 0">
+        <h2 style="margin: 0 0 4px; font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #B9CFCF">Crediti</h2>
+        <ul style="margin: 0; padding: 0; list-style: none">
+          <li><a href="https://stockfishchess.org" style="min-height: 48px; display: inline-flex; align-items: center; color: #FBF8F0; font-size: 16px; text-decoration: underline; text-underline-offset: 3px">Stockfish, il motore di analisi</a></li>
+          <li><a href="https://database.lichess.org/#puzzles" style="min-height: 48px; display: inline-flex; align-items: center; color: #FBF8F0; font-size: 16px; text-decoration: underline; text-underline-offset: 3px">Database dei puzzle di Lichess</a></li>
+          <li><a href="https://github.com/lichess-org/chess-openings" style="min-height: 48px; display: inline-flex; align-items: center; color: #FBF8F0; font-size: 16px; text-decoration: underline; text-underline-offset: 3px">lichess-org/chess-openings</a></li>
+        </ul>
+      </div>
+      <div style="min-width: 0">
+        <p style="margin: 0; font-size: 16px; line-height: 1.5">Non affiliato a Chess.com né a Lichess.</p>
+      </div>
+    </div>
+  </footer>
+
+  <sc-if value="{{showNote}}" hint-placeholder-val="{{ false }}">
+    <aside aria-labelledby="nota-titolo" style="flex: none; box-sizing: border-box; padding: 56px 48px 64px; background: #FFFFFF; color: #14262B; border-top: 3px dashed #14262B">
+      <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+        <span style="font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #44585C">Nota per il codice · non fa parte del sito</span>
+        <h2 id="nota-titolo" style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 36px; font-weight: 500; color: #0F4C57">Punti di rottura e cosa cambia</h2>
+        <ul style="margin: 0; padding-left: 20px; max-width: 90ch; font-size: 16px; line-height: 1.55">
+          <li>Telefono da 360 a 599 px, tablet da 600 a 1023 px, desktop da 1024 px in su. Tra un punto e l’altro il layout è fluido; da 1200 + margini in su resta centrato.</li>
+          <li>Nessuno scorrimento orizzontale: checksum, nomi di file e comandi usano <code style="font-family: 'IBM Plex Mono', monospace">overflow-wrap: anywhere</code>.</li>
+          <li>Riconoscimento: Windows, Android, iPhone e iPad, Mac dal browser. Un iPad recente si presenta come Mac: va distinto con il tocco. Tutto il resto, Linux compreso, è «non riconosciuto».</li>
+          <li>Un solo pulsante ambra pieno: quello del dispositivo riconosciuto. Con iPhone non disponibile o dispositivo non riconosciuto non ce n’è nessuno.</li>
+          <li>Le schermate sono i pannelli D4, M4 e M3 rimpiccioliti: nel codice diventano immagini, una per tema.</li>
+          <li>Il contatore non occupa spazio quando è spento: la sezione Verifica chiude la pagina con il suo margine.</li>
+        </ul>
+        <table style="width: 100%; border-collapse: collapse; table-layout: fixed">
+          
+          <thead>
+            <tr>
+              <th scope="col" style="padding: 0 16px 12px 0; text-align: left; font-size: 14px; font-weight: 600; color: #44585C">Sezione</th>
+              <th scope="col" style="padding: 0 16px 12px; text-align: left; font-size: 14px; font-weight: 600; color: #44585C">Telefono · 360-599</th>
+              <th scope="col" style="padding: 0 16px 12px; text-align: left; font-size: 14px; font-weight: 600; color: #44585C">Tablet · 600-1023</th>
+              <th scope="col" style="padding: 0 0 12px 16px; text-align: left; font-size: 14px; font-weight: 600; color: #44585C">Desktop · da 1024</th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Contenitore</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Margini 20 px (16 sotto i 380 px).</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Margini 32 px.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Margini 48 px. Contenuto largo al massimo 1200 px e centrato, fino a 1920 px. Paragrafi al massimo 62 caratteri.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Intestazione</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">56 px: logo, IT/EN, tema. Niente link di sezione.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">64 px: compaiono i link Cosa fa, Installazione, Verifica.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">72 px, come il tablet.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Apertura</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Una colonna. Titolo 44 px. Pulsante ambra a tutta larghezza.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Una colonna. Titolo 64 px. Scheda download su due colonne: pulsante a sinistra, altre piattaforme a destra.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Titolo e scheda download affiancati (7/12 e 5/12). Titolo 88 px.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Altre piattaforme</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Pulsanti impilati a tutta larghezza, 56 px.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Colonna destra della scheda.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Sotto il pulsante principale, impilati.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Dispositivo non riconosciuto</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Riga di avviso, poi i quattro pulsanti uno sotto l’altro.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Quattro pulsanti su due colonne.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Quattro pulsanti su due colonne.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Schermate</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">M4 in cornice di telefono.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">M4 e M3 affiancati in cornici di telefono.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">D4 a tutta larghezza, M4 sovrapposto in basso a destra.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Cosa fa</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Una colonna.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Due colonne.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Due colonne.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Come si installa</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Schede a fisarmonica, chiuse; il sistema riconosciuto per primo.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Due colonne, schede aperte.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Due colonne, schede aperte.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Verifica</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Elenco impilato; checksum e comandi vanno a capo; copia a tutta larghezza.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Elenco impilato.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Tabella; checksum su due righe; comandi su tre colonne.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Contatore</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Nascosto al lancio, nessuno spazio riservato. Acceso: riga centrata sopra il piè di pagina.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Come il telefono.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Come il telefono.</td>
+          </tr>
+          <tr style="border-top: 1.5px solid #8B7C5C">
+            <th scope="row" style="padding: 12px 16px 12px 0; text-align: left; vertical-align: top; font-size: 16px; font-weight: 600">Piè di pagina</th>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Una colonna.</td>
+            <td style="padding: 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Due colonne.</td>
+            <td style="padding: 12px 0 12px 16px; vertical-align: top; font-size: 16px; line-height: 1.45">Quattro colonne.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </aside>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":null,"default":"Chiaro"},"device":{"editor":null,"default":"windows"},"vw":{"editor":null,"default":"1440"},"install":{"editor":null,"default":""},"counter":{"editor":null,"default":""},"embedded":{"editor":null,"default":""},"$preview":{"width":1440,"height":6720}}'>
+// W1 · Site: the download page for Chess Review. One responsive file: it measures its own width
+// and switches layout at 600 px (tablet) and 1024 px (desktop). The other W and SW panels mount it.
+var THEMES = {
+  Chiaro: {
+    bg: '#E9E1CE', card: '#FBF8F0', s2: '#F1EAD8', text: '#14262B', text2: '#44585C', title: '#0F4C57',
+    cardBorder: '#8B7C5C', ctrlBorder: '#708183', rule: '#8B7C5C', link: '#0F4C57',
+    disFill: '#E3DAC4', disText: '#526164', disBorder: '#8B7C5C',
+    amberBorder: '1.5px solid #14262B', headerBorder: '0', ring: '#14262B',
+    sel: '#F7DCA6', selBorder: '#14262B', shotEdge: '#14262B', bezelEdge: '#14262B', shadow: '0 1px 0 rgba(20,38,43,.08)'
+  },
+  Scuro: {
+    bg: '#0B1E22', card: '#143339', s2: '#1B434B', text: '#F2EDE0', text2: '#B7C4C3', title: '#F2EDE0',
+    cardBorder: '#3C707B', ctrlBorder: '#5D8791', rule: '#3C707B', link: '#F2EDE0',
+    disFill: '#143339', disText: '#8FA4A5', disBorder: '#3C707B',
+    amberBorder: '1.5px solid #E8A33D', headerBorder: '1.5px solid #5D8791', ring: '#F2EDE0',
+    sel: 'rgba(232,163,61,.18)', selBorder: '#E8A33D', shotEdge: '#5D8791', bezelEdge: '#5D8791', shadow: 'none'
+  }
+};
+
+// Example release data (marked "esempio" on the page).
+var RELEASES = 'https://github.com/simoneP-txt/local-chess-review/releases';
+var PLAT = {
+  windows: { name: 'Windows', cta: 'Scarica per Windows', meta: 'Installer .exe · 48,2 MB', primary: '0.1.0 · 21 nov 2026 · 48,2 MB', href: RELEASES, file: true },
+  android: { name: 'Android', cta: 'Scarica per Android', meta: 'APK · 31,7 MB', primary: '0.1.0 · 21 nov 2026 · 31,7 MB', href: RELEASES, file: true },
+  ios: { name: 'iPhone e iPad', cta: 'Apri [App Store o TestFlight]', meta: '[App Store o TestFlight]', primary: '0.1.0 · 21 nov 2026 · tramite Apple', href: '#installa', file: false },
+  mac: { name: 'macOS', cta: 'Scarica per macOS', meta: 'Immagine .dmg · 52,9 MB', primary: '0.1.0 · 21 nov 2026 · 52,9 MB', href: RELEASES, file: true }
+};
+var ORDER = ['windows', 'android', 'ios', 'mac'];
+var SHA = {
+  windows: '5364138e1e0697735f17525ece25a2c0e1c19418f8f1dfa3508d9802444fae74',
+  android: 'ec7ac8cc9181b1cc52091cca3578d537b8fd2ecec9fca233dd81e5f6dc029057',
+  mac: '645f58fa1e40470be87d78cd082d5074f7a1e379272d597c32970cc774256b7c'
+};
+
+function phoneFrame(s) {
+  return { s: s.toFixed(4), iw: Math.round(390 * s) + 'px', ih: Math.round(844 * s) + 'px',
+           fw: (Math.round(390 * s) + 17) + 'px', r: Math.round(36 * s + 8) + 'px', ir: Math.round(36 * s) + 'px' };
+}
+
+class Component extends DCLogic {
+  constructor() {
+    super(...arguments);
+    this.state = { w: null, dark: null, open: null, copied: '' };
+    this.rootEl = null;
+    this.ro = null;
+    this.setRoot = (el) => { this.rootEl = el; };
+  }
+
+  // Layout follows the page's own width (offsetWidth ignores canvas zoom transforms).
+  componentDidMount() {
+    var self = this;
+    if (!this.rootEl) return;
+    var measure = function () {
+      var w = self.rootEl ? self.rootEl.offsetWidth : 0;
+      if (w && w !== self.state.w) self.setState({ w: w });
+    };
+    measure();
+    if (typeof ResizeObserver !== 'undefined') {
+      this.ro = new ResizeObserver(measure);
+      this.ro.observe(this.rootEl);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.ro) this.ro.disconnect();
+  }
+
+  renderVals() {
+    var self = this;
+    var w = this.state.w || Number(this.props.vw) || 1440;
+    var P = w < 600, T = w >= 600 && w < 1024, D = w >= 1024;
+    var dark = this.state.dark !== null ? this.state.dark : this.props.theme === 'Scuro';
+    var t = dark ? THEMES.Scuro : THEMES.Chiaro;
+
+    var device = this.props.device || 'windows';
+    var known = !!PLAT[device];
+    var iosSoon = (this.props.ios || (device === 'ios' ? 'soon' : 'store')) === 'soon';
+    var mine = known ? PLAT[device] : null;
+    var dl = {
+      known: known, unknown: !known,
+      available: known && !(device === 'ios' && iosSoon), soon: device === 'ios' && iosSoon,
+      cta: mine ? mine.cta : '', meta: mine ? mine.primary : '', href: mine ? mine.href : '', hasFile: !!(mine && mine.file)
+    };
+    var others = ORDER.filter(function (k) { return k !== device; }).map(function (k) {
+      var p = PLAT[k], off = k === 'ios' && iosSoon;
+      return { enabled: !off, disabled: off, name: p.name, meta: off ? 'Presto disponibile' : p.meta, href: p.href };
+    });
+
+    var pad = P ? (w < 380 ? 16 : 20) : (T ? 32 : 48);
+    var cw = Math.min(1200, w - 2 * pad);
+    var Lx = {
+      pad: pad + 'px', wrapMax: (1200 + 2 * pad) + 'px',
+      headerH: P ? '56px' : (T ? '64px' : '72px'), headGap: P ? '8px' : '16px',
+      brandIcon: P ? '28px' : (T ? '34px' : '40px'), brandSize: P ? '18px' : (T ? '22px' : '24px'),
+      heroTop: P ? '40px' : (T ? '64px' : '88px'), heroGap: P ? '32px' : (T ? '40px' : '56px'),
+      heroCols: D ? 'minmax(0, 7fr) minmax(0, 5fr)' : 'minmax(0, 1fr)',
+      tileIcon: P ? '56px' : (T ? '64px' : '72px'),
+      h1: P ? '44px' : (T ? '64px' : '88px'), deck: P ? '21px' : (T ? '24px' : '28px'), body: P ? '17px' : '18px',
+      cardPad: P ? '20px' : '28px',
+      dlCols: (T && known) ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'minmax(0, 1fr)', dlGap: T ? '32px' : '24px',
+      otherCols: known ? 'minmax(0, 1fr)' : (P ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))'),
+      otherRule: (known && !T) ? '1.5px solid ' + t.rule : '0', otherPadTop: (known && !T) ? '20px' : '0',
+      shotTop: P ? '48px' : (T ? '64px' : '72px'),
+      secTop: P ? '72px' : (T ? '96px' : '128px'), secBottom: P ? '72px' : (T ? '96px' : '112px'),
+      h2: P ? '32px' : (T ? '40px' : '48px'), h3: P ? '22px' : '24px', listTop: P ? '32px' : '48px',
+      featCols: P ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))', featGap: P ? '32px' : (T ? '40px 32px' : '48px 64px'),
+      instCols: P ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))', instGap: P ? '12px' : '24px',
+      instPad: P ? '0 20px 20px' : '16px 24px 24px',
+      cmdCols: D ? 'repeat(3, minmax(0, 1fr))' : 'minmax(0, 1fr)', copyW: P ? '100%' : 'auto',
+      counterSize: P ? '24px' : '30px', counterBottom: P ? '56px' : '72px',
+      footCols: P ? 'minmax(0, 1fr)' : (T ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1.4fr) repeat(3, minmax(0, 1fr))'),
+      footGap: P ? '28px' : '40px', footPad: P ? '48px' : '64px'
+    };
+
+    // Screenshots: the real mockups, scaled to the column.
+    // Every variant is computed so each {{S.*}} lookup resolves, whichever branch is shown.
+    var inner = cw - 3;
+    var S = {
+      dw: cw + 'px', dh: Math.round(inner * 900 / 1440 + 3) + 'px', ds: (inner / 1440).toFixed(4),
+      po: phoneFrame(Math.max(0.45, Math.min(0.6, cw * 0.2 / 390))),
+      pt: phoneFrame(Math.max(0.4, Math.min(0.72, ((cw - 32) / 2 - 17) / 390))),
+      pp: phoneFrame(Math.max(0.4, Math.min(0.74, (cw - 17) / 390))),
+      capPad: T ? '24px' : '20px',
+      caption: D ? 'La revisione della Partita dell’Opera (Parigi, 1858) sul computer e, in primo piano, sul telefono. Schermate dell’app.'
+        : (T ? 'Revisione e riepilogo della Partita dell’Opera (Parigi, 1858) sul telefono. Schermate dell’app.'
+             : 'La revisione della Partita dell’Opera (Parigi, 1858) sul telefono. Schermata dell’app.')
+    };
+
+    // Install cards: the recognised system first; on the phone they fold.
+    var opened = this.state.open;
+    if (!opened) { opened = {}; if (this.props.install) opened[this.props.install] = true; }
+    var inst = {};
+    ORDER.forEach(function (k, i) {
+      var isMine = known && k === device, isOpen = !!opened[k];
+      inst[k] = {
+        order: isMine ? 0 : i + 1, mine: isMine, show: !P || isOpen,
+        expanded: isOpen ? 'true' : 'false', rot: isOpen ? '180deg' : '0deg',
+        toggle: function () { var o = Object.assign({}, opened); o[k] = !o[k]; self.setState({ open: o }); }
+      };
+    });
+
+    var copied = {}, copy = {};
+    ['windows', 'android', 'mac'].forEach(function (k) {
+      copied[k] = self.state.copied === k ? 'Copiato' : (self.state.copied === 'x' + k ? 'Copia non riuscita' : 'Copia');
+      copy[k] = function () {
+        try {
+          navigator.clipboard.writeText(SHA[k]).then(function () { self.setState({ copied: k }); }, function () { self.setState({ copied: 'x' + k }); });
+        } catch (e) { self.setState({ copied: 'x' + k }); }
+      };
+    });
+
+    return {
+      setRoot: this.setRoot, t: t, L: Lx, S: S, dl: dl, others: others, inst: inst, sha: SHA, copied: copied, copy: copy,
+      isPhone: P, notPhone: !P, isTablet: T, isDesktop: D, notDesktop: !D,
+      isDark: dark, isLight: !dark, themeAttr: dark ? 'dark' : 'light', darkPressed: dark ? 'true' : 'false',
+      shotTheme: dark ? 'Scuro' : 'Chiaro',
+      iosStore: !iosSoon, iosSoon: iosSoon,
+      showCounter: this.props.counter === 'on', showNote: this.props.embedded !== '1',
+      toggleTheme: function () { self.setState({ dark: !dark }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

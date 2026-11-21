@@ -52,16 +52,16 @@ body{margin:0}
             <sc-if value="{{sq.showFile}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; bottom: 2px; right: 3px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.file}}</span></sc-if>
             <sc-if value="{{sq.hasPiece}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 45 45" role="img" aria-label="{{sq.label}}" style="width: 43px; height: 43px; overflow: visible"><path d="{{sq.body}}" style="fill: {{sq.fill}}; stroke: #14262B; stroke-width: 1.5px; stroke-linejoin: round; vector-effect: non-scaling-stroke"></path><path d="{{sq.detail}}" style="fill: none; stroke: {{sq.dc}}; stroke-width: 1px; stroke-linecap: round; vector-effect: non-scaling-stroke"></path></svg></sc-if>
             <sc-if value="{{sq.hasBadge}}" hint-placeholder-val="{{ false }}">
-              <span aria-hidden="true" style="position: absolute; top: 1px; right: 1px; z-index: 3; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{sq.tag.c}}; color: {{sq.tag.fg}}; border: 1.5px solid #14262B; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
+              <span aria-hidden="true" style="position: absolute; top: {{sq.bTop}}; right: {{sq.bRight}}; z-index: 3; width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; background: {{sq.tag.c}}; color: {{sq.tag.fg}}; border: 1.5px solid #14262B; box-shadow: 0 0 0 1.5px #FBF8F0; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif">
                 <sc-if value="{{sq.tag.isTxt}}" hint-placeholder-val="{{ true }}"><span>{{sq.tag.txt}}</span></sc-if>
-                <sc-if value="{{sq.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 15px; height: 15px; fill: {{sq.tag.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{sq.tag.path}}"></path></svg></sc-if>
+                <sc-if value="{{sq.tag.isIcon}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 16 16" style="width: 13px; height: 13px; fill: {{sq.tag.fill}}; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><path d="{{sq.tag.path}}"></path></svg></sc-if>
               </span>
             </sc-if>
           </div>
         </sc-for>
       </div>
       <sc-if value="{{arrow.show}}" hint-placeholder-val="{{ false }}">
-        <svg viewBox="0 0 384 384" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 384px; height: 384px; pointer-events: none; z-index: 2"><polygon points="{{arrow.points}}" style="fill: #14262B; stroke: #14262B; stroke-width: 7; stroke-linejoin: round"></polygon><polygon points="{{arrow.points}}" style="fill: #FBF8F0; stroke: #FBF8F0; stroke-width: 4; stroke-linejoin: round"></polygon><polygon points="{{arrow.points}}" style="fill: #5FA83B"></polygon></svg>
+        <svg viewBox="0 0 384 384" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 384px; height: 384px; pointer-events: none; z-index: 2; opacity: 0.8"><polygon points="{{arrow.points}}" style="fill: #14262B; stroke: #14262B; stroke-width: 7; stroke-linejoin: round"></polygon><polygon points="{{arrow.points}}" style="fill: #FBF8F0; stroke: #FBF8F0; stroke-width: 4; stroke-linejoin: round"></polygon><polygon points="{{arrow.points}}" style="fill: #5FA83B"></polygon></svg>
       </sc-if>
     </div>
 
@@ -433,7 +433,9 @@ class Component extends DCLogic {
           hasPiece: !!pc, body: P ? P.body : '', detail: P ? P.detail : '',
           fill: white ? '#FFFBF0' : '#1B2B30', dc: white ? '#14262B' : '#DCE8E6',
           label: pc ? PIECE_NAME[pc.toLowerCase()] + (white ? ' bianco ' : ' nero ') + 'in ' + name : '',
-          hasBadge: isTo, tag: curTag
+          hasBadge: isTo, tag: curTag,
+          // Badge on the square's top-right corner; pulled inward on the top row and the right file.
+          bTop: a === 0 ? '-2px' : '-8px', bRight: b === 7 ? '-2px' : (a === 0 ? '-10px' : '-8px')
         });
       }
     }

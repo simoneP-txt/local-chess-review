@@ -193,12 +193,12 @@ body{margin:0}
                     <sc-if value="{{sq.showFile}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; bottom: 3px; right: 4px; font: 600 12px/1 'IBM Plex Mono', monospace; color: {{sq.cc}}">{{sq.file}}</span></sc-if>
                     <sc-if value="{{sq.hasPiece}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 45 45" aria-hidden="true" style="width: 90%; height: 90%; overflow: visible"><path d="{{sq.body}}" style="fill: {{sq.fill}}; stroke: #14262B; stroke-width: {{bd.sw}}; stroke-linejoin: round; vector-effect: non-scaling-stroke"></path><path d="{{sq.detail}}" style="fill: none; stroke: {{sq.dc}}; stroke-width: 1px; stroke-linecap: round; vector-effect: non-scaling-stroke"></path></svg></sc-if>
                     <sc-if value="{{sq.hasBadge}}" hint-placeholder-val="{{ false }}">
-                      <span aria-hidden="true" style="position: absolute; top: 2px; right: 2px; z-index: 3; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; background: {{sq.tag.c}}; color: {{sq.tag.fg}}; border: 1.5px solid #14262B; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif"><span>{{sq.tag.txt}}</span></span>
+                      <span aria-hidden="true" style="position: absolute; top: {{sq.bTop}}; right: {{sq.bRight}}; z-index: 3; width: {{sq.bSize}}; height: {{sq.bSize}}; box-sizing: border-box; border-radius: 50%; background: {{sq.tag.c}}; color: {{sq.tag.fg}}; border: 1.5px solid #14262B; box-shadow: {{sq.bHalo}}; display: flex; align-items: center; justify-content: center; font: 700 14px/1 'Instrument Sans', sans-serif"><span>{{sq.tag.txt}}</span></span>
                     </sc-if>
                   </div>
                 </sc-for>
               </div>
-              <svg viewBox="{{bd.vb}}" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none"><polygon points="{{bd.arrow}}" style="fill: #14262B; stroke: #14262B; stroke-width: 7; stroke-linejoin: round"></polygon><polygon points="{{bd.arrow}}" style="fill: #FBF8F0; stroke: #FBF8F0; stroke-width: 4; stroke-linejoin: round"></polygon><polygon points="{{bd.arrow}}" style="fill: #5FA83B"></polygon></svg>
+              <svg viewBox="{{bd.vb}}" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.8"><polygon points="{{bd.arrow}}" style="fill: #14262B; stroke: #14262B; stroke-width: 7; stroke-linejoin: round"></polygon><polygon points="{{bd.arrow}}" style="fill: #FBF8F0; stroke: #FBF8F0; stroke-width: 4; stroke-linejoin: round"></polygon><polygon points="{{bd.arrow}}" style="fill: #5FA83B"></polygon></svg>
             </div>
             <figcaption style="max-width: {{bd.size}}; font-size: 14px; line-height: 1.45; color: {{t.text2}}">{{bd.caption}}</figcaption>
           </figure>
@@ -206,7 +206,7 @@ body{margin:0}
         <ul style="flex: 1 1 240px; min-width: 0; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.45">
           <li>Posizione dopo 9… b5: tutti i 12 pezzi in gioco.</li>
           <li>Arrivo ambra opaca #E8A33D, partenza #F1C06E, uguali su case chiare e scure.</li>
-          <li>Freccia della migliore (♞︎a6) verde, alone chiaro 2 px e contorno inchiostro 1,5 px.</li>
+          <li>Freccia della migliore (♞︎a6) verde, alone chiaro 2 px e contorno inchiostro 1,5 px, opacità 80 % perché il pezzo sotto resti visibile.</li>
           <li>Badge 28 px sulla casa di arrivo, anello inchiostro anche in tema scuro.</li>
           <li>Coordinate 12 px: inchiostro sulle case chiare ed evidenziate, bianco sulle scure (4,16:1, eccezione del brief).</li>
         </ul>
@@ -568,7 +568,11 @@ function buildBoard(opts) {
         showRank: f === 0, rank: String(8 - r), showFile: r === 7, file: 'abcdefgh'[f],
         cc: (light || isTo || isFrom) ? '#14262B' : '#FFFFFF',
         hasPiece: !!pc, body: pv.body, detail: pv.detail, fill: pv.fill, dc: pv.dc,
-        hasBadge: isTo, tag: tagView(opts.tag, 28, '#14262B')
+        hasBadge: isTo, tag: tagView(opts.tag, 28, '#14262B'),
+        // Phone board: smaller badge on the square's corner (same rule as M4); desktop board unchanged.
+        bSize: opts.phone ? '24px' : '28px', bHalo: opts.phone ? '0 0 0 1.5px #FBF8F0' : 'none',
+        bTop: !opts.phone ? '2px' : (r === 0 ? '-2px' : '-8px'),
+        bRight: !opts.phone ? '2px' : (f === 7 ? '-2px' : (r === 0 ? '-10px' : '-8px'))
       });
     }
   }
@@ -649,8 +653,8 @@ class Component extends DCLogic {
     var boards = [
       buildBoard({ fen: fenB5, size: 480, sw: '2px', arrowW: 14, move: { from: 'b7', to: 'b5' }, best: { from: 'b8', to: 'a6' }, tag: 'imprecisione',
                    caption: 'Desktop · 480 px · contorno pezzi 2 px · freccia 14 px' }),
-      buildBoard({ fen: fenB5, size: 350, sw: '1.5px', arrowW: 10, move: { from: 'b7', to: 'b5' }, best: { from: 'b8', to: 'a6' }, tag: 'imprecisione',
-                   caption: 'Telefono · 350 px · contorno pezzi 1,5 px · freccia 10 px' })
+      buildBoard({ fen: fenB5, size: 350, phone: true, sw: '1.5px', arrowW: 10, move: { from: 'b7', to: 'b5' }, best: { from: 'b8', to: 'a6' }, tag: 'imprecisione',
+                   caption: 'Telefono · 350 px · contorno pezzi 1,5 px · freccia 10 px · badge 24 px sull’angolo della casa' })
     ];
     var order = 'KQRBNPkqrbnp'.split('');
     var names = { k: 'Re', q: 'Donna', r: 'Torre', b: 'Alfiere', n: 'Cavallo', p: 'Pedone' };
@@ -665,8 +669,8 @@ class Component extends DCLogic {
       userValue: 'PaulMorphy', placeholderValue: 'il tuo nome utente',
       tags: TAG_ORDER.map(function (k) { return tagView(k, 32, ringTheme); }),
       tagSizes: [
-        Object.assign(tagView('brillante', 24, ringTheme), { caption: '24 · striscia mobile' }),
-        Object.assign(tagView('brillante', 28, ringTheme), { caption: '28 · liste, badge, marker desktop' }),
+        Object.assign(tagView('brillante', 24, ringTheme), { caption: '24 · striscia mobile, badge sulla scacchiera del telefono' }),
+        Object.assign(tagView('brillante', 28, ringTheme), { caption: '28 · liste, badge sulla scacchiera desktop, marker desktop' }),
         Object.assign(tagView('brillante', 32, ringTheme), { caption: '32 · marker telefono' }),
         Object.assign(tagView('brillante', 40, t.onPetrol), { caption: '40 · card feedback' })
       ],
