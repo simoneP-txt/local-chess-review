@@ -1,12 +1,13 @@
 use review_core::accuracy::pstdev;
-use review_core::openings::epd;
+use review_core::game::{Game, parse_elo, read_game};
+use review_core::openings::{Book, epd};
 use review_core::py::{py_round, py_round_int};
 use review_core::see::static_exchange_evaluation;
 use review_core::special::make_comment;
 use review_core::stats::{PhaseStats, compute_phases};
 use serde_json::{Value, json};
 use shakmaty::fen::Fen;
-use shakmaty::san::San;
+use shakmaty::san::{San, SanPlus};
 use shakmaty::uci::UciMove;
 use shakmaty::{CastlingMode, Chess, Move, Position};
 
@@ -34,6 +35,18 @@ fn epd_after(sans: &[&str]) -> String {
         board.play_unchecked(m);
     }
     epd(&board)
+}
+
+fn read(pgn: &str) -> Game {
+    read_game(pgn, &Book::load()).unwrap_or_else(|e| panic!("{pgn:?}: {e}"))
+}
+
+fn read_error(pgn: &str) -> Option<String> {
+    read_game(pgn, &Book::load()).err()
+}
+
+fn ucis(game: &Game) -> Vec<&str> {
+    game.plies.iter().map(|p| p.uci.as_str()).collect()
 }
 
 #[test]
@@ -209,6 +222,185 @@ fn test_epd_writes_en_passant_only_when_legal() {
         epd_after(&["e4", "d5", "e5", "f5"]),
         "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6"
     );
+}
+
+#[test]
+fn test_fen_writes_en_passant_only_when_legal() {
+    // 5.8.6
+    let game = read("1. e4 d5 2. e5 f5 *");
+    assert_eq!(
+        game.plies[0].fen_after,
+        "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+    );
+    assert_eq!(
+        game.plies[3].fen_after,
+        "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"
+    );
+}
+
+#[test]
+fn test_san_matches_python_chess() {
+    // 5.8.8, Review Focus 2
+    let cases = [
+        ("4k3/8/8/8/8/5N2/8/1N2K3 w - - 0 1", "b1d2", "Nbd2"),
+        ("4k3/8/8/R7/8/8/8/R3K3 w - - 0 1", "a1a3", "R1a3"),
+        // the black king on g6, not e8: with e8 Qe1 checks it on White's move, which shakmaty rejects
+        ("8/8/6k1/8/7Q/8/8/4Q1KQ w - - 0 1", "h1e4", "Qh1e4+"),
+        ("3r3k/2P5/8/8/8/8/8/4K3 w - - 0 1", "c7d8n", "cxd8=N"),
+        ("7k/2P5/8/8/8/8/8/4K3 w - - 0 1", "c7c8q", "c8=Q+"),
+        ("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1g1", "O-O"),
+        ("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "e1c1", "O-O-O"),
+        ("6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", "a1a8", "Ra8#"),
+        ("4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1", "e5d6", "exd6"),
+    ];
+    for (fen, uci, san) in cases {
+        let board = pos(fen);
+        let m = mv(&board, uci);
+        assert_eq!(SanPlus::from_move(board, m).to_string(), san, "{fen} {uci}");
+    }
+}
+
+#[test]
+fn test_castling_uci_is_the_king_move() {
+    // Review Focus 1
+    let game = read("1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. O-O *");
+    let last = game.plies.last().unwrap();
+    assert_eq!((last.san.as_str(), last.uci.as_str()), ("O-O", "e1g1"));
+}
+
+#[test]
+fn test_headers_follow_python_chess() {
+    // 5.8.9: the seven roster tags first, then the others in file order; values as in the file
+    let game = read(
+        r#"[White "A"]
+[Foo "x"]
+[Event "E"]
+[White "B"]
+[Black "Gioè"]
+[Site "A \"quoted\" \\ site"]
+
+1. e4 *
+"#,
+    );
+    let pairs: Vec<(&str, &str)> = game
+        .headers
+        .iter()
+        .map(|(k, v)| (k.as_str(), v.as_str().unwrap()))
+        .collect();
+    assert_eq!(
+        pairs,
+        [
+            ("Event", "E"),
+            ("Site", r#"A \"quoted\" \\ site"#),
+            ("Date", "????.??.??"),
+            ("Round", "?"),
+            ("White", "B"),
+            ("Black", "Gioè"),
+            ("Result", "*"),
+            ("Foo", "x"),
+        ]
+    );
+}
+
+#[test]
+fn test_elo_like_python_int() {
+    let cases = [
+        (Some("  1500 "), Some(1500)),
+        (Some("+1500"), Some(1500)),
+        (Some("-5"), Some(-5)),
+        (Some("0"), None),
+        (Some("?"), None),
+        (Some(""), None),
+        (Some("1500.0"), None),
+        (None, None),
+    ];
+    for (value, elo) in cases {
+        assert_eq!(parse_elo(value), elo, "{value:?}");
+    }
+    // shortcut: Python int() reads 15_00 as 1500
+    assert_eq!(parse_elo(Some("15_00")), None);
+}
+
+#[test]
+fn test_clock_like_python_chess() {
+    // Review Focus 3
+    let game = read(
+        "1. e4 {[%clk 0:09:57.3]} e5 {[%clk 1:00:00]} 2. Nf3 {[%clk 0:00:05.]} Nc6 3. Bb5 {text} \
+         {[%clk 0:01:02.345]} a6 {[%clk 1:2] [%clk 0:00:07.25] [%clk 0:00:09]} 4. Ba4 *",
+    );
+    let clocks: Vec<Option<f64>> = game.plies.iter().map(|p| p.clock).collect();
+    assert_eq!(
+        clocks,
+        [
+            Some(597.3),
+            Some(3600.0),
+            Some(5.0),
+            None,
+            Some(62.345),
+            Some(7.25),
+            None
+        ]
+    );
+}
+
+#[test]
+fn test_clock_in_a_comment_across_a_buffer_refill() {
+    // pgn-reader 0.29.2 reads 16384 bytes at a time and hands a comment that crosses a refill in
+    // chunks: here the refill falls inside the clock, right after "[%cl"
+    let x = "x".repeat(16_384 - "1. e4 {[%cl".len());
+    let game = read(&format!("1. e4 {{{x}[%clk 0:00:07]}} *"));
+    assert_eq!(game.plies[0].clock, Some(7.0));
+}
+
+#[test]
+fn test_start_fen_cleans_castling_and_move_zero() {
+    // 5.8.11
+    let game = read("[SetUp \"1\"]\n[FEN \"4k3/8/8/8/8/8/8/4K3 w KQkq - 0 0\"]\n\n*\n");
+    assert_eq!(game.start_fen, "4k3/8/8/8/8/8/8/4K3 w - - 0 1");
+    let game = read("[FEN \"7k/8/6K1/5Q2/8/8/8/8 b - - 3 40\"]\n\n*\n");
+    assert_eq!(game.start_fen, "7k/8/6K1/5Q2/8/8/8/8 b - - 3 40");
+}
+
+#[test]
+fn test_chess960_and_invalid_positions_are_errors() {
+    // 5.9
+    for pgn in [
+        "[FEN \"4k3/8/8/8/8/8/8/1R2K2R w KQ - 0 1\"]\n\n*\n",
+        "[Variant \"Chess960\"]\n\n*\n",
+    ] {
+        assert_eq!(
+            read_error(pgn).as_deref(),
+            Some("Chess960 is not supported"),
+            "{pgn:?}"
+        );
+    }
+    let error = read_error("[FEN \"8/8/8/8/8/8/8/4K3 w - - 0 1\"]\n\n*\n").unwrap();
+    assert!(error.starts_with("invalid FEN"), "{error}");
+}
+
+#[test]
+fn test_illegal_move_ends_the_game() {
+    assert_eq!(ucis(&read("1. e4 e5 2. Ke3 Nc6 *")), ["e2e4", "e7e5"]);
+}
+
+#[test]
+fn test_reads_the_first_game_and_its_main_line() {
+    assert_eq!(
+        ucis(&read("1. e4 (1. d4 d5) e5 *\n\n1. d4 *\n")),
+        ["e2e4", "e7e5"]
+    );
+}
+
+#[test]
+fn test_empty_pgn() {
+    for pgn in ["", "   \n"] {
+        assert_eq!(
+            read_error(pgn).as_deref(),
+            Some("invalid or empty PGN"),
+            "{pgn:?}"
+        );
+    }
+    assert!(read("*\n").plies.is_empty());
 }
 
 // Python 3.11.9 math.exp on Windows, on the arguments cp_to_wp and lichess_win_pct pass for cp
