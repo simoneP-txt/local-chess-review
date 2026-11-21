@@ -1,10 +1,16 @@
+mod common;
+
+use common::{analyze, scripted, scripted_with};
 use review_core::accuracy::pstdev;
+use review_core::analysis::{classify, evaluate};
+use review_core::engine::{Line, Score};
 use review_core::game::{Game, parse_elo, read_game};
 use review_core::openings::{Book, epd};
 use review_core::py::{py_round, py_round_int};
 use review_core::see::static_exchange_evaluation;
 use review_core::special::make_comment;
-use review_core::stats::{PhaseStats, compute_phases};
+use review_core::stats::{PhaseStats, compute_phases, estimate_performance_elo};
+use review_core::{ByColor, analyze_pgn};
 use serde_json::{Value, json};
 use shakmaty::fen::Fen;
 use shakmaty::san::{San, SanPlus};
@@ -401,6 +407,184 @@ fn test_empty_pgn() {
         );
     }
     assert!(read("*\n").plies.is_empty());
+}
+
+#[test]
+fn test_performance_elo_cap_does_not_overflow() {
+    // Python ints do not overflow: real_elo 2**63 - 1 leaves the pure curve
+    assert_eq!(estimate_performance_elo(50.0, Some(i64::MAX)), 350);
+}
+
+#[test]
+fn test_elo_argument_wins_over_the_header() {
+    // venv, GameAnalyzer.analyze_pgn with ScriptedEngine(lambda board: 0): accuracy 100 and pure
+    // Elo 2900, so each cap binds; from the headers alone White would get 2000
+    let pgn = "[WhiteElo \"500\"]\n[BlackElo \"900\"]\n\n1. e4 e5 *\n";
+    let mut engine = scripted_with(|_| 0);
+    let analysis = analyze_pgn(pgn, Some(1200), None, &mut engine, &Book::load(), 15).unwrap();
+    let real_elo = ByColor {
+        white: Some(1200),
+        black: Some(900),
+    };
+    assert_eq!(analysis.real_elo, real_elo);
+    let performance_elo = ByColor {
+        white: 2700,
+        black: 2400,
+    };
+    assert_eq!(analysis.performance_elo, performance_elo);
+}
+
+const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+#[test]
+fn test_empty_engine_answer_is_an_error() {
+    let mut engine = scripted().with_answer(START_FEN, vec![]);
+    let error = analyze_pgn("1. e4 *", None, None, &mut engine, &Book::load(), 15).unwrap_err();
+    assert_eq!(error, format!("no lines in the engine answer: {START_FEN}"));
+}
+
+#[test]
+fn test_classify_checks_the_engine_answers() {
+    let after_e4 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1";
+    let game = read("1. e4 *");
+    let evals = evaluate(&game, &mut scripted(), 15).unwrap();
+    let no_elo = ByColor {
+        white: None,
+        black: None,
+    };
+    let error = classify(&game, &evals[..1], no_elo).unwrap_err();
+    assert_eq!(error, "expected 2 engine answers, got 1");
+    for (i, fen) in [(0, START_FEN), (1, after_e4)] {
+        let mut evals = evals.clone();
+        evals[i].clear();
+        let error = classify(&game, &evals, no_elo).unwrap_err();
+        assert_eq!(error, format!("no lines in the engine answer: {fen}"));
+    }
+}
+
+#[test]
+fn test_unreadable_best_move_is_an_error() {
+    // e2e5 is no legal move in the starting position
+    let line = Line {
+        score: Score::Cp(10),
+        pv: vec!["e2e5".into()],
+    };
+    let mut engine = scripted().with_answer(START_FEN, vec![line]);
+    let error = analyze_pgn("1. e4 *", None, None, &mut engine, &Book::load(), 15).unwrap_err();
+    assert_eq!(error, format!("unreadable best move e2e5 in {START_FEN}"));
+}
+
+#[test]
+fn test_is_best_reads_castling_as_uci() {
+    // 5.8.14, Review Focus 1
+    let mut engine = scripted().with_lines(&[(
+        "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+        &["e1g1", "d2d3"],
+    )]);
+    let moves = analyze("1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. O-O *", &mut engine).moves;
+    assert!(moves[6].is_best);
+    assert_eq!(
+        (
+            moves[6].best_move_uci.as_str(),
+            moves[6].best_move_san.as_str()
+        ),
+        ("e1g1", "O-O")
+    );
+}
+
+#[test]
+fn test_clock_after_is_rounded() {
+    // Review Focus 3: Python's round(62.345, 2) is 62.34
+    let moves = analyze("1. e4 {[%clk 0:01:02.345]} e5 *", &mut scripted()).moves;
+    let clocks: Vec<Option<f64>> = moves.iter().map(|m| m.clock_after).collect();
+    assert_eq!(clocks, [Some(62.34), None]);
+}
+
+fn keys(value: &Value) -> Vec<&str> {
+    value
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(String::as_str)
+        .collect()
+}
+
+#[test]
+fn test_json_types_match_python() {
+    // Review Focus 4: integer and decimal as Python's json.dumps writes them, null for None
+    let v = serde_json::to_value(analyze("*\n", &mut scripted())).unwrap();
+    assert_eq!(
+        keys(&v),
+        [
+            "headers",
+            "moves",
+            "accuracy",
+            "acpl",
+            "performance_elo",
+            "wp_series",
+            "move_counts",
+            "phases",
+            "real_elo",
+            "time_control",
+            "opening",
+            "start_fen"
+        ]
+    );
+    assert!(v["accuracy"]["white"].is_f64() && v["accuracy"]["white"] == 0.0);
+    assert!(v["acpl"]["white"].is_i64() && v["acpl"]["white"] == 0);
+    assert!(v["performance_elo"]["white"].is_i64() && v["performance_elo"]["white"] == 100);
+    assert_eq!(v["real_elo"], json!({"white": null, "black": null}));
+    assert_eq!(
+        v["phases"]["opening"]["white"],
+        json!({"label": null, "mean_drop": null, "moves": 0})
+    );
+    assert!(v["phases"]["opening"]["white"]["moves"].is_i64());
+    assert!(v["opening"].is_null());
+    assert_eq!(v["time_control"], "");
+    assert_eq!(v["move_counts"]["white"], json!({}));
+    assert_eq!(
+        keys(&v["headers"]),
+        ["Event", "Site", "Date", "Round", "White", "Black", "Result"]
+    );
+
+    // 1. f3 e5 2. g4 Qh4#
+    let v = serde_json::to_value(analyze("1. f3 e5 2. g4 Qh4# 0-1\n", &mut scripted())).unwrap();
+    let m = &v["moves"][3];
+    assert_eq!(
+        keys(m),
+        [
+            "ply",
+            "move_number",
+            "color",
+            "san",
+            "uci",
+            "fen_before",
+            "fen_after",
+            "best_move_san",
+            "best_move_uci",
+            "eval_before_cp",
+            "eval_after_cp",
+            "eval_white_cp",
+            "wp_before",
+            "wp_after",
+            "wp_white_after",
+            "wp_drop",
+            "cp_loss",
+            "classification",
+            "is_best",
+            "phase",
+            "see_played",
+            "comment",
+            "pv_uci",
+            "pv_after_uci",
+            "clock_after"
+        ]
+    );
+    assert!(m["wp_after"].is_f64() && m["wp_after"] == 1.0);
+    assert!(m["wp_drop"].is_f64() && m["wp_drop"] == 0.0);
+    assert!(m["eval_after_cp"].is_i64() && m["eval_after_cp"] == 10000);
+    assert!(m["comment"].is_null() && m["clock_after"].is_null());
+    assert!(v["wp_series"][3]["wp_white"].is_f64());
 }
 
 // Python 3.11.9 math.exp on Windows, on the arguments cp_to_wp and lichess_win_pct pass for cp

@@ -43,7 +43,8 @@ pub fn accuracy_to_elo(accuracy: f64) -> i64 {
 pub fn estimate_performance_elo(accuracy: f64, real_elo: Option<i64>) -> i64 {
     let mut pure = accuracy_to_elo(accuracy);
     if let Some(real_elo) = real_elo.filter(|&elo| elo > 0) {
-        pure = pure.min(real_elo + PERFORMANCE_ELO_OVERPERFORMANCE_CAP);
+        // saturating: Python ints never overflow, and near i64::MAX the cap leaves the pure curve
+        pure = pure.min(real_elo.saturating_add(PERFORMANCE_ELO_OVERPERFORMANCE_CAP));
     }
     pure.clamp(100, 2900)
 }

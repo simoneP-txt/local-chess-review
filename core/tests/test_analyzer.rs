@@ -1,4 +1,11 @@
-use review_core::accuracy::harmonic_mean;
+mod common;
+
+use std::collections::HashSet;
+
+use common::{analyze, scripted, scripted_with};
+use review_core::ByColor;
+use review_core::accuracy::{game_accuracy_lichess, harmonic_mean};
+use review_core::analysis::MoveAnalysis;
 use review_core::engine::Score;
 use review_core::scoring::*;
 use review_core::see::*;
@@ -6,7 +13,7 @@ use review_core::special::*;
 use review_core::stats::*;
 use shakmaty::fen::Fen;
 use shakmaty::uci::UciMove;
-use shakmaty::{CastlingMode, Chess, Color, Move};
+use shakmaty::{CastlingMode, Chess, Color, Move, Position};
 
 const W: Color = Color::White;
 const B: Color = Color::Black;
@@ -424,6 +431,231 @@ fn test_compute_phases() {
             label: Some("blunder"),
             mean_drop: Some(0.3),
             moves: 1
+        }
+    );
+}
+
+const OPENING: &str = "1. e4 e5 2. Nf3 Nc6 *\n";
+const BLACK_MATES: &str = "1. f3 e5 2. g4 Qh4# 0-1\n";
+const WHITE_MATES: &str = "1. e4 f6 2. d4 g5 3. Qh5# 1-0\n";
+const ONE_MOVE_THEN_STALEMATE: &str =
+    "[SetUp \"1\"]\n[FEN \"7k/8/6K1/5Q2/8/8/8/8 b - - 0 1\"]\n\n1... Kg8 2. Qf6 1/2-1/2\n";
+// the king cannot move: line 1 is c8=Q, line 2 c8=R (python-chess order, given by with_lines)
+const OFF_THEORY: &str = "[SetUp \"1\"]\n[FEN \"7k/2P5/8/8/8/6q1/8/7K w - - 0 1\"]\n\n";
+
+/// shakmaty's first legal move: line 1 of the scripted engine.
+fn first_legal(fen: &str) -> Vec<String> {
+    let board = pos(fen);
+    let first = board.legal_moves().into_iter().take(1);
+    first
+        .map(|m| m.to_uci(CastlingMode::Standard).to_string())
+        .collect()
+}
+
+fn classes(moves: &[MoveAnalysis]) -> Vec<&'static str> {
+    moves.iter().map(|m| m.classification).collect()
+}
+
+#[test]
+fn test_analyze_searches_each_position_once() {
+    let mut engine = scripted();
+    let moves = analyze(OPENING, &mut engine).moves;
+    assert_eq!(engine.calls.len(), 5);
+    assert!(engine.calls.iter().all(|&(_, multipv)| multipv == 2));
+    let fens: HashSet<&String> = engine.calls.iter().map(|(fen, _)| fen).collect();
+    assert_eq!(fens.len(), 5);
+    for m in &moves {
+        // line 1 plays the first legal move: reading line 2 instead fails here
+        assert_eq!([m.best_move_uci.clone()][..], first_legal(&m.fen_before));
+        let pv_after_first: Vec<String> = m.pv_after_uci.iter().take(1).cloned().collect();
+        assert_eq!(pv_after_first, first_legal(&m.fen_after));
+    }
+}
+
+#[test]
+fn test_analyze_reuses_after_eval_as_next_before() {
+    let mut scores = (10..).step_by(10); // every search answers a new score
+    let moves = analyze(OPENING, &mut scripted_with(|_| scores.next().unwrap())).moves;
+    for pair in moves.windows(2) {
+        // one search of the position between the two moves, seen by its two sides
+        assert_eq!(pair[0].eval_after_cp, -pair[1].eval_before_cp);
+    }
+}
+
+#[test]
+fn test_analyze_great_turnaround_after_the_opponent_blunder() {
+    // side to move, P0-P4: White +200 until 2. Nd6?? hands it to Black
+    let mut scores = [200, -200, 200, 200, -200].into_iter();
+    let mut engine = scripted_with(|_| scores.next().unwrap()).with_lines(&[
+        ("7k/2P5/8/8/8/6q1/8/7K w - - 0 1", &["c7c8q", "c7c8r"]),
+        ("2N4k/8/8/8/8/6q1/8/7K b - - 0 1", &["h8g8", "h8h7"]),
+        ("2N4k/8/8/8/6q1/8/8/7K w - - 1 2", &["c8e7", "c8a7"]),
+        ("7k/8/3N4/8/6q1/8/8/7K b - - 2 2", &["h8g8", "h8h7"]),
+        ("6k1/8/3N4/8/6q1/8/8/7K w - - 3 3", &["d6e8", "d6c8"]),
+    ]);
+    let pgn = format!("{OFF_THEORY}1. c8=N Qg4 2. Nd6 Kg8 *\n");
+    let moves = analyze(&pgn, &mut engine).moves;
+    // 1. c8=N keeps 0.68 but has no move before it; 1... Qg4 stays at 0.32; 2... Kg8 goes from 0.32 to 0.68
+    assert_eq!(classes(&moves), ["best", "best", "blunder", "great"]);
+    // Review Focus 2: the best move is a promotion
+    assert_eq!(
+        (
+            moves[0].best_move_uci.as_str(),
+            moves[0].best_move_san.as_str()
+        ),
+        ("c7c8q", "c8=Q+")
+    );
+}
+
+#[test]
+fn test_analyze_no_great_turnaround_after_an_opponent_line_one() {
+    let classes_of = |movetext: &str, lines: &[(&str, &[&str])]| {
+        // side to move, P0-P2: Black goes 0.35, 0.47, then 0.55 after its reply
+        let mut scores = [168, -33, -54].into_iter();
+        let mut engine = scripted_with(|_| scores.next().unwrap()).with_lines(lines);
+        classes(&analyze(&format!("{OFF_THEORY}{movetext}"), &mut engine).moves)
+    };
+
+    // c8=Q is the first legal move, so line 1: only the next search gives Black the 0.12 (horizon effect)
+    let queen = classes_of(
+        "1. c8=Q+ Kh7 *\n",
+        &[
+            ("7k/2P5/8/8/8/6q1/8/7K w - - 0 1", &["c7c8q", "c7c8r"]),
+            ("2Q4k/8/8/8/8/6q1/8/7K b - - 0 1", &["h8h7", "h8g7"]),
+            ("2Q5/7k/8/8/8/6q1/8/7K w - - 1 2", &["c8h8", "c8g8"]),
+        ],
+    );
+    assert_eq!(queen, ["best", "best"]);
+    // same scores, but c8=N is not line 1: a real mistake, and the reply punishes it
+    let knight = classes_of(
+        "1. c8=N Kg8 *\n",
+        &[
+            ("7k/2P5/8/8/8/6q1/8/7K w - - 0 1", &["c7c8q", "c7c8r"]),
+            ("2N4k/8/8/8/8/6q1/8/7K b - - 0 1", &["h8g8", "h8h7"]),
+            ("2N3k1/8/8/8/8/6q1/8/7K w - - 1 2", &["c8e7", "c8a7"]),
+        ],
+    );
+    assert_eq!(knight, ["mistake", "great"]);
+}
+
+#[test]
+fn test_analyze_miss_after_the_opponent_blunder() {
+    // side to move, P0-P2: 1. c8=N?? hands Black 0.96, 1... Kh7 gives it back
+    let mut scores = [0, 900, 0].into_iter();
+    let mut engine = scripted_with(|_| scores.next().unwrap()).with_lines(&[
+        ("7k/2P5/8/8/8/6q1/8/7K w - - 0 1", &["c7c8q", "c7c8r"]),
+        ("2N4k/8/8/8/8/6q1/8/7K b - - 0 1", &["h8g8", "h8h7"]),
+        ("2N5/7k/8/8/8/6q1/8/7K w - - 1 2", &["c8e7", "c8a7"]),
+    ]);
+    let moves = analyze(&format!("{OFF_THEORY}1. c8=N Kh7 *\n"), &mut engine).moves;
+    assert_eq!(classes(&moves), ["blunder", "miss"]); // Kh7 is not line 1: Kg8 is
+}
+
+#[test]
+fn test_analyze_handles_mate_and_single_move() {
+    assert_eq!(analyze(BLACK_MATES, &mut scripted()).moves.len(), 4);
+    let moves = analyze(ONE_MOVE_THEN_STALEMATE, &mut scripted()).moves; // Kg8 is the only legal move
+    assert!(moves.len() == 2 && moves[0].color == "black");
+}
+
+#[test]
+fn test_analyze_scores_a_given_mate_as_a_win() {
+    let cases = [
+        // 1. f3 e5 2. g4 Qh4# is a row of the openings database
+        ("black-mates", BLACK_MATES, -10000, 0.0, "book"),
+        ("white-mates", WHITE_MATES, 10000, 1.0, "best"),
+    ];
+    for (case, pgn, white_cp, white_wp, classification) in cases {
+        let moves = analyze(pgn, &mut scripted()).moves;
+        let last = moves.last().unwrap(); // answers Mate(0) for the mated side
+        assert_eq!(
+            (last.eval_after_cp, last.wp_after, last.cp_loss),
+            (10000, 1.0, 0),
+            "{case}"
+        );
+        assert_eq!(
+            (last.eval_white_cp, last.wp_white_after),
+            (white_cp, white_wp),
+            "{case}"
+        );
+        assert_eq!(
+            (last.classification, last.wp_drop),
+            (classification, 0.0),
+            "{case}"
+        );
+    }
+}
+
+#[test]
+fn test_analyze_move_number_from_fen() {
+    let moves = analyze(ONE_MOVE_THEN_STALEMATE, &mut scripted()).moves;
+    let pairs: Vec<(&str, u32)> = moves
+        .iter()
+        .map(|m| (m.san.as_str(), m.move_number))
+        .collect();
+    assert_eq!(pairs, [("Kg8", 1), ("Qf6", 2)]);
+}
+
+#[test]
+fn test_analyze_reports_the_start_fen() {
+    let cases = [
+        (
+            "standard",
+            "1. e4 e5 *\n",
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        ),
+        (
+            "from-fen",
+            "[SetUp \"1\"]\n[FEN \"7k/8/6K1/5Q2/8/8/8/8 b - - 0 1\"]\n\n1... Kg8 *\n",
+            "7k/8/6K1/5Q2/8/8/8/8 b - - 0 1",
+        ),
+    ];
+    for (case, pgn, fen) in cases {
+        assert_eq!(analyze(pgn, &mut scripted()).start_fen, fen, "{case}");
+    }
+}
+
+#[test]
+fn test_analyze_accuracy_series() {
+    let cases: [(&str, &str, bool, &[i32]); 4] = [
+        (
+            "black-mates",
+            BLACK_MATES,
+            true,
+            &[10, -10, 10, -10, -10000],
+        ),
+        (
+            "white-mates",
+            WHITE_MATES,
+            true,
+            &[10, -10, 10, -10, 10, 10000],
+        ),
+        // P0 is Black's +10 seen from White
+        (
+            "black-moves-first",
+            ONE_MOVE_THEN_STALEMATE,
+            false,
+            &[-10, 10, 0],
+        ),
+        ("one-ply", "1. e4 *\n", true, &[10, -10]),
+    ];
+    for (case, pgn, white_starts, cps_white) in cases {
+        // ScriptedEngine scores 10 cp for the side to move, Mate(0) for the mated side, 0 for stalemate
+        assert_eq!(
+            analyze(pgn, &mut scripted()).accuracy,
+            game_accuracy_lichess(white_starts, cps_white),
+            "{case}"
+        );
+    }
+}
+
+#[test]
+fn test_analyze_accuracy_without_moves() {
+    assert_eq!(
+        analyze("*\n", &mut scripted()).accuracy,
+        ByColor {
+            white: 0.0,
+            black: 0.0
         }
     );
 }
