@@ -1,0 +1,13 @@
+[Event "Mini"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "-"]
+[White "White"]
+[Black "Black"]
+[Result "*"]
+[WhiteElo "1500"]
+[BlackElo "1480"]
+[TimeControl "600"]
+
+1. e4 {[%clk 0:09:58.1]} 1... e5 {[%clk 0:09:57]} 2. Nf3 {[%clk 0:09:50.25]} 2... Nc6 3. Bc4 Bc5 4. O-O Nf6
+5. d4 Bxd4 6. Nxd4 Nxd4 7. f4 d5 8. fxe5 dxc4 9. exf6 Qxf6 10. c3 Ne2+ 11. Kh1 Qxf1+ 12. Qxf1 *

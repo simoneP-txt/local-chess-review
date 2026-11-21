@@ -1,9 +1,11 @@
 pub mod accuracy;
 pub mod analysis;
+pub mod compare;
 pub mod engine;
 pub mod game;
 pub mod openings;
 pub mod py;
+pub mod replay;
 pub mod scoring;
 pub mod see;
 pub mod special;
